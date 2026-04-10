@@ -1,0 +1,8 @@
+*.sqlite3
+back-end/store/staticfiles/
+back-end/store/images/
+back-end/store/media/
+node_modules/
+__pycache__/
+.env
+.DS_Store

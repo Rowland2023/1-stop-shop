@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Employee Management Application</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <h1>Employee Management Application</h1>
+
+  <form id="employee-form">
+    <input type="hidden" id="employeeId" />
+    <input type="text" id="firstName" placeholder="First Name" required />
+    <input type="text" id="lastName" placeholder="Last Name" required />
+    <input type="date" id="birthDate" required />
+    <input type="email" id="email" placeholder="Email" required />
+    <input type="tel" id="phoneNumber" placeholder="Phone Number" required />
+    <select id="department-select" required>
+      <option value="">Select a department</option>
+    </select>
+    <button type="submit">💾 Save Employee</button>
+  </form>
+
+  <h2>Employee List</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th><th>Email</th><th>Phone</th><th>Department</th><th>Actions</th>
+      </tr>
+    </thead>
+    <tbody id="employee-table"></tbody>
+  </table>
+
+  <script src="/js/main.js"></script>
+</body>
+</html>
