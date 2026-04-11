@@ -1,8 +1,3 @@
-"""
-Django settings for store project.
-Unified PostgreSQL & Redis Configuration
-"""
-
 import os
 import dj_database_url
 from pathlib import Path
@@ -10,24 +5,22 @@ from pathlib import Path
 # --- 1. BASE PATHS ---
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-_m6@*&@vaop567))d(y20&&+_ne_$0p%-^e7ap94(gfsw4izjm'
+# --- 2. SECURITY ---
+# In production, set SECRET_KEY as an Environment Variable on Render
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-_m6@*&@vaop567))d(y20&&+_ne_$0p%-^e7ap94(gfsw4izjm')
 
-# SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'False') == 'True'
-
 
 ALLOWED_HOSTS = [
     'back-end-wdk7.onrender.com', 
     'localhost', 
     '127.0.0.1', 
-    '.onrender.com' # This covers all Render subdomains
+    '.onrender.com' 
 ]
 
-# --- 2. APPLICATION DEFINITION ---
-
+# --- 3. APPLICATION DEFINITION ---
 INSTALLED_APPS = [
-    'jazzmin',              # Must be above admin
+    'jazzmin',              # Must stay at the top
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -35,28 +28,20 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     
-    # Third-party apps
+    # Third-party
     'cloudinary_storage',
     'cloudinary',
     'corsheaders',
     'rest_framework',
     
-    # Internal apps
+    # Internal
     'super_mart',           
 ]
 
-CLOUDINARY_STORAGE = {
-    'CLOUD_NAME': os.getenv('CLOUDINARY_CLOUD_NAME'),
-    'API_KEY': os.getenv('CLOUDINARY_API_KEY'),
-    'API_SECRET': os.getenv('CLOUDINARY_API_SECRET')
-}
-
-DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
-
 MIDDLEWARE = [
-    'corsheaders.middleware.CorsMiddleware', 
-    'whitenoise.middleware.WhiteNoiseMiddleware', # Must be as high as possible
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware', # FIXED: Must be right after SecurityMiddleware
+    'corsheaders.middleware.CorsMiddleware', 
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -84,35 +69,42 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'store.wsgi.application'
 
-# --- 3. DATABASE CONFIGURATION (PostgreSQL) ---
-
+# --- 4. DATABASE (PostgreSQL) ---
 DATABASES = {
     'default': dj_database_url.config(
-        # Default to the internal Docker service name "database"
-        default=os.getenv('DATABASE_URL', 'postgres://admin:marketpass@database:5432/market_place_db'),
+        default=os.getenv('DATABASE_URL'),
         conn_max_age=600,
         conn_health_checks=True,
     )
 }
 
-# --- 4. ASYNCHRONOUS TASKS (Celery & Redis) ---
+# --- 5. STATIC & MEDIA FILES ---
+STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
-CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL', 'redis://redis:6379/0')
-CELERY_RESULT_BACKEND = os.getenv('CELERY_BROKER_URL', 'redis://redis:6379/0')
-CELERY_ACCEPT_CONTENT = ['json']
-CELERY_TASK_SERIALIZER = 'json'
-CELERY_RESULT_SERIALIZER = 'json'
-CELERY_TIMEZONE = 'Africa/Lagos'
+# Only include this if you have a physical 'static' folder in your project root
+STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')] if os.path.exists(os.path.join(BASE_DIR, 'static')) else []
 
-# --- 5. AUTH & REST FRAMEWORK ---
+# WhiteNoise storage to handle MIME types and compression correctly
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-AUTH_PASSWORD_VALIDATORS = [
-    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
-    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
-]
+# Cloudinary for Media
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': os.getenv('CLOUDINARY_CLOUD_NAME'),
+    'API_KEY': os.getenv('CLOUDINARY_API_KEY'),
+    'API_SECRET': os.getenv('CLOUDINARY_API_SECRET')
+}
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
+# --- 6. SECURITY & CORS ---
+CORS_ALLOW_ALL_ORIGINS = True 
+APPEND_SLASH = True
+USE_X_FORWARDED_HOST = True
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# --- 7. AUTH & REST FRAMEWORK ---
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [], 
     'DEFAULT_PERMISSION_CLASSES': [
@@ -120,61 +112,27 @@ REST_FRAMEWORK = {
     ],
 }
 
-# --- 6. INTERNATIONALIZATION ---
-
+# --- 8. INTERNATIONALIZATION ---
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'Africa/Lagos'
 USE_I18N = True
 USE_TZ = True
 
-# --- 7. STATIC & MEDIA FILES ---
-
-STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
-
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-
-# --- 8. SECURITY & CORS ---
-
-CORS_ALLOW_ALL_ORIGINS = True  # Optimized for dev; restrict this in prod
-APPEND_SLASH = True
-USE_X_FORWARDED_HOST = True
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-
-# --- 9. JAZZMIN UI CUSTOMIZATION ---
-
+# --- 9. JAZZMIN UI ---
 JAZZMIN_SETTINGS = {
     "site_title": "Lagos Tech Hub Admin",
     "site_header": "Market-Place HRM",
     "site_brand": "Command Center",
-    "welcome_sign": "Welcome to the Market-Place Management Portal",
+    "welcome_sign": "Welcome to the Management Portal",
     "copyright": "Lagos Tech Hub Ltd",
-    "search_model": ["super_mart.Employee", "super_mart.Product"],
     "show_sidebar": True,
     "navigation_expanded": True,
     "icons": {
-        "auth": "fas fa-users-cog",
         "auth.user": "fas fa-user",
         "super_mart.Employee": "fas fa-user-tie",
         "super_mart.Product": "fas fa-box-open",
-        "super_mart.Attendance": "fas fa-calendar-check",
-        "super_mart.Payroll": "fas fa-money-bill-wave",
-        "super_mart.PerformanceReview": "fas fa-chart-line",
         "super_mart.Department": "fas fa-sitemap",
     },
-    "order_with_respect_to": ["super_mart.Employee", "super_mart.Product", "super_mart.Department"],
-    "use_google_fonts": True,
-}
-
-JAZZMIN_UI_TWEAKS = {
-    "navbar_fixed": True,
-    "sidebar_fixed": True,
-    "theme": "default",
-    "sidebar": "sidebar-dark-primary",
 }
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
