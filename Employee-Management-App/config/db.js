@@ -1,32 +1,35 @@
-const { Pool } = require('pg');
+const { Sequelize } = require('sequelize');
 
-const connectDB = async () => {
+const connectDB = () => {
   const connectionString = process.env.DATABASE_URL;
 
   if (!connectionString) {
     throw new Error('Missing DATABASE_URL in environment variables');
   }
 
-  // A Pool is better for web apps than a single Client connection
-  const pool = new Pool({
-    connectionString: connectionString,
-    // Optional: Render often requires SSL in production
-    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+  // Create the Sequelize instance
+  const sequelize = new Sequelize(connectionString, {
+    dialect: 'postgres',
+    logging: false, // Set to console.log to see SQL queries in Render
+    dialectOptions: {
+      ssl: process.env.NODE_ENV === 'production' ? {
+        require: true,
+        rejectUnauthorized: false
+      } : false
+    }
   });
 
-  try {
-    // Testing the connection
-    const client = await pool.connect();
-    console.log('✅ PostgreSQL connected');
-    
-    // Release the client back to the pool
-    client.release();
-    
-    return pool; 
-  } catch (err) {
-    console.error('❌ PostgreSQL connection error:', err.message);
-    throw err;
-  }
+  // Test the connection immediately
+  sequelize.authenticate()
+    .then(() => {
+      console.log('✅ PostgreSQL connected via Sequelize');
+    })
+    .catch(err => {
+      console.error('❌ PostgreSQL connection error:', err.message);
+    });
+
+  return sequelize;
 };
 
-module.exports = connectDB;
+// We execute the function and export the result (the sequelize instance)
+module.exports = connectDB();
