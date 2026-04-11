@@ -14,14 +14,13 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy the actual project code
 COPY back-end/store/ .
 
-# Create the directory for static files (matching your settings.py STATIC_ROOT)
+# Create the directory for static files
 RUN mkdir -p /app/staticfiles
 
-# --- THE FIX ---
 # Collect static files during the image build process
-# This populates the /app/staticfiles directory so WhiteNoise can find them
 RUN python manage.py collectstatic --no-input
 
-# Run migrations and start the server using a shell-form CMD
-# This ensures the database is ready before the API starts
-CMD python manage.py migrate && gunicorn store.wsgi:application --bind 0.0.0.0:10000
+# --- THE CRITICAL FIX ---
+# Use Shell form (no brackets) to chain the migration and the server start
+# This ensures the DB is ready before Gunicorn takes requests
+CMD python manage.py migrate && gunicorn store.wsgi:application --bind 0.0.0.0:10000 --log-level debug

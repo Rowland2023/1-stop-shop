@@ -99,7 +99,12 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # --- 6. SECURITY & CORS ---
-CORS_ALLOW_ALL_ORIGINS = True 
+CORS_ALLOW_CREDENTIALS = True
+# If using JWT or Sessions, ensure this is set
+CSRF_TRUSTED_ORIGINS = [
+    'https://back-end-wdk7.onrender.com',
+    'https://your-frontend-url.onrender.com' # Add your actual frontend URL here
+]
 APPEND_SLASH = True
 USE_X_FORWARDED_HOST = True
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
