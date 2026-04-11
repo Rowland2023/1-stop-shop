@@ -11,3 +11,4 @@ dj-database-url
 gunicorn
 django-cloudinary-storage
 cloudinary
+whitenoise
