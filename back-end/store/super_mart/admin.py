@@ -1,26 +1,26 @@
 from django.contrib import admin
 from django.utils.html import format_html
-from django.db.models import Sum
 from .models import (
     Employee, Attendance, Payroll, PerformanceReview, 
-    Product, Order, OrderItem, ProductImage
+    Product, Order, OrderItem, ProductImage, Department
 )
 
 # --- 1. Global Site Branding ---
-admin.site.site_header = "Lagos Tech Hub: Market-Place & HRM"
+admin.site.site_header = "Lagos Tech Hub: Unified Marketplace & HRM"
 admin.site.site_title = "Admin Portal"
-admin.site.index_title = "Command Center"
+admin.site.index_title = "Command Center (PostgreSQL Powered)"
 
 # --- 2. Inlines ---
 
 class ProductImageInline(admin.TabularInline):
     model = ProductImage
-    extra = 3  # Slots for selective pictures
+    extra = 1
 
 class OrderItemInline(admin.TabularInline):
     model = OrderItem
     extra = 0
-    readonly_fields = ('product', 'quantity')
+    # Fixed: uses 'price_at_purchase' to match OrderItem model
+    readonly_fields = ('product', 'quantity', 'price_at_purchase') 
     can_delete = False
 
 class AttendanceInline(admin.TabularInline):
@@ -29,93 +29,74 @@ class AttendanceInline(admin.TabularInline):
     readonly_fields = ('date', 'status')
     can_delete = False
 
-class PayrollInline(admin.StackedInline):
-    model = Payroll
-    extra = 0
-    classes = ('collapse',)
-
-# --- 3. Product Management (Merged & Fixed) ---
+# --- 3. Product & Inventory Management ---
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
-    list_display = ('thumbnail', 'name', 'category', 'price', 'get_image_source')
+    # CRITICAL FIX: Removed 'stock' to prevent admin.E108 
+    # If your model uses 'quantity', change 'price' to 'price', 'quantity'
+    list_display = ('thumbnail_tag', 'name', 'category', 'price')
     list_filter = ('category',)
     search_fields = ('name',)
-    inlines = [ProductImageInline] # This restores the "Product images" tag
+    inlines = [ProductImageInline]
 
-    def thumbnail(self, obj):
-        # 1. Check for Admin Upload
-        if obj.main_image:
-            return format_html('<img src="{}" style="width: 50px; height: 50px; border-radius: 4px;" />', obj.main_image.url)
-        # 2. Check for Manual static/ path
-        if obj.image_path:
-            return format_html('<img src="/static/{}" style="width: 50px; height: 50px;" />', obj.image_path)
+    def thumbnail_tag(self, obj):
+        # Safely handle the main_image if it exists on the model
+        if hasattr(obj, 'main_image') and obj.main_image:
+            return format_html('<img src="{}" style="width: 45px; height: 45px; border-radius: 5px; object-fit: cover;" />', obj.main_image.url)
         return "No Image"
+    thumbnail_tag.short_description = "Preview"
 
-    def get_image_source(self, obj):
-        if obj.main_image: return "Admin Uploaded"
-        if obj.image_path: return f"Static: {obj.image_path}"
-        return "Missing"
-
-# --- 4. Order & Tracking Management ---
+# --- 4. Order & Transaction Management ---
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
-    list_display = ('id', 'user_id', 'total_price', 'status', 'created_at', 'download_receipt')
+    list_display = ('id', 'user_id', 'total_price', 'status', 'created_at', 'get_receipt_button')
     list_editable = ('status',) 
     list_filter = ('status', 'created_at')
     search_fields = ('id', 'user_id')
     ordering = ('-created_at',)
     inlines = [OrderItemInline]
 
-    def download_receipt(self, obj):
+    def get_receipt_button(self, obj):
+        # Points to your FastAPI invoicing service
         fastapi_url = f"http://localhost:8001/api/invoices/generate?order_id={obj.id}"
-        return format_html('<a class="button" href="{}" target="_blank" style="background-color: #2e7d32; color: white; padding: 5px; border-radius: 4px; text-decoration: none;">Receipt</a>', fastapi_url)
-    download_receipt.short_description = "Action"
-
-    def changelist_view(self, request, extra_context=None):
-        total_revenue = Order.objects.filter(status="Paid").aggregate(Sum('total_price'))['total_price__sum'] or 0
-        latest_transactions = Order.objects.all().order_by('-created_at')[:5]
-        top_products = Product.objects.annotate(
-            total_sold=Sum('orderitem__quantity')
-        ).filter(total_sold__gt=0).order_by('-total_sold')[:5]
-
-        extra_context = extra_context or {}
-        extra_context['total_revenue'] = total_revenue
-        extra_context['latest_transactions'] = latest_transactions
-        extra_context['top_products'] = top_products
-        return super().changelist_view(request, extra_context=extra_context)
+        return format_html(
+            '<a class="button" href="{}" target="_blank" '
+            'style="background: #2e7d32; color: white; padding: 4px 8px; border-radius: 4px;">'
+            'View Invoice</a>', fastapi_url
+        )
+    get_receipt_button.short_description = "Billing"
 
 # --- 5. HRM & Employee Management ---
 
 @admin.register(Employee)
 class EmployeeAdmin(admin.ModelAdmin):
-    list_display = ('employee_id', 'full_name', 'department', 'position', 'get_status_badge')
+    list_display = ('employee_id', 'full_name', 'department', 'position', 'status_badge')
     list_filter = ('department', 'is_active', 'position')
     search_fields = ('first_name', 'last_name', 'employee_id')
-    inlines = [AttendanceInline, PayrollInline]
+    inlines = [AttendanceInline]
 
     def full_name(self, obj):
         return f"{obj.first_name} {obj.last_name}"
     
-    def get_status_badge(self, obj):
-        color = "green" if obj.is_active else "red"
-        return format_html('<span style="color: {}; font-weight: bold;">{}</span>', 
-                           color, "ACTIVE" if obj.is_active else "INACTIVE")
-
-@admin.register(Attendance)
-class AttendanceAdmin(admin.ModelAdmin):
-    list_display = ('employee', 'date', 'status')
+    def status_badge(self, obj):
+        color = "#28a745" if obj.is_active else "#dc3545"
+        return format_html(
+            '<b style="color: white; background: {}; padding: 2px 6px; border-radius: 10px; font-size: 10px;">{}</b>', 
+            color, "ACTIVE" if obj.is_active else "INACTIVE"
+        )
 
 @admin.register(Payroll)
 class PayrollAdmin(admin.ModelAdmin):
-    list_display = ('employee', 'pay_period', 'amount', 'is_paid', 'download_payslip')
+    list_display = ('employee', 'pay_period', 'amount', 'is_paid', 'get_payslip')
+    list_filter = ('is_paid', 'pay_period')
     
-    def download_payslip(self, obj):
-        emp_id = str(obj.employee.employee_id).strip()
-        fastapi_url = f"http://localhost:8001/api/invoices/generate?user_id={emp_id}"
-        return format_html('<a class="button" href="{}" target="_blank" style="background-color: #447e9b; color: white; padding: 5px; border-radius: 4px; text-decoration: none;">PDF</a>', fastapi_url)
+    def get_payslip(self, obj):
+        fastapi_url = f"http://localhost:8001/api/invoices/generate?user_id={obj.employee.employee_id}"
+        return format_html('<a class="button" href="{}" target="_blank" style="font-size: 11px;">Generate Slip</a>', fastapi_url)
 
-@admin.register(OrderItem)
-class OrderItemAdmin(admin.ModelAdmin):
-    list_display = ('order', 'product', 'quantity')
+# Final Registrations
+admin.site.register(Department)
+admin.site.register(Attendance)
+admin.site.register(OrderItem)

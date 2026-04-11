@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from .models import (
     Product, Order, OrderItem, 
-    Employee, Attendance, Payroll, PerformanceReview, ProductImage
+    Employee, Attendance, Payroll, PerformanceReview, ProductImage, Department
 )
 
 # --- 1. MARKETPLACE & INVENTORY SERIALIZERS ---
@@ -20,7 +20,6 @@ class ProductSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'price', 'category', 'image_display', 'additional_images']
 
     def get_image_display(self, obj):
-        # Return upload URL if exists, else fallback to the static path
         if obj.main_image:
             return obj.main_image.url
         if obj.image_path:
@@ -28,7 +27,6 @@ class ProductSerializer(serializers.ModelSerializer):
         return None
     
 class OrderItemSerializer(serializers.ModelSerializer):
-    # This pulls the product name into the order item for the PDF/Frontend
     product_name = serializers.ReadOnlyField(source='product.name')
     
     class Meta:
@@ -36,7 +34,6 @@ class OrderItemSerializer(serializers.ModelSerializer):
         fields = ['id', 'product', 'product_name', 'quantity', 'price_at_purchase']
 
 class OrderSerializer(serializers.ModelSerializer):
-    # This allows you to see all items inside an order (Nested Serializer)
     items = OrderItemSerializer(many=True, read_only=True)
 
     class Meta:
@@ -62,14 +59,17 @@ class PerformanceReviewSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class EmployeeSerializer(serializers.ModelSerializer):
-    # Nested relations to see history in the employee profile
+    # This ensures the frontend sees "Engineering" instead of "1"
+    department_name = serializers.ReadOnlyField(source='department.name')
+    
     payrolls = PayrollSerializer(many=True, read_only=True)
-    attendance = AttendanceSerializer(many=True, read_only=True)
+    # Note: Ensure the related_name in models.py matches this (attendances)
+    attendances = AttendanceSerializer(many=True, read_only=True, source='attendances')
 
     class Meta:
         model = Employee
         fields = [
             'id', 'employee_id', 'first_name', 'last_name', 
-            'email', 'department', 'position', 'salary', 
-            'is_active', 'date_joined', 'payrolls', 'attendance'
+            'email', 'department', 'department_name', 'position', 'salary', 
+            'is_active', 'date_joined', 'payrolls', 'attendances'
         ]
