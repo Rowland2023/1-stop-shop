@@ -9,3 +9,5 @@ django-jazzmin
 Pillow
 dj-database-url
 gunicorn
+django-cloudinary-storage
+cloudinary
