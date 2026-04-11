@@ -14,17 +14,31 @@ load_dotenv()
 
 app = FastAPI(title="Lagos Tech Hub: Invoicing & Payroll Service")
 
+# Enhanced CORS for production
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"], # In production, replace with your specific frontend URL
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Configuration
-DJANGO_SERVICE_URL = os.getenv("DJANGO_SERVICE_URL", "http://django-backend:8000")
+# --- CONFIGURATION ---
+# Use the Render Internal/External URL for your Django service
+DJANGO_SERVICE_URL = os.getenv("DJANGO_SERVICE_URL", "https://back-end-wdk7.onrender.com")
 PAYSTACK_SECRET_KEY = os.getenv("PAYSTACK_SECRET_KEY")
+
+# --- 0. ROOT HEALTH CHECK (Fixes the 404 at /) ---
+@app.get("/")
+async def health_check():
+    return {
+        "status": "online",
+        "service": "Lagos Tech Hub Invoicing",
+        "endpoints": {
+            "generate_invoice": "/api/invoices/generate",
+            "docs": "/docs"
+        }
+    }
 
 # --- 1. HELPER: UPDATE DJANGO STATUS ---
 async def update_order_status(order_id: int, status: str):
@@ -136,16 +150,12 @@ async def generate_hrm_payslip_pdf(user_id: str):
     buffer.seek(0)
     return buffer.getvalue(), f"payslip_{user_id}.pdf"
 
-# --- 4. UNIFIED ROUTE FOR DJANGO ADMIN ---
+# --- 4. UNIFIED ROUTE ---
 @app.get("/api/invoices/generate")
 async def generate_invoice_route(
     order_id: int = Query(None),
     user_id: str = Query(None)
 ):
-    """
-    Called by Django Admin buttons. 
-    Matches: http://localhost:8001/api/invoices/generate
-    """
     if order_id:
         pdf_content, filename = await generate_marketplace_pdf(order_id)
         return Response(
@@ -167,6 +177,9 @@ async def generate_invoice_route(
 # --- 5. WEBHOOKS ---
 @app.post("/api/paystack/webhook")
 async def paystack_webhook(request: Request, x_paystack_signature: str = Header(None)):
+    if not PAYSTACK_SECRET_KEY:
+        raise HTTPException(status_code=500, detail="Paystack secret key not configured")
+        
     payload = await request.body()
     computed_signature = hmac.new(
         PAYSTACK_SECRET_KEY.encode(),
@@ -179,7 +192,6 @@ async def paystack_webhook(request: Request, x_paystack_signature: str = Header(
 
     data = await request.json()
     if data['event'] == 'charge.success':
-        # Safely extract order_id from Paystack metadata
         try:
             order_id = data['data']['metadata']['custom_fields'][0]['value']
             await update_order_status(order_id, "Paid")
