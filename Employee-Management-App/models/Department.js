@@ -1,12 +1,18 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const { sequelize } = require('../config/db');
 
-const departmentSchema = new mongoose.Schema({
+const Department = sequelize.define('Department', {
   name: {
-    type: String,
-    required: true,
-    unique: true, // 🚫 Prevents duplicate department names
-    trim: true    // ✂️ Removes leading/trailing spaces
+    type: DataTypes.STRING,
+    allowNull: false,
+    unique: true,
+    set(val) {
+      // Logic for 'trim'
+      this.setDataValue('name', val ? val.trim() : val);
+    }
   }
+}, {
+  timestamps: true
 });
 
-module.exports = mongoose.model('Department', departmentSchema);
+module.exports = Department;
