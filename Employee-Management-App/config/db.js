@@ -10,7 +10,7 @@ const connectDB = () => {
   // Create the Sequelize instance
   const sequelize = new Sequelize(connectionString, {
     dialect: 'postgres',
-    logging: false, // Set to console.log to see SQL queries in Render
+    logging: false, 
     dialectOptions: {
       ssl: process.env.NODE_ENV === 'production' ? {
         require: true,
@@ -19,7 +19,7 @@ const connectDB = () => {
     }
   });
 
-  // Test the connection immediately
+  // Test the connection
   sequelize.authenticate()
     .then(() => {
       console.log('✅ PostgreSQL connected via Sequelize');
@@ -31,5 +31,5 @@ const connectDB = () => {
   return sequelize;
 };
 
-// We execute the function and export the result (the sequelize instance)
+// Export the instance directly
 module.exports = connectDB();
