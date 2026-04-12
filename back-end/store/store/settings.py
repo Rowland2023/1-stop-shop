@@ -11,7 +11,7 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-_m6@*&@vaop567))d(y20
 
 DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
-ALLOWED_HOSTS = ['back-end-wdk7', 'back-end-wdk7.onrender.com', 'localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['back-end-wdk7', 'back-end-wdk7.onrender.com', 'your-frontend-url.onrender.com']
 
 # --- 3. APPLICATION DEFINITION ---
 INSTALLED_APPS = [
