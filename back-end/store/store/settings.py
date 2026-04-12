@@ -106,6 +106,7 @@ SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 # --- 7. AUTH & REST FRAMEWORK ---
 REST_FRAMEWORK = {
+    'COERCE_DECIMAL_TO_STRING': True,
     'DEFAULT_AUTHENTICATION_CLASSES': [], 
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.AllowAny',
