@@ -10,7 +10,6 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-your-fallback-key')
 
 DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
-# Include your Render URLs and local host
 ALLOWED_HOSTS = [
     'back-end-wdk7', 
     'back-end-wdk7.onrender.com', 
@@ -21,27 +20,27 @@ ALLOWED_HOSTS = [
 
 # --- 3. APPLICATION DEFINITION ---
 INSTALLED_APPS = [
-    'cloudinary_storage',         # Must be at the very top
-    'jazzmin',                    # Must be above admin
+    'cloudinary_storage',         # 1. MUST be at the very top
+    'jazzmin',                    # 2. Above admin
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-    'django.contrib.staticfiles', # WhiteNoise and Cloudinary depend on this
+    'django.contrib.staticfiles', # Handled by WhiteNoise below
     
     # Third-party
     'cloudinary',
     'corsheaders',
     'rest_framework',
     
-    # Internal App
+    # Internal
     'super_mart',           
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware', # Must be immediately after SecurityMiddleware
+    'whitenoise.middleware.WhiteNoiseMiddleware', # 3. Immediately after Security
     'corsheaders.middleware.CorsMiddleware', 
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -71,10 +70,9 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'store.wsgi.application'
 
-# --- 4. DATABASE (PostgreSQL with SQLite Fallback) ---
+# --- 4. DATABASE ---
 DATABASES = {
     'default': dj_database_url.config(
-        # Falls back to local SQLite if DATABASE_URL environment var is missing
         default=os.getenv('DATABASE_URL', f"sqlite:///{BASE_DIR}/db.sqlite3"),
         conn_max_age=600,
         conn_health_checks=True,
@@ -83,15 +81,21 @@ DATABASES = {
 
 # --- 5. STATIC & MEDIA FILES ---
 
-# Static Files (CSS, JavaScript, Images for Admin/Jazzmin)
+# STATIC FILES (WhiteNoise handles CSS/JS)
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
-# WhiteNoise configuration for Render
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-WHITENOISE_MANIFEST_STRICT = False  # Prevents 404s if a specific version isn't found
+# This forces Django to find files inside Jazzmin/Admin apps
+STATICFILES_FINDERS = [
+    'django.contrib.staticfiles.finders.FileSystemFinder',
+    'django.contrib.staticfiles.finders.AppDirectoriesFinder',
+]
 
-# Media Files (User uploads / Product Images)
+# Storage for Static
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+WHITENOISE_MANIFEST_STRICT = False # Essential for Render to avoid 404s on CSS
+
+# MEDIA FILES (Cloudinary handles Product Images)
 CLOUDINARY_STORAGE = {
     'CLOUD_NAME': os.getenv('CLOUDINARY_CLOUD_NAME'),
     'API_KEY': os.getenv('CLOUDINARY_API_KEY'),
@@ -103,9 +107,8 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # --- 6. SECURITY & CORS ---
-CORS_ALLOW_ALL_ORIGINS = True # Set to False and use CORS_ALLOWED_ORIGINS in production
+CORS_ALLOW_ALL_ORIGINS = True 
 CORS_ALLOW_CREDENTIALS = True
-
 CSRF_TRUSTED_ORIGINS = [
     'https://back-end-wdk7.onrender.com',
     'https://front-end-6f9m.onrender.com'
