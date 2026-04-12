@@ -1,9 +1,14 @@
+import os
 from django.contrib import admin
 from django.utils.html import format_html
 from .models import (
     Employee, Attendance, Payroll, PerformanceReview, 
     Product, Order, OrderItem, ProductImage, Department
 )
+
+# --- CONFIGURATION ---
+# This ensures the buttons point to Render in production and localhost during dev
+INVOICE_SERVICE_URL = os.environ.get('INVOICE_SERVICE_URL', 'https://invoice-service-ttn6.onrender.com')
 
 # --- 1. Global Site Branding ---
 admin.site.site_header = "Lagos Tech Hub: Unified Marketplace & HRM"
@@ -19,7 +24,6 @@ class ProductImageInline(admin.TabularInline):
 class OrderItemInline(admin.TabularInline):
     model = OrderItem
     extra = 0
-    # FIX: Uses 'price_at_purchase' to match OrderItem model
     readonly_fields = ('product', 'quantity', 'price_at_purchase') 
     can_delete = False
 
@@ -56,11 +60,11 @@ class OrderAdmin(admin.ModelAdmin):
     inlines = [OrderItemInline]
 
     def get_receipt_button(self, obj):
-        # Points to your FastAPI invoicing service
-        fastapi_url = f"http://localhost:8001/api/invoices/generate?order_id={obj.id}"
+        # Points to your live FastAPI invoicing service on Render
+        fastapi_url = f"{INVOICE_SERVICE_URL}/api/invoices/generate?order_id={obj.id}"
         return format_html(
             '<a class="button" href="{}" target="_blank" '
-            'style="background: #2e7d32; color: white; padding: 4px 8px; border-radius: 4px; text-decoration: none;">'
+            'style="background: #2e7d32; color: white; padding: 4px 8px; border-radius: 4px; text-decoration: none; font-weight: bold;">'
             'View Invoice</a>', fastapi_url
         )
     get_receipt_button.short_description = "Billing"
@@ -86,21 +90,29 @@ class EmployeeAdmin(admin.ModelAdmin):
 
 @admin.register(Payroll)
 class PayrollAdmin(admin.ModelAdmin):
-    # RESTORED: 'get_payslip' added back to list_display
     list_display = ('employee', 'pay_period', 'amount', 'is_paid', 'get_payslip')
     list_filter = ('is_paid', 'pay_period')
     
     def get_payslip(self, obj):
-        # Link to FastAPI using the employee_id
-        fastapi_url = f"http://localhost:8001/api/invoices/generate?user_id={obj.employee.employee_id}"
+        # Link to FastAPI using the employee_id and live Render URL
+        fastapi_url = f"{INVOICE_SERVICE_URL}/api/invoices/generate?user_id={obj.employee.employee_id}"
         return format_html(
             '<a class="button" href="{}" target="_blank" '
-            'style="background: #1565c0; color: white; padding: 4px 8px; border-radius: 4px; text-decoration: none; font-size: 11px;">'
+            'style="background: #1565c0; color: white; padding: 4px 8px; border-radius: 4px; text-decoration: none; font-size: 11px; font-weight: bold;">'
             'Generate Slip</a>', fastapi_url
         )
     get_payslip.short_description = "Payroll Action"
 
-# Final Registrations
-admin.site.register(Department)
-admin.site.register(Attendance)
-admin.site.register(OrderItem)
+# --- 6. Final Registrations ---
+@admin.register(Department)
+class DepartmentAdmin(admin.ModelAdmin):
+    list_display = ('name',)
+
+@admin.register(Attendance)
+class AttendanceAdmin(admin.ModelAdmin):
+    list_display = ('employee', 'date', 'status')
+    list_filter = ('status', 'date')
+
+@admin.register(OrderItem)
+class OrderItemAdmin(admin.ModelAdmin):
+    list_display = ('order', 'product', 'quantity', 'price_at_purchase')
