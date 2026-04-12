@@ -21,17 +21,17 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-    'django.contrib.staticfiles',
-    
-    # Third-party
     'cloudinary_storage',
+    'django.contrib.staticfiles',
+    # Third-party
     'cloudinary',
     'corsheaders',
     'rest_framework',
-    
     # Internal
     'super_mart',           
 ]
+
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
