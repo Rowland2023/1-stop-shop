@@ -23,4 +23,4 @@ RUN python manage.py collectstatic --no-input
 # --- THE CRITICAL FIX ---
 # Use Shell form (no brackets) to chain the migration and the server start
 # This ensures the DB is ready before Gunicorn takes requests
-CMD python manage.py migrate && gunicorn store.wsgi:application --bind 0.0.0.0:10000 --log-level debug
+CMD python manage.py migrate && gunicorn store.wsgi:application --bind 0.0.0.0:10000 --timeout 120 --workers 3 --log-level debug
