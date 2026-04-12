@@ -44,8 +44,8 @@ class Product(models.Model):
     name = models.CharField(max_length=255)
     price = models.DecimalField(max_digits=12, decimal_places=2)
     category = models.CharField(max_length=50, choices=CATEGORY_CHOICES)
-    #main_image = models.ImageField(upload_to='products/main/', blank=True, null=True)
-    main_image = CloudinaryField('image', null=True, blank=True)
+    main_image = models.ImageField(upload_to='products/main/', blank=True, null=True)
+    #main_image = CloudinaryField('image', null=True, blank=True)
     image_path = models.CharField(max_length=500, blank=True, null=True)
 
     def __str__(self):
