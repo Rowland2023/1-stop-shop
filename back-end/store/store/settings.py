@@ -19,9 +19,9 @@ ALLOWED_HOSTS = [
 
 # --- 3. APPLICATION DEFINITION ---
 INSTALLED_APPS = [
-    'django.contrib.staticfiles',  # 1. Staticfiles first for collection
-    'cloudinary_storage',         # 2. Storage next
-    'jazzmin',                    # 3. Jazzmin before admin
+    'django.contrib.staticfiles',  # 1. Native static first
+    'cloudinary_storage',         # 2. Cloudinary storage
+    'jazzmin',                    # 3. Jazzmin (Must be before admin)
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -80,20 +80,20 @@ DATABASES = {
 
 # --- 5. STATIC & MEDIA FILES ---
 
-# STATIC FILES (WhiteNoise handles CSS/JS)
+# STATIC FILES (WhiteNoise handles CSS/JS for the UI)
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
-# Storage for Static - This ensures WhiteNoise takes control of CSS/JS
+# Storage for Static - Optimized for WhiteNoise on Render
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 WHITENOISE_MANIFEST_STRICT = False 
 
-# MEDIA FILES (Cloudinary handles Product Images)
+# MEDIA FILES (Cloudinary handles Persistent Product Images)
 CLOUDINARY_STORAGE = {
     'CLOUD_NAME': os.getenv('CLOUDINARY_CLOUD_NAME'),
     'API_KEY': os.getenv('CLOUDINARY_API_KEY'),
     'API_SECRET': os.getenv('CLOUDINARY_API_SECRET'),
-    'STATICFILES_STORAGE': None,  # CRITICAL: Prevents Cloudinary from interfering with WhiteNoise
+    'STATICFILES_STORAGE': None,  # Decouples static from Cloudinary
 }
 
 DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
