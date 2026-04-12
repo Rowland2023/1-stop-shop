@@ -142,3 +142,13 @@ JAZZMIN_SETTINGS = {
 }
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Tell Django it is behind a proxy and to trust the X-Forwarded-Proto header
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SECURE_SSL_REDIRECT = True
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
+
+# Add this to prevent Gunicorn from dropping connections due to protocol confusion
+USE_X_FORWARDED_HOST = True
+USE_X_FORWARDED_PORT = True
