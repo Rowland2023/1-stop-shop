@@ -15,13 +15,13 @@ ALLOWED_HOSTS = ['back-end-wdk7', 'back-end-wdk7.onrender.com', 'front-end-6f9m.
 
 # --- 3. APPLICATION DEFINITION ---
 INSTALLED_APPS = [
+    'cloudinary_storage',
     'jazzmin',              # Must stay at the top
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-    'cloudinary_storage',
     'django.contrib.staticfiles',
     # Third-party
     'cloudinary',
@@ -77,10 +77,14 @@ DATABASES = {
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
-# Only include this if you have a physical 'static' folder in your project root
-STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')] if os.path.exists(os.path.join(BASE_DIR, 'static')) else []
+# Remove the 'if' check for now to force Django to look for app statics
+STATICFILES_DIRS = [
+    # If you have a custom static folder, keep this. 
+    # If not, comment it out so Django only looks at App Statics (Jazzmin/Admin)
+    # os.path.join(BASE_DIR, 'static'), 
+]
 
-# WhiteNoise storage to handle MIME types and compression correctly
+# Standard WhiteNoise Storage
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Cloudinary for Media
