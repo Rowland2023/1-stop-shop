@@ -7,7 +7,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # --- 2. SECURITY ---
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-your-fallback-key')
-
 DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
 ALLOWED_HOSTS = [
@@ -20,14 +19,14 @@ ALLOWED_HOSTS = [
 
 # --- 3. APPLICATION DEFINITION ---
 INSTALLED_APPS = [
-    'cloudinary_storage',         # 1. MUST be at the very top
-    'jazzmin',                    # 2. Above admin
+    'django.contrib.staticfiles',  # 1. Staticfiles first for collection
+    'cloudinary_storage',         # 2. Storage next
+    'jazzmin',                    # 3. Jazzmin before admin
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-    'django.contrib.staticfiles', # Handled by WhiteNoise below
     
     # Third-party
     'cloudinary',
@@ -40,7 +39,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware', # 3. Immediately after Security
+    'whitenoise.middleware.WhiteNoiseMiddleware', # Immediately after Security
     'corsheaders.middleware.CorsMiddleware', 
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -85,21 +84,16 @@ DATABASES = {
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
-# This forces Django to find files inside Jazzmin/Admin apps
-STATICFILES_FINDERS = [
-    'django.contrib.staticfiles.finders.FileSystemFinder',
-    'django.contrib.staticfiles.finders.AppDirectoriesFinder',
-]
-
-# Storage for Static
+# Storage for Static - This ensures WhiteNoise takes control of CSS/JS
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-WHITENOISE_MANIFEST_STRICT = False # Essential for Render to avoid 404s on CSS
+WHITENOISE_MANIFEST_STRICT = False 
 
 # MEDIA FILES (Cloudinary handles Product Images)
 CLOUDINARY_STORAGE = {
     'CLOUD_NAME': os.getenv('CLOUDINARY_CLOUD_NAME'),
     'API_KEY': os.getenv('CLOUDINARY_API_KEY'),
-    'API_SECRET': os.getenv('CLOUDINARY_API_SECRET')
+    'API_SECRET': os.getenv('CLOUDINARY_API_SECRET'),
+    'STATICFILES_STORAGE': None,  # CRITICAL: Prevents Cloudinary from interfering with WhiteNoise
 }
 
 DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
