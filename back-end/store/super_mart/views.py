@@ -6,8 +6,8 @@ from rest_framework.decorators import api_view, authentication_classes, permissi
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
-from .models import Product, Order, OrderItem, Employee, Payroll, Department
-from .serializers import ProductSerializer, OrderSerializer
+from .models import Product, Order, OrderItem, Employee, Payroll, Department, Advertisement
+from .serializers import ProductSerializer, OrderSerializer, AdvertisementSerializer
 from .tasks import trigger_invoice_generation
 
 # --- 1. AUTHENTICATION & ROOT VIEWS ---
@@ -33,7 +33,8 @@ def register_user(request):
     if User.objects.filter(username=username).exists():
         return Response({"error": "Username exists"}, status=400)
     user = User.objects.create_user(username=username, password=password)
-    return Response({"message": "User created", "id": user.id}, status=201)
+    # Return user_id so React can log the user in immediately after registration
+    return Response({"message": "User created", "user_id": user.id}, status=201)
 
 @api_view(['POST'])
 @authentication_classes([])
@@ -43,16 +44,38 @@ def login_user(request):
     password = request.data.get('password')
     user = authenticate(username=username, password=password)
     if user:
-        return Response({"message": "Login successful", "username": user.username})
+        # Crucial: return user_id for the frontend's state
+        return Response({
+            "message": "Login successful", 
+            "username": user.username,
+            "user_id": user.id
+        })
     return Response({"error": "Invalid credentials"}, status=401)
 
-# --- 2. MARKETPLACE: PRODUCT VIEWSET ---
+# --- 2. MARKETPLACE: PRODUCT & AD VIEWSETS ---
 
 class ProductViewSet(viewsets.ModelViewSet):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
     authentication_classes = []
     permission_classes = [AllowAny]
+
+class AdvertisementViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    API endpoint that allows advertisements to be viewed.
+    Filters for active ads specifically for the header.
+    """
+    queryset = Advertisement.objects.filter(is_active=True)
+    serializer_class = AdvertisementSerializer
+    authentication_classes = []
+    permission_classes = [AllowAny]
+
+    def get_queryset(self):
+        # Optional: Filter by location via query param (e.g., /api/ads/?location=header_main)
+        location = self.request.query_params.get('location')
+        if location:
+            return self.queryset.filter(location=location)
+        return self.queryset
 
 # --- 3. HRM: EMPLOYEE DATA API ---
 
@@ -99,7 +122,8 @@ def order_list(request):
     if request.method == 'GET':
         user_id = request.query_params.get('userId')
         orders = Order.objects.all().order_by('-created_at')
-        if user_id: orders = orders.filter(user_id=user_id)
+        if user_id: 
+            orders = orders.filter(user_id=user_id)
         return Response(OrderSerializer(orders, many=True).data)
 
     if request.method == 'POST':
@@ -115,12 +139,18 @@ def order_list(request):
                 for item in data.get('items', []):
                     product = Product.objects.get(id=item['id'])
                     OrderItem.objects.create(
-                        order=new_order, product=product,
+                        order=new_order, 
+                        product=product,
                         quantity=item.get('quantity', 1),
                         price_at_purchase=product.price
                     )
-                    items_data.append({"name": product.name, "price": float(product.price), "quantity": item.get('quantity', 1)})
+                    items_data.append({
+                        "name": product.name, 
+                        "price": float(product.price), 
+                        "quantity": item.get('quantity', 1)
+                    })
 
+            # Hand off to Celery for background processing
             trigger_invoice_generation.delay({
                 "order_id": new_order.id,
                 "total_amount": float(data.get('total')),

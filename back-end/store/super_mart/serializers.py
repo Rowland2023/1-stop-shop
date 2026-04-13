@@ -1,8 +1,29 @@
 from rest_framework import serializers
 from .models import (
     Product, Order, OrderItem, 
-    Employee, Attendance, Payroll, PerformanceReview, ProductImage, Department
+    Employee, Attendance, Payroll, PerformanceReview, 
+    ProductImage, Department, Advertisement
 )
+
+# --- 1. PROMOTIONS SERIALIZER ---
+
+class AdvertisementSerializer(serializers.ModelSerializer):
+    image_url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Advertisement
+        fields = ['id', 'image_url', 'link_url', 'location']
+
+    def get_image_url(self, obj):
+        if obj.image:
+            image_url = obj.image.url
+            # Scaling for header ads: height limit 100px to keep the logo area clean
+            if 'cloudinary.com' in image_url:
+                image_url = image_url.replace('/upload/', '/upload/h_100,c_limit/')
+            return image_url
+        return None
+
+# --- 2. MARKETPLACE SERIALIZERS ---
 
 class ProductImageSerializer(serializers.ModelSerializer):
     image_url = serializers.SerializerMethodField()
@@ -14,11 +35,13 @@ class ProductImageSerializer(serializers.ModelSerializer):
     def get_image_url(self, obj):
         if obj.image:
             url = obj.image.url
-            # Add Cloudinary resizing (w_800) for gallery images
+            # Cloudinary gallery scaling (800px width limit)
             if 'cloudinary.com' in url:
                 url = url.replace('/upload/', '/upload/w_800,c_limit/')
+            
             if url.startswith('http'):
                 return url
+            
             request = self.context.get('request')
             if request:
                 return request.build_absolute_uri(url)
@@ -42,7 +65,7 @@ class ProductSerializer(serializers.ModelSerializer):
         
         if obj.main_image:
             image_url = obj.main_image.url
-            # Inject Cloudinary scaling: limit width to 1000px to prevent UI blowout
+            # Scaling for main product page display
             if 'cloudinary.com' in image_url:
                 image_url = image_url.replace('/upload/', '/upload/w_1000,c_limit/')
             
@@ -63,7 +86,6 @@ class ProductSerializer(serializers.ModelSerializer):
     def get_image(self, obj):
         return self.get_image_display(obj)
 
-# --- Remaining serializers remain as provided in your previous snippet ---
 class OrderItemSerializer(serializers.ModelSerializer):
     product_name = serializers.ReadOnlyField(source='product.name')
     class Meta:
@@ -76,6 +98,8 @@ class OrderSerializer(serializers.ModelSerializer):
         model = Order
         fields = ['id', 'user_id', 'created_at', 'total_price', 'status', 'items']
 
+# --- 3. HRM SERIALIZERS ---
+
 class AttendanceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Attendance
@@ -84,7 +108,7 @@ class AttendanceSerializer(serializers.ModelSerializer):
 class PayrollSerializer(serializers.ModelSerializer):
     class Meta:
         model = Payroll
-        fields = ['id', 'amount', 'pay_date', 'status', 'bonus', 'deductions']
+        fields = ['id', 'employee', 'pay_period', 'amount', 'is_paid']
 
 class PerformanceReviewSerializer(serializers.ModelSerializer):
     class Meta:

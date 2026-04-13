@@ -39,7 +39,6 @@ class Product(models.Model):
     name = models.CharField(max_length=255)
     price = models.DecimalField(max_digits=12, decimal_places=2)
     category = models.CharField(max_length=50, choices=CATEGORY_CHOICES)
-    # FIX: Added description field to match serializer requirements
     description = models.TextField(blank=True, null=True) 
     main_image = CloudinaryField('image', null=True, blank=True)
     image_path = models.CharField(max_length=500, blank=True, null=True)
@@ -49,7 +48,8 @@ class Product(models.Model):
 
 class ProductImage(models.Model):
     product = models.ForeignKey(Product, related_name='images', on_delete=models.CASCADE)
-    image = models.ImageField(upload_to='products/gallery/', blank=True, null=True) 
+    # Updated to CloudinaryField to match Product model
+    image = CloudinaryField('image', blank=True, null=True) 
     alt_text = models.CharField(max_length=100, blank=True)
 
 class Order(models.Model):
@@ -71,7 +71,25 @@ class OrderItem(models.Model):
     quantity = models.PositiveIntegerField(default=1)
     price_at_purchase = models.DecimalField(max_digits=12, decimal_places=2)
 
-# --- 3. EMPLOYEE MANAGEMENT (HRM) ---
+# --- 3. MARKETING & PROMOTIONS (NEW) ---
+
+class Advertisement(models.Model):
+    AD_LOCATION_CHOICES = [
+        ('header_main', 'Top Header (Near Logo)'),
+        ('sidebar', 'Sidebar'),
+        ('popup', 'Flash Sale Popup'),
+    ]
+    name = models.CharField(max_length=100)
+    image = CloudinaryField('image')
+    link_url = models.URLField(blank=True, null=True, help_text="Where the user goes when they click")
+    location = models.CharField(max_length=50, choices=AD_LOCATION_CHOICES, default='header_main')
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.name} ({self.location})"
+
+# --- 4. EMPLOYEE MANAGEMENT (HRM) ---
 
 class Employee(models.Model):
     employee_id = models.CharField(max_length=20, unique=True)

@@ -500,3 +500,26 @@ header {
 .detail-info {
   flex: 1;
 }
+
+.logo-section {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.header-ad-link {
+  display: flex;
+  align-items: center;
+}
+
+.header-promo-img {
+  max-height: 50px; /* Adjust based on your header height */
+  width: auto;
+  border-radius: 5px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  transition: transform 0.2s;
+}
+
+.header-promo-img:hover {
+  transform: scale(1.03);
+}
