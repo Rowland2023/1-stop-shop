@@ -10,9 +10,9 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-your-fallback-key')
 DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
 ALLOWED_HOSTS = [
-    'back-end-wdk7', 
     'back-end-wdk7.onrender.com', 
     'front-end-6f9m.onrender.com',
+    '.onrender.com', # Allows any sub-domain on Render
     'localhost',
     '127.0.0.1'
 ]
@@ -40,7 +40,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'corsheaders.middleware.CorsMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware', # Immediately after Security 
+    'whitenoise.middleware.WhiteNoiseMiddleware', 
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -79,21 +79,16 @@ DATABASES = {
 }
 
 # --- 5. STATIC & MEDIA FILES ---
-
-# STATIC FILES (WhiteNoise handles CSS/JS for the UI)
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-
-# Storage for Static - Optimized for WhiteNoise on Render
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 WHITENOISE_MANIFEST_STRICT = False 
 
-# MEDIA FILES (Cloudinary handles Persistent Product Images)
 CLOUDINARY_STORAGE = {
     'CLOUD_NAME': os.getenv('CLOUDINARY_CLOUD_NAME'),
     'API_KEY': os.getenv('CLOUDINARY_API_KEY'),
     'API_SECRET': os.getenv('CLOUDINARY_API_SECRET'),
-    'STATICFILES_STORAGE': None,  # Decouples static from Cloudinary
+    'STATICFILES_STORAGE': None,
     'SECURE': True,
 }
 
@@ -102,26 +97,31 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # --- 6. SECURITY & CORS ---
-# 1. Only allow your actual frontend to talk to the API
 CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOWED_ORIGINS = [
     'https://front-end-6f9m.onrender.com',
 ]
 
-# 2. Only needed if using session-based cookies
 CORS_ALLOW_CREDENTIALS = True
 
-# 3. Allow CSRF protection to trust your domains
+# We trust both the direct backend URL and the frontend proxy URL
 CSRF_TRUSTED_ORIGINS = [
     'https://front-end-6f9m.onrender.com',
     'https://back-end-wdk7.onrender.com',
 ]
 
-# 4. Critical for Render/Nginx to handle HTTPS properly
+# --- PROXY SETTINGS (CRITICAL FOR NGINX) ---
+# This tells Django to trust the headers Nginx is sending
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 USE_X_FORWARDED_HOST = True
 USE_X_FORWARDED_PORT = True
 
+# If your site is still failing, try setting this to False temporarily 
+# to see if the redirect is what's breaking the connection.
+SECURE_SSL_REDIRECT = False 
+
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
 APPEND_SLASH = True
 
 # --- 7. REST FRAMEWORK ---
@@ -155,13 +155,3 @@ JAZZMIN_SETTINGS = {
 }
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-# Tell Django it is behind a proxy and to trust the X-Forwarded-Proto header
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-SECURE_SSL_REDIRECT = True
-SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SECURE = True
-
-# Add this to prevent Gunicorn from dropping connections due to protocol confusion
-USE_X_FORWARDED_HOST = True
-USE_X_FORWARDED_PORT = True
