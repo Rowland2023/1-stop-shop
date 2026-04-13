@@ -4,7 +4,7 @@ from django.utils.html import format_html
 from .models import (
     Employee, Attendance, Payroll, PerformanceReview, 
     Product, Order, OrderItem, ProductImage, Department,
-    Advertisement 
+    Advertisement
 )
 
 # --- CONFIGURATION ---
@@ -15,10 +15,10 @@ admin.site.site_header = "Lagos Tech Hub: Unified Marketplace & HRM"
 admin.site.site_title = "Admin Portal"
 admin.site.index_title = "Command Center (PostgreSQL Powered)"
 
-# --- 2. Inlines (For nested adding) ---
+# --- 2. Inlines ---
 
 class ProductImageInline(admin.TabularInline):
-    """Allows adding multiple gallery images while creating a product"""
+    """Allows adding gallery images directly on the Product page"""
     model = ProductImage
     extra = 1
     fields = ('image', 'alt_text')
@@ -35,23 +35,24 @@ class AttendanceInline(admin.TabularInline):
     readonly_fields = ('date', 'status')
     can_delete = False
 
-# --- 3. Advertisement & Banner Management ---
+# --- 3. Advertisement Management ---
 
 @admin.register(Advertisement)
 class AdvertisementAdmin(admin.ModelAdmin):
+    # Matches your models.py: title, image, link_url, location, is_active
     list_display = ('preview_img', 'title', 'location', 'is_active', 'created_at')
-    list_editable = ('is_active',) 
-    list_filter = ('is_active', 'location', 'created_at')
+    list_editable = ('is_active', 'location')
+    list_filter = ('location', 'is_active', 'created_at')
     search_fields = ('title',)
 
     def preview_img(self, obj):
         if obj.image:
             return format_html(
-                '<img src="{}" style="width: 120px; height: auto; border-radius: 5px; border: 1px solid #ccc;" />', 
+                '<img src="{}" style="width: 120px; height: auto; border-radius: 8px; border: 1px solid #ddd;" />', 
                 obj.image.url
             )
         return "No Image"
-    preview_img.short_description = "Banner Preview"
+    preview_img.short_description = "Ad Preview"
 
 # --- 4. Product & Inventory Management ---
 
@@ -60,21 +61,20 @@ class ProductAdmin(admin.ModelAdmin):
     list_display = ('thumbnail_tag', 'name', 'category', 'price')
     list_filter = ('category',)
     search_fields = ('name', 'description')
-    inlines = [ProductImageInline] # Add gallery images on the same page
-    
-    # Organize the form layout for adding products
+    inlines = [ProductImageInline]
+
     fieldsets = (
-        ("Basic Info", {
+        ("Core Information", {
             'fields': ('name', 'description', 'category', 'price')
         }),
-        ("Primary Image", {
+        ("Media Assets", {
             'fields': ('main_image', 'image_path')
         }),
     )
 
     def thumbnail_tag(self, obj):
         if hasattr(obj, 'main_image') and obj.main_image:
-            return format_html('<img src="{}" style="width: 50px; height: 50px; border-radius: 5px; object-fit: cover;" />', obj.main_image.url)
+            return format_html('<img src="{}" style="width: 45px; height: 45px; border-radius: 5px; object-fit: cover;" />', obj.main_image.url)
         return "No Image"
     thumbnail_tag.short_description = "Thumbnail"
 
@@ -129,13 +129,11 @@ class PayrollAdmin(admin.ModelAdmin):
             'style="background: #1565c0; color: white; padding: 4px 8px; border-radius: 4px; text-decoration: none; font-size: 11px; font-weight: bold;">'
             'Generate Slip</a>', fastapi_url
         )
-    get_payslip.short_description = "Payroll Action"
 
 @admin.register(PerformanceReview)
 class PerformanceReviewAdmin(admin.ModelAdmin):
     list_display = ('employee', 'review_date', 'rating', 'reviewer')
     list_filter = ('rating', 'review_date')
-    search_fields = ('employee__first_name', 'employee__last_name', 'reviewer')
 
 # --- 7. Final Registrations ---
 
@@ -146,11 +144,10 @@ class DepartmentAdmin(admin.ModelAdmin):
 @admin.register(Attendance)
 class AttendanceAdmin(admin.ModelAdmin):
     list_display = ('employee', 'date', 'status')
-    list_filter = ('status', 'date')
 
 @admin.register(OrderItem)
 class OrderItemAdmin(admin.ModelAdmin):
-    list_display = ('order', 'product', 'quantity', 'price_at_purchase')
+    list_display = ('order', 'product', 'quantity')
 
 @admin.register(ProductImage)
 class ProductImageAdmin(admin.ModelAdmin):
