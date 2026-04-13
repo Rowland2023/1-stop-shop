@@ -1,11 +1,14 @@
 import React, { useEffect, useState } from "react";
 import "./App.css";
 
+// --- CONFIGURATION ---
+// Using the full public URL bypasses Nginx DNS issues. 
+// Note: Ensure your Django backend has CORS_ALLOW_ALL_ORIGINS = True
+const API_BASE_URL = "https://back-end-wdk7.onrender.com";
+
 // --- SUB-COMPONENT: PRODUCT CARD ---
 function ProductCard({ product, onAddToCart, onSelect }) {
   const [tempQty, setTempQty] = useState(1);
-
-  // Use the image_display field from the Serializer
   const displayImage = product.image_display || "/static/placeholder.png";
 
   return (
@@ -76,11 +79,11 @@ function App() {
     localStorage.setItem("shop_cart_data", JSON.stringify(cart));
   }, [cart]);
 
+  // Fetch products using absolute URL
   useEffect(() => {
-    fetch("/api/products/")
+    fetch(`${API_BASE_URL}/api/products/`)
       .then((res) => res.json())
       .then((data) => {
-          // Handle both direct array and paginated results
           const productData = Array.isArray(data) ? data : (data.results || []);
           setProducts(productData);
       })
@@ -91,9 +94,10 @@ function App() {
     setVisibleCount(PAGE_SIZE);
   }, [category, searchTerm]);
 
+  // Fetch orders using absolute URL
   useEffect(() => {
     if (view === "account" && user) {
-      fetch(`/api/orders/?userId=${user.id}`)
+      fetch(`${API_BASE_URL}/api/orders/?userId=${user.id}`)
         .then((res) => res.json())
         .then((data) => {
           let ordersArray = Array.isArray(data) ? data : (data.results || []);
@@ -122,7 +126,7 @@ function App() {
 
   const handleAuth = async (e) => {
     e.preventDefault();
-    const url = authMode === "login" ? "/api/login/" : "/api/register/";
+    const url = authMode === "login" ? `${API_BASE_URL}/api/login/` : `${API_BASE_URL}/api/register/`;
     try {
       const response = await fetch(url, {
         method: "POST",
@@ -157,7 +161,7 @@ function App() {
 
   const verifyPaymentOnBackend = async (reference, djangoOrderId) => {
     try {
-      const response = await fetch("/api/payments/verify", {
+      const response = await fetch(`${API_BASE_URL}/api/payments/verify/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ reference, order_id: djangoOrderId }),
@@ -166,7 +170,7 @@ function App() {
         setIsSuccess(true);
         setCart([]);
         localStorage.removeItem("shop_cart_data");
-        window.open(`/api/invoices/generate?order_id=${djangoOrderId}`, "_blank");
+        window.open(`${API_BASE_URL}/api/invoices/generate?order_id=${djangoOrderId}`, "_blank");
       }
     } catch (err) {
       console.error("Verification error", err);
@@ -177,7 +181,7 @@ function App() {
     if (cart.length === 0) return alert("Cart is empty!");
     setIsProcessing(true);
     try {
-      const response = await fetch("/api/orders/", {
+      const response = await fetch(`${API_BASE_URL}/api/orders/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -210,7 +214,7 @@ function App() {
   const handleTrackOrder = async () => {
     if (!trackInput) return alert("Please enter an Order ID");
     try {
-      const response = await fetch(`/api/orders/${trackInput}/`);
+      const response = await fetch(`${API_BASE_URL}/api/orders/${trackInput}/`);
       const data = await response.json();
       if (response.ok) setTrackingData(data);
       else alert("Order not found.");
@@ -314,7 +318,7 @@ function App() {
                 <div key={order.id} className="history-item">
                   <strong>Order #{order.id}</strong>
                   <span>₦{parseFloat(order.total_price || 0).toLocaleString()}</span>
-                  <button onClick={() => window.open(`/api/invoices/generate?order_id=${order.id}`, "_blank")}>PDF</button>
+                  <button onClick={() => window.open(`${API_BASE_URL}/api/invoices/generate?order_id=${order.id}`, "_blank")}>PDF</button>
                 </div>
               ))}
             </div>
@@ -331,7 +335,6 @@ function App() {
             <div className="detail-layout" style={{ display: 'flex', gap: '30px', marginTop: '20px' }}>
               <div className="image-gallery-container" style={{ flex: 1 }}>
                 <div className="main-image-frame">
-                  {/* DETAIL VIEW: Uses activeImage if clicked, otherwise default image_display */}
                   <img 
                     src={activeImage || selectedProduct.image_display} 
                     alt={selectedProduct.name} 
@@ -340,7 +343,6 @@ function App() {
                 </div>
                 
                 <div className="thumbnail-row" style={{ display: 'flex', gap: '10px', marginTop: '15px', overflowX: 'auto' }}>
-                  {/* Main Product Image as Thumbnail */}
                   <img 
                     src={selectedProduct.image_display}
                     alt="Main view"
@@ -350,11 +352,10 @@ function App() {
                       border: (activeImage === selectedProduct.image_display || !activeImage) ? '2px solid #2e7d32' : '1px solid #ccc' 
                     }}
                   />
-                  {/* Additional Gallery Images */}
                   {selectedProduct.additional_images?.map((img, idx) => (
                     <img 
                       key={idx}
-                      src={img.image} // This is the URL from ProductImageSerializer
+                      src={img.image}
                       alt={img.alt_text || `View ${idx + 1}`}
                       onClick={() => setActiveImage(img.image)}
                       style={{ 
@@ -369,7 +370,7 @@ function App() {
               <div className="detail-info" style={{ flex: 1 }}>
                 <h1>{selectedProduct.name}</h1>
                 <h2 style={{ color: '#2e7d32' }}>₦{parseFloat(selectedProduct.price).toLocaleString()}</h2>
-                <p className="description">{selectedProduct.description || "Premium quality product from Lagos Tech Hub."}</p>
+                <p className="description">{selectedProduct.description || "Premium quality product."}</p>
                 <button className="add-btn" style={{ padding: '15px 30px', fontSize: '1.1rem' }} onClick={() => addToCart(selectedProduct)}>
                   Add to Cart
                 </button>
