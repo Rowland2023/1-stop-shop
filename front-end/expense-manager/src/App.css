@@ -525,43 +525,61 @@ header {
 }
 
 
-.header-promo-img {
-  max-height: 80px; /* Adjust based on your header size */
-  width: auto;
-  display: block;
-  object-fit: contain;
+/* Fix for the Top Advertisement */
+.header-adv-frame {
+  width: 100%;
+  height: 120px; /* Fixed height for the banner */
+  overflow: hidden;
+  border-radius: 8px;
+  background: #eee;
 }
 
-/* Container for the small thumbnails in detail view */
+.adv-banner {
+  width: 100%;
+  height: 100%;
+  object-fit: contain; /* Ensures the whole ad is visible without cropping */
+}
+
+/* Fix for the "Oversized" Review/Detail Images */
+.main-image-frame {
+  width: 100%;
+  max-width: 500px; /* Limits width */
+  height: 400px;    /* Fixed height for uniformity */
+  margin: 0 auto;
+  overflow: hidden;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.review-image-main {
+  width: 100%;
+  height: 100%;
+  object-fit: contain; /* Prevents zooming/oversizing */
+}
+
+/* Thumbnail Styling */
 .thumbnail-row {
   display: flex;
   gap: 10px;
   margin-top: 15px;
-  overflow-x: auto;
-  padding-bottom: 5px;
+  justify-content: center;
 }
 
-/* Force every thumbnail to be an exact square */
-.thumbnail-row img {
-  width: 70px !important;
-  height: 70px !important;
-  min-width: 70px;
-  object-fit: cover; /* This prevents stretching */
+.thumb-item {
+  width: 60px;
+  height: 60px;
+  border: 2px solid #ddd;
   border-radius: 6px;
   cursor: pointer;
-  border: 2px solid transparent;
-  transition: border-color 0.2s ease;
+  overflow: hidden;
 }
 
-.thumbnail-row img:hover {
-  border-color: #2e7d32;
-}
-
-/* The main product image in detail view */
-.main-image-frame img {
+.thumb-item img {
   width: 100%;
-  height: 400px; /* Fixed height for the main display */
-  object-fit: contain; /* Shows full product without cropping */
-  background-color: #f9f9f9;
-  border-radius: 12px;
+  height: 100%;
+  object-fit: cover;
+}
+
+.thumb-item:hover {
+  border-color: #2e7d32;
 }
