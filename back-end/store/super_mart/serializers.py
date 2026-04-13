@@ -12,17 +12,13 @@ class AdvertisementSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Advertisement
-        fields = ['id', 'image_url', 'link_url', 'location', 'is_active']
+        fields = ['id', 'title', 'image_url', 'link_url', 'location', 'is_active']
 
     def get_image_url(self, obj):
         if obj.image:
-            url = obj.image.url
-            if 'cloudinary.com' in url:
-                # Increased height to 250 to ensure header ads are visible and high quality
-                url = url.replace('/upload/', '/upload/h_250,c_limit/')
-            return url
+            return obj.image.url
         return None
-
+    
 # --- 2. MARKETPLACE SERIALIZERS ---
 
 class ProductImageSerializer(serializers.ModelSerializer):
