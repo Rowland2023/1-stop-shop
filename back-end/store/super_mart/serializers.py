@@ -8,12 +8,28 @@ from .models import (
 
 class ProductImageSerializer(serializers.ModelSerializer):
     """
-    Handles gallery images. DRF automatically handles absolute URLs 
-    for ImageFields if the request context is provided.
+    Handles gallery images. We force the absolute URL to ensure
+    Cloudinary links are passed clearly to the React frontend.
     """
+    image_url = serializers.SerializerMethodField()
+
     class Meta:
         model = ProductImage
-        fields = ['image', 'alt_text']
+        fields = ['image_url', 'alt_text']
+
+    def get_image_url(self, obj):
+        if obj.image:
+            # If Cloudinary already provided a full URL, use it
+            if obj.image.url.startswith('http'):
+                return obj.image.url
+            
+            request = self.context.get('request')
+            if request:
+                return request.build_absolute_uri(obj.image.url)
+            
+            # Fallback to relative path for Nginx to proxy
+            return f"/media/{obj.image.url.lstrip('/')}"
+        return None
 
 class ProductSerializer(serializers.ModelSerializer):
     # 'source=images' refers to the related_name on the ProductImage model
@@ -22,33 +38,34 @@ class ProductSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Product
-        fields = ['id', 'name', 'price', 'category', 'image_display', 'additional_images']
+        fields = ['id', 'name', 'price', 'category', 'image_display', 'additional_images', 'description']
 
     def get_image_display(self, obj):
         """
-        Force absolute URLs for both Cloudinary and local static paths.
-        This prevents '502' or 'Broken Image' errors on the React Frontend.
+        Critical for Nginx Reverse Proxy:
+        Ensures images either point directly to Cloudinary or use a path
+        that the Frontend (Nginx) can route to the Backend.
         """
         request = self.context.get('request')
         
-        # 1. Handle Cloudinary/Main Image Field
+        # 1. Handle Main Image Field (Cloudinary)
         if obj.main_image:
             image_url = obj.main_image.url
-            # If it's already a full Cloudinary URL (https://res.cloudinary.com...)
             if image_url.startswith('http'):
                 return image_url
-            # If it's a relative path, use request context to make it absolute
+            
             if request:
                 return request.build_absolute_uri(image_url)
-            # Hardcoded fallback for production if request context fails
-            return f"https://back-end-wdk7.onrender.com{image_url}"
+            
+            # Proxy fallback
+            return f"/media/{image_url.lstrip('/')}"
 
-        # 2. Handle Manual Static Fallback (image_path string)
+        # 2. Handle Manual Static Fallback (if using local image_path strings)
         if hasattr(obj, 'image_path') and obj.image_path:
-            path = f"/static/{obj.image_path}"
+            path = f"/static/{obj.image_path.lstrip('/')}"
             if request:
                 return request.build_absolute_uri(path)
-            return f"https://back-end-wdk7.onrender.com{path}"
+            return path
             
         return None
     
@@ -85,11 +102,9 @@ class PerformanceReviewSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class EmployeeSerializer(serializers.ModelSerializer):
-    # This ensures the frontend sees "Engineering" instead of a PK ID
     department_name = serializers.ReadOnlyField(source='department.name')
-    
     payrolls = PayrollSerializer(many=True, read_only=True)
-    # Ensure related_name='attendances' is set in your Employee/Attendance models
+    # Ensure related_name='attendances' is set in your model
     attendances = AttendanceSerializer(many=True, read_only=True, source='attendances')
 
     class Meta:
