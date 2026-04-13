@@ -13,16 +13,16 @@ ALLOWED_HOSTS = [
     'back-end-wdk7.onrender.com', 
     'front-end-6f9m.onrender.com',
     'back-end-wdk7', # Internal Render Name
+    '.onrender.com',
     'localhost',
     '127.0.0.1'
 ]
 
 # --- 3. APPLICATION DEFINITION ---
 INSTALLED_APPS = [
-    # CLOUDINARY MUST BE TOP
-    'cloudinary_storage', 
-    'django.contrib.staticfiles',
-    'jazzmin',
+    'cloudinary_storage',         # Must be before staticfiles
+    'django.contrib.staticfiles', 
+    'jazzmin',                    # Must be before admin
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -40,7 +40,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'corsheaders.middleware.CorsMiddleware', # Keep near top
+    'corsheaders.middleware.CorsMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware', 
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -50,7 +50,30 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-# --- 4. DATABASE (Performance Optimized) ---
+ROOT_URLCONF = 'store.urls'
+
+# --- CRITICAL FIX FOR admin.E403 ---
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'context_processors': [
+                'django.template.context_processors.debug',
+                'django.template.context_processors.request',
+                'django.contrib.auth.context_processors.auth',
+                'django.contrib.messages.context_processors.messages',
+                'django.template.context_processors.static',  # Added
+                'django.template.context_processors.media',   # Added
+            ],
+        },
+    },
+]
+
+WSGI_APPLICATION = 'store.wsgi.application'
+
+# --- 4. DATABASE ---
 DATABASES = {
     'default': dj_database_url.config(
         default=os.getenv('DATABASE_URL', f"sqlite:///{BASE_DIR}/db.sqlite3"),
@@ -62,8 +85,6 @@ DATABASES = {
 # --- 5. STATIC & MEDIA FILES ---
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-
-# Use WhiteNoise for static, Cloudinary for Media
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 CLOUDINARY_STORAGE = {
@@ -75,24 +96,20 @@ CLOUDINARY_STORAGE = {
 DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 MEDIA_URL = '/media/'
 
-# --- 6. SECURITY & CORS (Proxy Aware) ---
+# --- 6. SECURITY & CORS ---
 CORS_ALLOWED_ORIGINS = [
     'https://front-end-6f9m.onrender.com',
 ]
 CORS_ALLOW_CREDENTIALS = True
 
-# Django requires the protocol (https://) in trusted origins
 CSRF_TRUSTED_ORIGINS = [
     'https://front-end-6f9m.onrender.com',
     'https://back-end-wdk7.onrender.com',
 ]
 
-# PROXY HEADERS: Tells Django it's behind Nginx
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 USE_X_FORWARDED_HOST = True
 USE_X_FORWARDED_PORT = True
-
-# Production SSL settings (Keep False if Nginx terminates SSL)
 SECURE_SSL_REDIRECT = False 
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
@@ -101,18 +118,22 @@ APPEND_SLASH = True
 # --- 7. REST FRAMEWORK ---
 REST_FRAMEWORK = {
     'COERCE_DECIMAL_TO_STRING': True,
-    'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.SessionAuthentication',
-        'rest_framework.authentication.BasicAuthentication',
-    ],
-    'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.AllowAny',
-    ],
+    'DEFAULT_PERMISSION_CLASSES': ['rest_framework.permissions.AllowAny'],
 }
 
 # --- 8. INTERNATIONALIZATION ---
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'Africa/Lagos'
+USE_I18N = True
 USE_TZ = True
+
+# --- 9. JAZZMIN UI SETTINGS ---
+JAZZMIN_SETTINGS = {
+    "site_title": "Lagos Tech Hub Admin",
+    "site_header": "Market-Place HRM",
+    "site_brand": "Command Center",
+    "welcome_sign": "Welcome to the Management Portal",
+    "copyright": "Lagos Tech Hub Ltd",
+}
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
