@@ -255,7 +255,7 @@ function App() {
             alt="Lagos Tech Hub Logo" 
             className="header-logo" 
             onClick={() => { setView("grid"); setSelectedProduct(null); setIsSuccess(false); }} 
-            style={{ cursor: 'pointer', height: '50px', width: 'auto' }} 
+            style={{ cursor: 'pointer', height: '80px', width: 'auto',display: 'block' }} 
           />
         </div>
 
