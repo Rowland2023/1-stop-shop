@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import "./App.css";
 
 // --- CONFIGURATION ---
-const API_BASE_URL = ""; // Change to "http://127.0.0.1:8000" for local dev if needed
+const API_BASE_URL = ""; 
 
 // --- SUB-COMPONENT: PRODUCT CARD ---
 function ProductCard({ product, onAddToCart, onSelect }) {
@@ -78,20 +78,16 @@ function App() {
     localStorage.setItem("shop_cart_data", JSON.stringify(cart));
   }, [cart]);
 
-  // Fetch Advertisement from Admin
   useEffect(() => {
     fetch(`${API_BASE_URL}/api/ads/?location=header_main`)
       .then((res) => res.json())
       .then((data) => {
         const ads = Array.isArray(data) ? data : (data.results || []);
-        if (ads.length > 0) {
-          setHeaderAd(ads[0]);
-        }
+        if (ads.length > 0) setHeaderAd(ads[0]);
       })
       .catch((err) => console.error("Error fetching ads:", err));
   }, []);
 
-  // Fetch products
   useEffect(() => {
     fetch(`${API_BASE_URL}/api/products/`)
       .then((res) => res.json())
@@ -106,7 +102,6 @@ function App() {
     setVisibleCount(PAGE_SIZE);
   }, [category, searchTerm]);
 
-  // Fetch orders for account view
   useEffect(() => {
     if (view === "account" && user) {
       fetch(`${API_BASE_URL}/api/orders/?userId=${user.id}`)
@@ -125,9 +120,7 @@ function App() {
       const existingItem = prevCart.find((item) => item.id === product.id);
       if (existingItem) {
         return prevCart.map((item) =>
-          item.id === product.id 
-            ? { ...item, quantity: item.quantity + qty } 
-            : item
+          item.id === product.id ? { ...item, quantity: item.quantity + qty } : item
         );
       }
       return [...prevCart, { ...product, quantity: qty }];
@@ -248,18 +241,16 @@ function App() {
   return (
     <div className="app-grid-wrapper">
       <header>
-        {/* LOGO SECTION */}
         <div className="logo-container">
           <img 
             src="/static/logo.png" 
             alt="Lagos Tech Hub Logo" 
             className="header-logo" 
             onClick={() => { setView("grid"); setSelectedProduct(null); setIsSuccess(false); }} 
-            style={{ cursor: 'pointer', height: '120px', width: 'auto',display: 'block' }} 
+            style={{ cursor: 'pointer', height: '120px', width: 'auto', display: 'block', borderRadius: '15px' }} 
           />
         </div>
 
-        {/* ADVERTISEMENT SECTION */}
         <div className="header-adv-frame">
           {headerAd ? (
             <a href={headerAd.link_url || "#"} target="_blank" rel="noopener noreferrer">
@@ -274,9 +265,6 @@ function App() {
           )}
         </div>
 
-        <div className="search-bar">
-          <input type="text" placeholder="Search products..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
-        </div>
         <button className="cart-toggle" onClick={() => setCartOpen(!cartOpen)}>
           🛒 Cart ({cart.reduce((acc, item) => acc + item.quantity, 0)})
         </button>
@@ -286,6 +274,21 @@ function App() {
         <ul>
           <li><button className="nav-btn-link" onClick={() => { setView("grid"); setSelectedProduct(null); setIsSuccess(false); }}>Home</button></li>
           <li><button className="nav-btn-link" onClick={() => { setView("tracking"); setTrackingData(null); }}>Track Order</button></li>
+          
+          {/* CENTERED SEARCH BAR ON NAV LEVEL */}
+          <li className="nav-search-container">
+            <div className="search-group">
+              <input 
+                type="text" 
+                placeholder="Search products..." 
+                value={searchTerm} 
+                onChange={(e) => setSearchTerm(e.target.value)} 
+                className="nav-search-input"
+              />
+              <button className="nav-search-btn">Search</button>
+            </div>
+          </li>
+
           <li><button className="nav-btn-link" onClick={() => setView("account")}>Account</button></li>
           <li className="nav-auth">
             {user ? (
@@ -377,12 +380,10 @@ function App() {
                 </div>
                 
                 <div className="thumbnail-row">
-                  {/* Primary Image Thumbnail */}
                   <div className={`thumb-item ${(activeImage === selectedProduct.image_display || !activeImage) ? 'active' : ''}`} 
                        onClick={() => setActiveImage(selectedProduct.image_display)}>
                     <img src={selectedProduct.image_display} alt="Main view" />
                   </div>
-                  {/* Additional Review Images */}
                   {selectedProduct.additional_images?.map((img, idx) => (
                     <div key={idx} className={`thumb-item ${activeImage === img.image ? 'active' : ''}`}
                          onClick={() => setActiveImage(img.image)}>
