@@ -2,11 +2,11 @@ from django.db import transaction
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
 from rest_framework import viewsets, status
-from rest_framework.decorators import api_view, authentication_classes, permission_classes
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 
-from .models import Product, Order, OrderItem, Employee, Payroll, Department, Advertisement
+from .models import Product, Order, OrderItem, Employee, Payroll, Advertisement
 from .serializers import ProductSerializer, OrderSerializer, AdvertisementSerializer
 from .tasks import trigger_invoice_generation
 
@@ -50,19 +50,24 @@ def login_user(request):
 # --- 2. MARKETPLACE: PRODUCT & AD VIEWSETS ---
 
 class ProductViewSet(viewsets.ModelViewSet):
-    # .prefetch_related('images') makes loading the gallery much faster
+    """
+    Handles retrieval and management of products.
+    Uses prefetch_related to optimize loading of the image gallery.
+    """
     queryset = Product.objects.all().prefetch_related('images')
     serializer_class = ProductSerializer
     permission_classes = [AllowAny]
 
 class AdvertisementViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    API endpoint that allows advertisements to be viewed.
+    Supports filtering by location (e.g., /api/ads/?location=header_main).
+    """
     serializer_class = AdvertisementSerializer
     permission_classes = [AllowAny]
 
     def get_queryset(self):
-        # Start with only active ads
         queryset = Advertisement.objects.filter(is_active=True)
-        # Check if React sent a ?location= param
         location = self.request.query_params.get('location')
         if location:
             queryset = queryset.filter(location=location)
@@ -76,6 +81,7 @@ def employee_detail_api(request, employee_id):
     try:
         emp = Employee.objects.select_related('department').filter(employee_id=employee_id).first()
         if not emp and str(employee_id).isdigit():
+            # Fallback for IDs that might have leading zeros stripped
             emp = Employee.objects.select_related('department').filter(employee_id=str(employee_id).lstrip('0')).first()
         
         if not emp:
@@ -99,6 +105,10 @@ def employee_detail_api(request, employee_id):
 @api_view(['GET', 'POST'])
 @permission_classes([AllowAny])
 def order_list(request):
+    """
+    GET: List orders (optionally filtered by userId).
+    POST: Create a new order with atomic transaction.
+    """
     if request.method == 'GET':
         user_id = request.query_params.get('userId')
         orders = Order.objects.all().order_by('-created_at')
@@ -130,6 +140,7 @@ def order_list(request):
                         "quantity": item.get('quantity', 1)
                     })
 
+            # Background invoice generation via Celery
             trigger_invoice_generation.delay({
                 "order_id": new_order.id,
                 "total_amount": float(data.get('total')),
@@ -139,3 +150,16 @@ def order_list(request):
             return Response({"status": "Accepted", "id": new_order.id}, status=201)
         except Exception as e:
             return Response({"error": str(e)}, status=400)
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def get_order_detail(request, order_id):
+    """
+    Fetches details for a specific order. 
+    Matches the URL path: api/orders/<int:order_id>/
+    """
+    try:
+        order = Order.objects.get(id=order_id)
+        return Response(OrderSerializer(order).data)
+    except Order.DoesNotExist:
+        return Response({"error": "Order not found"}, status=404)
