@@ -3,7 +3,6 @@ import "./App.css";
 
 const API_BASE_URL = window.location.origin; 
 
-// --- SUB-COMPONENT: PRODUCT CARD ---
 function ProductCard({ product, onAddToCart, onSelect }) {
   const [tempQty, setTempQty] = useState(1);
   const displayImage = product.image_display || "/static/placeholder.png";
@@ -38,6 +37,7 @@ function ProductCard({ product, onAddToCart, onSelect }) {
 
 function App() {
   const [products, setProducts] = useState([]);
+  const [headerAd, setHeaderAd] = useState(null); // NEW: State for the dynamic ad
   const [category, setCategory] = useState("food");
   const [cart, setCart] = useState(() => {
     const savedCart = localStorage.getItem("shop_cart_data");
@@ -64,7 +64,9 @@ function App() {
     localStorage.setItem("shop_cart_data", JSON.stringify(cart));
   }, [cart]);
 
+  // Combined fetch for Products and Ads
   useEffect(() => {
+    // Fetch Products
     fetch(`${API_BASE_URL}/api/products/`)
       .then((res) => res.json())
       .then((data) => {
@@ -72,6 +74,14 @@ function App() {
           setProducts(productData);
       })
       .catch((err) => console.error("Error fetching products:", err));
+
+    // NEW: Fetch Active Ads
+    fetch(`${API_BASE_URL}/api/ads/?location=header_main`)
+      .then((res) => res.json())
+      .then((data) => {
+          if (data && data.length > 0) setHeaderAd(data[0]);
+      })
+      .catch((err) => console.error("Error fetching ads:", err));
   }, []);
 
   const addToCart = (product, qty = 1) => {
@@ -109,6 +119,42 @@ function App() {
     } catch (err) { alert("Connection failed."); }
   };
 
+  const checkoutWithPaystack = async () => {
+    if (cart.length === 0) return alert("Cart is empty!");
+    setIsProcessing(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/orders/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          items: cart.map((item) => ({ id: parseInt(item.id), quantity: item.quantity })),
+          total: totalDue.toFixed(2),
+          userId: user ? user.id : "guest_001",
+        }),
+      });
+      const orderData = await response.json();
+
+      const handler = window.PaystackPop.setup({
+        key: 'pk_live_YOUR_KEY_HERE', 
+        email: user ? `${user.phone}@lekki-market.com` : 'guest@lekki.com',
+        amount: Math.round(totalDue * 100), 
+        currency: 'NGN',
+        onClose: () => setIsProcessing(false),
+        callback: (res) => {
+          setIsProcessing(false);
+          setIsSuccess(true);
+          setCart([]);
+          localStorage.removeItem("shop_cart_data");
+          window.open(`${API_BASE_URL}/api/invoices/generate?order_id=${orderData.id}`, "_blank");
+        }
+      });
+      handler.openIframe();
+    } catch (err) {
+      alert("Checkout failed.");
+      setIsProcessing(false);
+    }
+  };
+
   const subTotalValue = cart.reduce((sum, item) => sum + (parseFloat(item.price) * item.quantity), 0);
   const totalDue = Math.max(0, subTotalValue - discount);
   const allFiltered = products.filter((p) => 
@@ -120,13 +166,20 @@ function App() {
   return (
     <div className="app-grid-wrapper">
       <header>
-        <h1>1-Stop Shop</h1>
-        <div className="header-adv-frame">
-            <img src="/static/Shoping-ad.jpg" alt="Advertisement" className="adv-banner" />
+        <div className="logo-section">
+            <h1>1-Stop Shop</h1>
+            {/* NEW: Dynamic Ad Display */}
+            {headerAd && (
+              <a href={headerAd.link_url} target="_blank" rel="noopener noreferrer" className="header-ad-link">
+                <img src={headerAd.image_url} alt="Promo" className="header-promo-img" />
+              </a>
+            )}
         </div>
+
         <div className="search-bar">
           <input type="text" placeholder="Search..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
         </div>
+        
         <button className="cart-toggle" onClick={() => setCartOpen(!cartOpen)}>
           🛒 Cart ({cart.reduce((acc, item) => acc + item.quantity, 0)})
         </button>
@@ -134,7 +187,7 @@ function App() {
 
       <nav className="main-nav">
         <ul>
-          <li><button className="nav-btn-link" onClick={() => { setView("grid"); setSelectedProduct(null); }}>Home</button></li>
+          <li><button className="nav-btn-link" onClick={() => { setView("grid"); setSelectedProduct(null); setIsSuccess(false); }}>Home</button></li>
           <li className="nav-auth">
             {user ? (
               <div className="user-badge"><span>Hi, <strong>{user.phone}</strong></span></div>
@@ -158,7 +211,13 @@ function App() {
       </aside>
 
       <main>
-        {view === "auth" ? (
+        {isSuccess ? (
+          <div className="view-container success-screen">
+            <h2>✅ Payment Confirmed!</h2>
+            <p>Your order has been placed successfully.</p>
+            <button onClick={() => setIsSuccess(false)}>Continue Shopping</button>
+          </div>
+        ) : view === "auth" ? (
           <div className="view-container auth-screen">
              <div className="auth-card">
                <h1>{authMode === "login" ? "Welcome Back" : "Create Account"}</h1>
@@ -176,7 +235,6 @@ function App() {
           <div className="view-container detail-screen">
             <button className="back-btn" onClick={() => { setSelectedProduct(null); setActiveImage(null); }}>← Back to Products</button>
             <div className="detail-layout">
-              {/* Image Section */}
               <div className="image-gallery-container">
                 <div className="main-image-frame">
                   <img src={activeImage || selectedProduct.image_display} alt={selectedProduct.name} />
@@ -188,7 +246,6 @@ function App() {
                   ))}
                 </div>
               </div>
-              {/* Text Section */}
               <div className="detail-info">
                 <h1>{selectedProduct.name}</h1>
                 <h2 className="price-tag">₦{parseFloat(selectedProduct.price).toLocaleString()}</h2>
@@ -214,14 +271,19 @@ function App() {
           <div className="cart-items-list">
             {cart.map((item, index) => (
               <div key={index} className="cart-item-row">
-                <strong>{item.name} (x{item.quantity})</strong>
+                <div className="cart-item-info">
+                   <strong>{item.name} (x{item.quantity})</strong>
+                   <span>₦{(parseFloat(item.price) * item.quantity).toLocaleString()}</span>
+                </div>
                 <button onClick={() => setCart(cart.filter((_, i) => i !== index))}>×</button>
               </div>
             ))}
           </div>
           <div className="total-section">
             <p className="final-total">Total: ₦{totalDue.toLocaleString()}</p>
-            <button className="vendor-btn paystack" onClick={() => alert("Checkout logic here")}>Pay Now</button>
+            <button className="vendor-btn paystack" disabled={isProcessing} onClick={checkoutWithPaystack}>
+              {isProcessing ? "Processing..." : "Pay Now"}
+            </button>
             <button className="clear-cart-btn" onClick={clearCart}>Clear Cart</button>
           </div>
         </div>
