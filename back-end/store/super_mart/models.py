@@ -1,10 +1,14 @@
 from django.db import models
 from cloudinary.models import CloudinaryField
-
 # --- 1. SHARED INFRASTRUCTURE ---
 
 class Department(models.Model):
+    """
+    Unified Department model. 
+    This table is shared with the Node.js Employee Service.
+    """
     name = models.CharField(max_length=100, unique=True)
+    # Adding timestamps to match Sequelize default behavior
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -12,6 +16,7 @@ class Department(models.Model):
         return self.name
     
     def save(self, *args, **kwargs):
+        # Emulate the 'trim' logic from your Node.js model
         if self.name:
             self.name = self.name.strip()
         super().save(*args, **kwargs)
@@ -24,59 +29,32 @@ class Product(models.Model):
         ('electronics', 'Electronics'),
         ('office', 'Office Supplies'),
         ('style&fashion', 'Style & Fashion'),
+        ('home', 'Home & Garden'),  
+        ('toys', 'Toys & Games '),
+        ('health', 'Health & Beauty'),
+        ('sports', 'Sports & Outdoors'),
+        ('automotive', 'Automotive'),
+        ('books', 'Books & Media'),
+        ('miscKitchen', 'Kitchen & Dining'),
         ('sex-toys', 'Sex-Toys'),
         ('rent-house','House-Rent'),
         ('car-sales','Car-Sales'),
         ('kitchen-items','Kitchen-Items'),
-        # Add others as needed
     ]
     name = models.CharField(max_length=255)
-    description = models.TextField(blank=True, null=True)
     price = models.DecimalField(max_digits=12, decimal_places=2)
     category = models.CharField(max_length=50, choices=CATEGORY_CHOICES)
-    
-    # Using Cloudinary for the main image
+    #main_image = models.ImageField(upload_to='products/main/', blank=True, null=True)
     main_image = CloudinaryField('image', null=True, blank=True)
-    
+    image_path = models.CharField(max_length=500, blank=True, null=True)
+
     def __str__(self):
         return self.name
 
-    @property
-    def image_display(self):
-        """Helper for the Frontend to get the main image URL safely"""
-        if self.main_image:
-            return self.main_image.url
-        return "/static/placeholder.png"
-
 class ProductImage(models.Model):
-    """The 'Review' or 'Gallery' images for a product"""
     product = models.ForeignKey(Product, related_name='images', on_delete=models.CASCADE)
-    # Using Cloudinary here too fixes the 'broken review images' issue
-    image = CloudinaryField('image', null=True, blank=True) 
+    image = models.ImageField(upload_to='products/gallery/', blank=True, null=True) 
     alt_text = models.CharField(max_length=100, blank=True)
-
-    def __str__(self):
-        return f"Image for {self.product.name}"
-
-# --- 3. ADVERTISEMENTS ---
-
-class Advertisement(models.Model):
-    LOCATION_CHOICES = [
-        ('header_main', 'Header Main Banner'),
-        ('sidebar', 'Sidebar Ad'),
-        ('popup', 'Popup Promo'),
-    ]
-    title = models.CharField(max_length=200)
-    image = CloudinaryField('image')
-    link_url = models.URLField(blank=True, null=True)
-    location = models.CharField(max_length=50, choices=LOCATION_CHOICES, default='header_main')
-    is_active = models.BooleanField(default=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return f"{self.title} ({self.location})"
-
-# --- 4. ORDERS & TRANSACTIONS ---
 
 class Order(models.Model):
     STATUS_CHOICES = [
@@ -87,12 +65,9 @@ class Order(models.Model):
         ('Cancelled', 'Cancelled'),
     ]
     user_id = models.CharField(max_length=100)
-    total_price = models.DecimalField(max_digits=12, decimal_places=2)
+    total_price = models.DecimalField(max_digits=10, decimal_places=2)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Pending')
     created_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return f"Order #{self.id} - {self.user_id}"
 
 class OrderItem(models.Model):
     order = models.ForeignKey(Order, related_name='items', on_delete=models.CASCADE)
@@ -100,14 +75,23 @@ class OrderItem(models.Model):
     quantity = models.PositiveIntegerField(default=1)
     price_at_purchase = models.DecimalField(max_digits=12, decimal_places=2)
 
-# --- 5. HRM & EMPLOYEE MANAGEMENT ---
+# --- 3. EMPLOYEE MANAGEMENT (HRM) ---
 
 class Employee(models.Model):
     employee_id = models.CharField(max_length=20, unique=True)
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
     email = models.EmailField(unique=True)
-    department = models.ForeignKey(Department, on_delete=models.SET_NULL, null=True, related_name='employees')
+    
+    # CRITICAL CHANGE: Refactored from CharField to ForeignKey
+    # to match the Node.js Sequelize association
+    department = models.ForeignKey(
+        Department, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        related_name='employees'
+    )
+    
     position = models.CharField(max_length=100)
     salary = models.DecimalField(max_digits=12, decimal_places=2)
     is_active = models.BooleanField(default=True)
