@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from "react";
 import "./App.css";
 
-// Use the explicit Render URL to ensure API calls find your backend
-const API_BASE_URL = "https://back-end-wdk7.onrender.com"; 
+const API_BASE_URL = window.location.origin; 
 
 function ProductCard({ product, onAddToCart, onSelect }) {
   const [tempQty, setTempQty] = useState(1);
@@ -38,7 +37,7 @@ function ProductCard({ product, onAddToCart, onSelect }) {
 
 function App() {
   const [products, setProducts] = useState([]);
-  const [headerAd, setHeaderAd] = useState(null); 
+  const [headerAd, setHeaderAd] = useState(null); // NEW: State for the dynamic ad
   const [category, setCategory] = useState("food");
   const [cart, setCart] = useState(() => {
     const savedCart = localStorage.getItem("shop_cart_data");
@@ -52,6 +51,7 @@ function App() {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [activeImage, setActiveImage] = useState(null); 
   const [isSuccess, setIsSuccess] = useState(false);
+
   const [user, setUser] = useState(null); 
   const [authMode, setAuthMode] = useState("login"); 
   const [authData, setAuthData] = useState({ phone: "", password: "" });
@@ -75,14 +75,11 @@ function App() {
       })
       .catch((err) => console.error("Error fetching products:", err));
 
-    // Fetch Active Ads - Added specific location filter
+    // NEW: Fetch Active Ads
     fetch(`${API_BASE_URL}/api/ads/?location=header_main`)
       .then((res) => res.json())
       .then((data) => {
-          // Check if data is an array and has at least one item
-          if (Array.isArray(data) && data.length > 0) {
-            setHeaderAd(data[0]);
-          }
+          if (data && data.length > 0) setHeaderAd(data[0]);
       })
       .catch((err) => console.error("Error fetching ads:", err));
   }, []);
@@ -148,7 +145,7 @@ function App() {
           setIsSuccess(true);
           setCart([]);
           localStorage.removeItem("shop_cart_data");
-          window.open(`${API_BASE_URL}/api/invoices/generate?order_id={orderData.id}`, "_blank");
+          window.open(`${API_BASE_URL}/api/invoices/generate?order_id=${orderData.id}`, "_blank");
         }
       });
       handler.openIframe();
@@ -171,16 +168,10 @@ function App() {
       <header>
         <div className="logo-section">
             <h1>1-Stop Shop</h1>
-            {/* Optimized Ad Display with fail-safe style */}
+            {/* NEW: Dynamic Ad Display */}
             {headerAd && (
               <a href={headerAd.link_url} target="_blank" rel="noopener noreferrer" className="header-ad-link">
-                <img 
-                  src={headerAd.image_url} 
-                  alt="Promo" 
-                  className="header-promo-img" 
-                  style={{ maxHeight: '50px', marginLeft: '15px', borderRadius: '4px' }}
-                  onError={(e) => { e.target.style.display = 'none'; }}
-                />
+                <img src={headerAd.image_url} alt="Promo" className="header-promo-img" />
               </a>
             )}
         </div>
@@ -194,7 +185,6 @@ function App() {
         </button>
       </header>
 
-      {/* Navigation, Sidebars, and Main View remain the same... */}
       <nav className="main-nav">
         <ul>
           <li><button className="nav-btn-link" onClick={() => { setView("grid"); setSelectedProduct(null); setIsSuccess(false); }}>Home</button></li>
