@@ -4,7 +4,7 @@ from django.utils.html import format_html
 from .models import (
     Employee, Attendance, Payroll, PerformanceReview, 
     Product, Order, OrderItem, ProductImage, Department,
-    Advertisement  # <--- 1. ADDED THIS IMPORT
+    Advertisement  # Added Advertisement to imports
 )
 
 # --- CONFIGURATION ---
@@ -33,7 +33,21 @@ class AttendanceInline(admin.TabularInline):
     readonly_fields = ('date', 'status')
     can_delete = False
 
-# --- 3. Product & Inventory Management ---
+# --- 3. Marketing & Promotions ---
+
+@admin.register(Advertisement)
+class AdvertisementAdmin(admin.ModelAdmin):
+    list_display = ('ad_preview', 'name', 'location', 'is_active', 'created_at')
+    list_filter = ('location', 'is_active')
+    search_fields = ('name',)
+
+    def ad_preview(self, obj):
+        if obj.image:
+            return format_html('<img src="{}" style="width: 80px; height: auto; border-radius: 4px;" />', obj.image.url)
+        return "No Image"
+    ad_preview.short_description = "Preview"
+
+# --- 4. Product & Inventory Management ---
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
@@ -48,7 +62,7 @@ class ProductAdmin(admin.ModelAdmin):
         return "No Image"
     thumbnail_tag.short_description = "Preview"
 
-# --- 4. Order & Transaction Management ---
+# --- 5. Order & Transaction Management ---
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
@@ -68,7 +82,7 @@ class OrderAdmin(admin.ModelAdmin):
         )
     get_receipt_button.short_description = "Billing"
 
-# --- 5. HRM & Employee Management ---
+# --- 6. HRM & Employee Management ---
 
 @admin.register(Employee)
 class EmployeeAdmin(admin.ModelAdmin):
@@ -101,20 +115,6 @@ class PayrollAdmin(admin.ModelAdmin):
         )
     get_payslip.short_description = "Payroll Action"
 
-# --- 6. Marketing & Promotions (NEW) ---
-
-@admin.register(Advertisement)
-class AdvertisementAdmin(admin.ModelAdmin):
-    list_display = ('ad_preview', 'name', 'location', 'is_active', 'created_at')
-    list_filter = ('location', 'is_active')
-    search_fields = ('name',)
-    
-    def ad_preview(self, obj):
-        if obj.image:
-            return format_html('<img src="{}" style="width: 80px; height: auto; border-radius: 4px;" />', obj.image.url)
-        return "No Image"
-    ad_preview.short_description = "Ad Image"
-
 # --- 7. Final Registrations ---
 
 @admin.register(Department)
@@ -129,3 +129,7 @@ class AttendanceAdmin(admin.ModelAdmin):
 @admin.register(OrderItem)
 class OrderItemAdmin(admin.ModelAdmin):
     list_display = ('order', 'product', 'quantity', 'price_at_purchase')
+
+@admin.register(PerformanceReview)
+class PerformanceReviewAdmin(admin.ModelAdmin):
+    list_display = ('employee', 'review_date', 'rating')
