@@ -2,13 +2,14 @@ import React, { useEffect, useState } from "react";
 import "./App.css";
 
 // --- CONFIGURATION ---
-// In production with Nginx, empty string or "/" works best for relative routing.
 const API_BASE_URL = ""; 
 
 // --- SUB-COMPONENT: PRODUCT CARD ---
 function ProductCard({ product, onAddToCart, onSelect }) {
   const [tempQty, setTempQty] = useState(1);
-  const displayImage = product.image_display || "/static/placeholder.png";
+  
+  // FIX: Look for 'image' if 'image_display' is missing (Cloudinary default)
+  const displayImage = product.image_display || product.image || "/static/placeholder.png";
 
   return (
     <div className="product-card">
@@ -17,10 +18,12 @@ function ProductCard({ product, onAddToCart, onSelect }) {
           src={displayImage} 
           alt={product.name} 
           className="zoom-effect" 
+          // Fallback if the Cloudinary link is broken
+          onError={(e) => { e.target.src = "/static/placeholder.png"; }}
         />
       </div>
       <h3>{product.name}</h3>
-      <p>₦{parseFloat(product.price).toLocaleString()}</p>
+      <p>₦{parseFloat(product.price || 0).toLocaleString()}</p>
       
       <div className="qty-input-container" style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
         <input 
@@ -43,7 +46,6 @@ function ProductCard({ product, onAddToCart, onSelect }) {
 }
 
 function App() {
-  // --- 1. CORE STATES ---
   const [products, setProducts] = useState([]);
   const [category, setCategory] = useState("food");
   const [cart, setCart] = useState(() => {
@@ -58,13 +60,11 @@ function App() {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [activeImage, setActiveImage] = useState(null); 
   const [isSuccess, setIsSuccess] = useState(false);
-
   const [user, setUser] = useState(null); 
   const [authMode, setAuthMode] = useState("login"); 
   const [authData, setAuthData] = useState({ phone: "", password: "" });
   const [giftCardCode, setGiftCardCode] = useState("");
   const [discount, setDiscount] = useState(0);
-
   const [trackingData, setTrackingData] = useState(null);
   const [trackInput, setTrackInput] = useState("");
   const [userOrders, setUserOrders] = useState([]); 
@@ -72,12 +72,11 @@ function App() {
   const PAGE_SIZE = 9; 
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE); 
 
-  // --- 2. EFFECTS ---
   useEffect(() => {
     localStorage.setItem("shop_cart_data", JSON.stringify(cart));
   }, [cart]);
 
-  // Fetch products via Nginx Proxy
+  // Fetch products
   useEffect(() => {
     fetch(`${API_BASE_URL}/api/products/`)
       .then((res) => res.json())
@@ -88,12 +87,10 @@ function App() {
       .catch((err) => console.error("Error fetching products:", err));
   }, []);
 
-  // Sync pagination
   useEffect(() => {
     setVisibleCount(PAGE_SIZE);
   }, [category, searchTerm]);
 
-  // Fetch order history for Account View
   useEffect(() => {
     if (view === "account" && user) {
       fetch(`${API_BASE_URL}/api/orders/?userId=${user.id}`)
@@ -102,19 +99,16 @@ function App() {
           let ordersArray = Array.isArray(data) ? data : (data.results || []);
           setUserOrders(ordersArray.sort((a, b) => b.id - a.id));
         })
-        .catch((err) => console.error("Error fetching order history:", err));
+        .catch((err) => console.error("Error fetching history:", err));
     }
   }, [view, user]);
 
-  // --- 3. LOGIC FUNCTIONS ---
   const addToCart = (product, qty = 1) => {
     setCart((prevCart) => {
       const existingItem = prevCart.find((item) => item.id === product.id);
       if (existingItem) {
         return prevCart.map((item) =>
-          item.id === product.id 
-            ? { ...item, quantity: item.quantity + qty } 
-            : item
+          item.id === product.id ? { ...item, quantity: item.quantity + qty } : item
         );
       }
       return [...prevCart, { ...product, quantity: qty }];
@@ -138,13 +132,13 @@ function App() {
       });
       const data = await response.json();
       if (response.ok) {
-        setUser({ id: data.user_id, phone: authData.phone });
+        setUser({ id: data.user_id || data.id, phone: authData.phone });
         setView("grid");
       } else {
         alert(data.error || "Authentication failed");
       }
     } catch (err) {
-      alert("Backend connection failed. Check your Nginx proxy settings.");
+      alert("Connection failed. Check your network.");
     }
   };
 
@@ -159,7 +153,6 @@ function App() {
         setIsSuccess(true);
         setCart([]);
         localStorage.removeItem("shop_cart_data");
-        // Forward to FastAPI Invoicing Service via Nginx
         window.open(`${API_BASE_URL}/api/invoices/generate?order_id=${djangoOrderId}`, "_blank");
       }
     } catch (err) {
@@ -169,22 +162,24 @@ function App() {
 
   const checkoutWithPaystack = async () => {
     if (cart.length === 0) return alert("Cart is empty!");
+    if (!user) return alert("Please login to checkout");
+    
     setIsProcessing(true);
     try {
       const response = await fetch(`${API_BASE_URL}/api/orders/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          items: cart.map((item) => ({ id: parseInt(item.id), quantity: item.quantity })),
+          items: cart.map((item) => ({ id: item.id, quantity: item.quantity })),
           total: totalDue.toFixed(2),
-          userId: user ? user.id : "guest_001",
+          userId: user.id,
         }),
       });
       const orderData = await response.json();
 
       const handler = window.PaystackPop.setup({
-        key: 'pk_live_YOUR_KEY_HERE', // Move to Env variable if possible
-        email: user ? `${user.phone}@lekki-market.com` : 'guest@lekki.com',
+        key: 'pk_live_your_actual_key', 
+        email: `${user.phone}@lekki-market.com`,
         amount: Math.round(totalDue * 100), 
         currency: 'NGN',
         onClose: () => setIsProcessing(false),
@@ -195,7 +190,7 @@ function App() {
       });
       handler.openIframe();
     } catch (err) {
-      alert("Checkout failed. Ensure backend service is reachable.");
+      alert("Checkout failed.");
       setIsProcessing(false);
     }
   };
@@ -210,24 +205,22 @@ function App() {
     } catch (err) { alert("Connection failed."); }
   };
 
-  // --- 4. CALCULATIONS ---
-  const subTotalValue = cart.reduce((sum, item) => sum + (parseFloat(item.price) * item.quantity), 0);
+  const subTotalValue = cart.reduce((sum, item) => sum + (parseFloat(item.price || 0) * item.quantity), 0);
   const totalDue = Math.max(0, subTotalValue - discount);
 
   const allFiltered = products.filter((p) => 
-    p.category.toLowerCase() === category.toLowerCase() && 
-    p.name.toLowerCase().includes(searchTerm.toLowerCase())
+    p.category?.toLowerCase() === category.toLowerCase() && 
+    p.name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const displayedProducts = allFiltered.slice(0, visibleCount);
 
-  // --- 5. RENDER ---
   return (
     <div className="app-grid-wrapper">
       <header>
         <h1>1-Stop Shop</h1>
         <div className="header-adv-frame">
-          <img src="/static/Shoping-ad.jpg" alt="Advertisement" className="adv-banner" />
+          <img src="/static/Shoping-ad.jpg" alt="Ads" className="adv-banner" onError={(e) => e.target.style.display='none'}/>
         </div>
         <div className="search-bar">
           <input type="text" placeholder="Search products..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
@@ -325,10 +318,11 @@ function App() {
             <div className="detail-layout">
               <div className="image-gallery-container">
                 <div className="main-image-frame">
-                  <img src={activeImage || selectedProduct.image_display} alt={selectedProduct.name} />
+                  {/* DETAIL FIX: Fallback for detail image */}
+                  <img src={activeImage || selectedProduct.image_display || selectedProduct.image} alt={selectedProduct.name} onError={(e) => e.target.src="/static/placeholder.png"}/>
                 </div>
                 <div className="thumbnail-row">
-                  <img src={selectedProduct.image_display} alt="Main" onClick={() => setActiveImage(selectedProduct.image_display)} />
+                  <img src={selectedProduct.image_display || selectedProduct.image} alt="Main" onClick={() => setActiveImage(selectedProduct.image_display || selectedProduct.image)} />
                   {selectedProduct.additional_images?.map((img, idx) => (
                     <img key={idx} src={img.image} alt="Extra" onClick={() => setActiveImage(img.image)} />
                   ))}
