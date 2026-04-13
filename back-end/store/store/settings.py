@@ -12,16 +12,17 @@ DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 ALLOWED_HOSTS = [
     'back-end-wdk7.onrender.com', 
     'front-end-6f9m.onrender.com',
-    '.onrender.com', # Allows any sub-domain on Render
+    'back-end-wdk7', # Internal Render Name
     'localhost',
     '127.0.0.1'
 ]
 
 # --- 3. APPLICATION DEFINITION ---
 INSTALLED_APPS = [
-    'django.contrib.staticfiles',  # 1. Native static first
-    'cloudinary_storage',         # 2. Cloudinary storage
-    'jazzmin',                    # 3. Jazzmin (Must be before admin)
+    # CLOUDINARY MUST BE TOP
+    'cloudinary_storage', 
+    'django.contrib.staticfiles',
+    'jazzmin',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -39,7 +40,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
+    'corsheaders.middleware.CorsMiddleware', # Keep near top
     'whitenoise.middleware.WhiteNoiseMiddleware', 
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -49,27 +50,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'store.urls'
-
-TEMPLATES = [
-    {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'templates')],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.debug',
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
-            ],
-        },
-    },
-]
-
-WSGI_APPLICATION = 'store.wsgi.application'
-
-# --- 4. DATABASE ---
+# --- 4. DATABASE (Performance Optimized) ---
 DATABASES = {
     'default': dj_database_url.config(
         default=os.getenv('DATABASE_URL', f"sqlite:///{BASE_DIR}/db.sqlite3"),
@@ -81,45 +62,38 @@ DATABASES = {
 # --- 5. STATIC & MEDIA FILES ---
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+# Use WhiteNoise for static, Cloudinary for Media
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-WHITENOISE_MANIFEST_STRICT = False 
 
 CLOUDINARY_STORAGE = {
     'CLOUD_NAME': os.getenv('CLOUDINARY_CLOUD_NAME'),
     'API_KEY': os.getenv('CLOUDINARY_API_KEY'),
     'API_SECRET': os.getenv('CLOUDINARY_API_SECRET'),
-    'STATICFILES_STORAGE': None,
-    'SECURE': True,
 }
 
 DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-# --- 6. SECURITY & CORS ---
-CORS_ALLOW_ALL_ORIGINS = False
+# --- 6. SECURITY & CORS (Proxy Aware) ---
 CORS_ALLOWED_ORIGINS = [
     'https://front-end-6f9m.onrender.com',
 ]
-
 CORS_ALLOW_CREDENTIALS = True
 
-# We trust both the direct backend URL and the frontend proxy URL
+# Django requires the protocol (https://) in trusted origins
 CSRF_TRUSTED_ORIGINS = [
     'https://front-end-6f9m.onrender.com',
     'https://back-end-wdk7.onrender.com',
 ]
 
-# --- PROXY SETTINGS (CRITICAL FOR NGINX) ---
-# This tells Django to trust the headers Nginx is sending
+# PROXY HEADERS: Tells Django it's behind Nginx
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 USE_X_FORWARDED_HOST = True
 USE_X_FORWARDED_PORT = True
 
-# If your site is still failing, try setting this to False temporarily 
-# to see if the redirect is what's breaking the connection.
+# Production SSL settings (Keep False if Nginx terminates SSL)
 SECURE_SSL_REDIRECT = False 
-
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
 APPEND_SLASH = True
@@ -127,7 +101,10 @@ APPEND_SLASH = True
 # --- 7. REST FRAMEWORK ---
 REST_FRAMEWORK = {
     'COERCE_DECIMAL_TO_STRING': True,
-    'DEFAULT_AUTHENTICATION_CLASSES': [], 
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.SessionAuthentication',
+        'rest_framework.authentication.BasicAuthentication',
+    ],
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.AllowAny',
     ],
@@ -136,22 +113,6 @@ REST_FRAMEWORK = {
 # --- 8. INTERNATIONALIZATION ---
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'Africa/Lagos'
-USE_I18N = True
 USE_TZ = True
-
-# --- 9. JAZZMIN UI SETTINGS ---
-JAZZMIN_SETTINGS = {
-    "site_title": "Lagos Tech Hub Admin",
-    "site_header": "Market-Place HRM",
-    "site_brand": "Command Center",
-    "welcome_sign": "Welcome to the Management Portal",
-    "copyright": "Lagos Tech Hub Ltd",
-    "show_sidebar": True,
-    "navigation_expanded": True,
-    "icons": {
-        "auth.user": "fas fa-user",
-        "super_mart.Product": "fas fa-box-open",
-    },
-}
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
