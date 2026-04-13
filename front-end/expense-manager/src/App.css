@@ -523,3 +523,11 @@ header {
 .header-promo-img:hover {
   transform: scale(1.03);
 }
+
+
+.header-promo-img {
+  max-height: 80px; /* Adjust based on your header size */
+  width: auto;
+  display: block;
+  object-fit: contain;
+}
