@@ -2,9 +2,8 @@ import React, { useEffect, useState } from "react";
 import "./App.css";
 
 // --- CONFIGURATION ---
-// Using the full public URL bypasses Nginx DNS issues. 
-// Note: Ensure your Django backend has CORS_ALLOW_ALL_ORIGINS = True
-const API_BASE_URL = "https://back-end-wdk7.onrender.com";
+// Set to empty string so Nginx handles the routing via relative paths.
+const API_BASE_URL = ""; 
 
 // --- SUB-COMPONENT: PRODUCT CARD ---
 function ProductCard({ product, onAddToCart, onSelect }) {
@@ -79,7 +78,7 @@ function App() {
     localStorage.setItem("shop_cart_data", JSON.stringify(cart));
   }, [cart]);
 
-  // Fetch products using absolute URL
+  // Fetch products (Nginx will proxy this to the backend)
   useEffect(() => {
     fetch(`${API_BASE_URL}/api/products/`)
       .then((res) => res.json())
@@ -94,7 +93,7 @@ function App() {
     setVisibleCount(PAGE_SIZE);
   }, [category, searchTerm]);
 
-  // Fetch orders using absolute URL
+  // Fetch orders (Nginx will proxy this to the backend)
   useEffect(() => {
     if (view === "account" && user) {
       fetch(`${API_BASE_URL}/api/orders/?userId=${user.id}`)

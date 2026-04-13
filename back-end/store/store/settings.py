@@ -38,8 +38,8 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware', # Immediately after Security 
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -102,15 +102,27 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # --- 6. SECURITY & CORS ---
-CORS_ALLOW_ALL_ORIGINS = True 
-CORS_ALLOW_CREDENTIALS = True
-CSRF_TRUSTED_ORIGINS = [
-    'https://back-end-wdk7.onrender.com',
-    'https://front-end-6f9m.onrender.com'
+# 1. Only allow your actual frontend to talk to the API
+CORS_ALLOW_ALL_ORIGINS = False
+CORS_ALLOWED_ORIGINS = [
+    'https://front-end-6f9m.onrender.com',
 ]
 
-APPEND_SLASH = True
+# 2. Only needed if using session-based cookies
+CORS_ALLOW_CREDENTIALS = True
+
+# 3. Allow CSRF protection to trust your domains
+CSRF_TRUSTED_ORIGINS = [
+    'https://front-end-6f9m.onrender.com',
+    'https://back-end-wdk7.onrender.com',
+]
+
+# 4. Critical for Render/Nginx to handle HTTPS properly
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+USE_X_FORWARDED_HOST = True
+USE_X_FORWARDED_PORT = True
+
+APPEND_SLASH = True
 
 # --- 7. REST FRAMEWORK ---
 REST_FRAMEWORK = {
