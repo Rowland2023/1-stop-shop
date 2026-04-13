@@ -39,7 +39,7 @@ class Product(models.Model):
     name = models.CharField(max_length=255)
     price = models.DecimalField(max_digits=12, decimal_places=2)
     category = models.CharField(max_length=50, choices=CATEGORY_CHOICES)
-    description = models.TextField(blank=True, null=True) 
+    description = models.TextField(blank=True, null=True) # Kept to avoid Serializer errors
     main_image = CloudinaryField('image', null=True, blank=True)
     image_path = models.CharField(max_length=500, blank=True, null=True)
 
@@ -48,7 +48,6 @@ class Product(models.Model):
 
 class ProductImage(models.Model):
     product = models.ForeignKey(Product, related_name='images', on_delete=models.CASCADE)
-    # Updated to CloudinaryField to match Product model
     image = CloudinaryField('image', blank=True, null=True) 
     alt_text = models.CharField(max_length=100, blank=True)
 
@@ -71,7 +70,7 @@ class OrderItem(models.Model):
     quantity = models.PositiveIntegerField(default=1)
     price_at_purchase = models.DecimalField(max_digits=12, decimal_places=2)
 
-# --- 3. MARKETING & PROMOTIONS (NEW) ---
+# --- 3. MARKETING & PROMOTIONS (CORRECTED) ---
 
 class Advertisement(models.Model):
     AD_LOCATION_CHOICES = [
@@ -79,7 +78,8 @@ class Advertisement(models.Model):
         ('sidebar', 'Sidebar'),
         ('popup', 'Flash Sale Popup'),
     ]
-    name = models.CharField(max_length=100)
+    # Changed from 'name' to 'title' to match Admin.py list_display
+    title = models.CharField(max_length=100) 
     image = CloudinaryField('image')
     link_url = models.URLField(blank=True, null=True, help_text="Where the user goes when they click")
     location = models.CharField(max_length=50, choices=AD_LOCATION_CHOICES, default='header_main')
@@ -87,7 +87,7 @@ class Advertisement(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.name} ({self.location})"
+        return f"{self.title} ({self.location})"
 
 # --- 4. EMPLOYEE MANAGEMENT (HRM) ---
 
