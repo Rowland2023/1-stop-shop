@@ -248,7 +248,18 @@ function App() {
   return (
     <div className="app-grid-wrapper">
       <header>
-        <h1>MeBuy</h1>
+        {/* LOGO SECTION */}
+        <div className="logo-container">
+          <img 
+            src="/static/logo.png" 
+            alt="Lagos Tech Hub Logo" 
+            className="header-logo" 
+            onClick={() => { setView("grid"); setSelectedProduct(null); setIsSuccess(false); }} 
+            style={{ cursor: 'pointer', height: '50px', width: 'auto' }} 
+          />
+        </div>
+
+        {/* ADVERTISEMENT SECTION */}
         <div className="header-adv-frame">
           {headerAd ? (
             <a href={headerAd.link_url || "#"} target="_blank" rel="noopener noreferrer">
@@ -262,6 +273,7 @@ function App() {
             <img src="/static/Shoping-ad.jpg" alt="Default Ad" className="adv-banner" />
           )}
         </div>
+
         <div className="search-bar">
           <input type="text" placeholder="Search products..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
         </div>
