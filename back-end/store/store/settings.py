@@ -76,9 +76,10 @@ WSGI_APPLICATION = 'store.wsgi.application'
 # --- 4. DATABASE ---
 DATABASES = {
     'default': dj_database_url.config(
-        default=os.getenv('DATABASE_URL', f"sqlite:///{BASE_DIR}/db.sqlite3"),
+        default=os.environ.get('DATABASE_URL'),
         conn_max_age=600,
-        conn_health_checks=True,
+        # ADD THIS LINE BELOW
+        disable_server_side_cursors=True, 
     )
 }
 
