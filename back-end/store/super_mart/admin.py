@@ -3,11 +3,10 @@ from django.contrib import admin
 from django.utils.html import format_html
 from .models import (
     Employee, Attendance, Payroll, PerformanceReview, 
-    Product, Order, OrderItem, ProductImage, Department
+    Product, Order, OrderItem, ProductImage, Department, Advertisement
 )
 
 # --- CONFIGURATION ---
-# This ensures the buttons point to Render in production and localhost during dev
 INVOICE_SERVICE_URL = os.environ.get('INVOICE_SERVICE_URL', 'https://invoice-service-ttn6.onrender.com')
 
 # --- 1. Global Site Branding ---
@@ -60,7 +59,6 @@ class OrderAdmin(admin.ModelAdmin):
     inlines = [OrderItemInline]
 
     def get_receipt_button(self, obj):
-        # Points to your live FastAPI invoicing service on Render
         fastapi_url = f"{INVOICE_SERVICE_URL}/api/invoices/generate?order_id={obj.id}"
         return format_html(
             '<a class="button" href="{}" target="_blank" '
@@ -94,7 +92,6 @@ class PayrollAdmin(admin.ModelAdmin):
     list_filter = ('is_paid', 'pay_period')
     
     def get_payslip(self, obj):
-        # Link to FastAPI using the employee_id and live Render URL
         fastapi_url = f"{INVOICE_SERVICE_URL}/api/invoices/generate?user_id={obj.employee.employee_id}"
         return format_html(
             '<a class="button" href="{}" target="_blank" '
@@ -103,7 +100,24 @@ class PayrollAdmin(admin.ModelAdmin):
         )
     get_payslip.short_description = "Payroll Action"
 
-# --- 6. Final Registrations ---
+# --- 6. Missing Registrations (Fixes 404) ---
+
+@admin.register(ProductImage)
+class ProductImageAdmin(admin.ModelAdmin):
+    list_display = ('product', 'alt_text', 'image_preview')
+    search_fields = ('product__name',)
+
+    def image_preview(self, obj):
+        if obj.image:
+            return format_html('<img src="{}" style="width: 40px; height: 40px; border-radius: 4px;" />', obj.image.url)
+        return "No Image"
+
+@admin.register(Advertisement)
+class AdvertisementAdmin(admin.ModelAdmin):
+    list_display = ('title', 'location', 'is_active', 'created_at')
+    list_editable = ('is_active',)
+    list_filter = ('location', 'is_active')
+
 @admin.register(Department)
 class DepartmentAdmin(admin.ModelAdmin):
     list_display = ('name',)
