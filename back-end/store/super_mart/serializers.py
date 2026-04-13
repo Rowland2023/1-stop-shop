@@ -8,7 +8,6 @@ from .models import (
 # --- 1. PROMOTIONS SERIALIZER ---
 
 class AdvertisementSerializer(serializers.ModelSerializer):
-    # This matches the 'headerAd.image_url' call in React
     image_url = serializers.SerializerMethodField()
 
     class Meta:
@@ -18,9 +17,9 @@ class AdvertisementSerializer(serializers.ModelSerializer):
     def get_image_url(self, obj):
         if obj.image:
             url = obj.image.url
-            # Cleanly scale header images for faster loading
             if 'cloudinary.com' in url:
-                url = url.replace('/upload/', '/upload/h_120,c_limit/')
+                # Increased height to 250 to ensure header ads are visible and high quality
+                url = url.replace('/upload/', '/upload/h_250,c_limit/')
             return url
         return None
 
@@ -60,8 +59,8 @@ class ProductSerializer(serializers.ModelSerializer):
             return url
         return None
 
-# --- 3. HRM & ORDER SERIALIZERS ---
-# (Keep your existing Order, Employee, and Payroll serializers here as they are)
+# --- 3. ORDER & HRM SERIALIZERS ---
+
 class OrderItemSerializer(serializers.ModelSerializer):
     product_name = serializers.ReadOnlyField(source='product.name')
     class Meta:

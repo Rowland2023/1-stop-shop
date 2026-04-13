@@ -13,7 +13,6 @@ from .tasks import trigger_invoice_generation
 # --- 1. AUTHENTICATION & ROOT VIEWS ---
 
 @api_view(['GET'])
-@authentication_classes([])
 @permission_classes([AllowAny])
 def api_root(request):
     return Response({
@@ -22,7 +21,6 @@ def api_root(request):
     })
 
 @api_view(['POST'])
-@authentication_classes([])
 @permission_classes([AllowAny])
 def register_user(request):
     data = request.data
@@ -33,18 +31,15 @@ def register_user(request):
     if User.objects.filter(username=username).exists():
         return Response({"error": "Username exists"}, status=400)
     user = User.objects.create_user(username=username, password=password)
-    # Return user_id so React can log the user in immediately after registration
     return Response({"message": "User created", "user_id": user.id}, status=201)
 
 @api_view(['POST'])
-@authentication_classes([])
 @permission_classes([AllowAny])
 def login_user(request):
     username = request.data.get('username')
     password = request.data.get('password')
     user = authenticate(username=username, password=password)
     if user:
-        # Crucial: return user_id for the frontend's state
         return Response({
             "message": "Login successful", 
             "username": user.username,
@@ -55,38 +50,34 @@ def login_user(request):
 # --- 2. MARKETPLACE: PRODUCT & AD VIEWSETS ---
 
 class ProductViewSet(viewsets.ModelViewSet):
-    queryset = Product.objects.all()
+    # .prefetch_related('images') makes loading the gallery much faster
+    queryset = Product.objects.all().prefetch_related('images')
     serializer_class = ProductSerializer
-    authentication_classes = []
     permission_classes = [AllowAny]
 
 class AdvertisementViewSet(viewsets.ReadOnlyModelViewSet):
-    """
-    API endpoint that allows advertisements to be viewed.
-    Filters for active ads specifically for the header.
-    """
-    queryset = Advertisement.objects.filter(is_active=True)
     serializer_class = AdvertisementSerializer
-    authentication_classes = []
     permission_classes = [AllowAny]
 
     def get_queryset(self):
-        # Optional: Filter by location via query param (e.g., /api/ads/?location=header_main)
+        # Start with only active ads
+        queryset = Advertisement.objects.filter(is_active=True)
+        # Check if React sent a ?location= param
         location = self.request.query_params.get('location')
         if location:
-            return self.queryset.filter(location=location)
-        return self.queryset
+            queryset = queryset.filter(location=location)
+        return queryset
 
 # --- 3. HRM: EMPLOYEE DATA API ---
 
 @api_view(['GET'])
-@authentication_classes([]) 
 @permission_classes([AllowAny]) 
 def employee_detail_api(request, employee_id):
     try:
         emp = Employee.objects.select_related('department').filter(employee_id=employee_id).first()
         if not emp and str(employee_id).isdigit():
             emp = Employee.objects.select_related('department').filter(employee_id=str(employee_id).lstrip('0')).first()
+        
         if not emp:
             return Response({"error": "Not found"}, status=404)
         
@@ -105,18 +96,7 @@ def employee_detail_api(request, employee_id):
 
 # --- 4. MARKETPLACE: ORDER API ---
 
-@api_view(['GET'])
-@authentication_classes([])
-@permission_classes([AllowAny])
-def get_order_detail(request, order_id):
-    try:
-        order = Order.objects.get(id=order_id)
-        return Response(OrderSerializer(order).data)
-    except Order.DoesNotExist:
-        return Response({"error": "Order not found"}, status=404)
-
 @api_view(['GET', 'POST'])
-@authentication_classes([]) 
 @permission_classes([AllowAny])
 def order_list(request):
     if request.method == 'GET':
@@ -150,7 +130,6 @@ def order_list(request):
                         "quantity": item.get('quantity', 1)
                     })
 
-            # Hand off to Celery for background processing
             trigger_invoice_generation.delay({
                 "order_id": new_order.id,
                 "total_amount": float(data.get('total')),
