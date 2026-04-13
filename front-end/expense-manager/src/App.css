@@ -583,3 +583,27 @@ header {
 .thumb-item:hover {
   border-color: #2e7d32;
 }
+
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 10px 20px;
+}
+
+.header-adv-frame {
+  flex: 1; /* Allows the ad to take available space */
+  max-width: 600px; /* Prevents it from becoming too wide */
+  height: 80px; 
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.adv-banner {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: 4px;
+}
