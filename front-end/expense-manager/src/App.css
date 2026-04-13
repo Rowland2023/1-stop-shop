@@ -531,3 +531,37 @@ header {
   display: block;
   object-fit: contain;
 }
+
+/* Container for the small thumbnails in detail view */
+.thumbnail-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+  overflow-x: auto;
+  padding-bottom: 5px;
+}
+
+/* Force every thumbnail to be an exact square */
+.thumbnail-row img {
+  width: 70px !important;
+  height: 70px !important;
+  min-width: 70px;
+  object-fit: cover; /* This prevents stretching */
+  border-radius: 6px;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: border-color 0.2s ease;
+}
+
+.thumbnail-row img:hover {
+  border-color: #2e7d32;
+}
+
+/* The main product image in detail view */
+.main-image-frame img {
+  width: 100%;
+  height: 400px; /* Fixed height for the main display */
+  object-fit: contain; /* Shows full product without cropping */
+  background-color: #f9f9f9;
+  border-radius: 12px;
+}
