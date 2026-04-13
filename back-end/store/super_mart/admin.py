@@ -4,7 +4,7 @@ from django.utils.html import format_html
 from .models import (
     Employee, Attendance, Payroll, PerformanceReview, 
     Product, Order, OrderItem, ProductImage, Department,
-    Advertisement  # CRITICAL: Added this back to the imports
+    Advertisement  # Ensure this is added to your models.py first
 )
 
 # --- CONFIGURATION ---
@@ -33,25 +33,41 @@ class AttendanceInline(admin.TabularInline):
     readonly_fields = ('date', 'status')
     can_delete = False
 
-# --- 3. Product & Inventory Management ---
+# --- 3. Advertisement & Banner Management ---
+
+@admin.register(Advertisement)
+class AdvertisementAdmin(admin.ModelAdmin):
+    list_display = ('preview_img', 'title', 'is_active', 'created_at')
+    list_editable = ('is_active',)  # Quickly toggle ads on/off
+    list_filter = ('is_active', 'created_at')
+    search_fields = ('title',)
+
+    def preview_img(self, obj):
+        if obj.image:
+            return format_html(
+                '<img src="{}" style="width: 150px; height: auto; border-radius: 8px; border: 1px solid #ddd;" />', 
+                obj.image.url
+            )
+        return "No Image"
+    preview_img.short_description = "Banner Preview"
+
+# --- 4. Product & Inventory Management ---
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
     list_display = ('thumbnail_tag', 'name', 'category', 'price')
     list_filter = ('category',)
     search_fields = ('name',)
-    inlines = [ProductImageInline]  # This enables the multiple image upload feature
+    inlines = [ProductImageInline]
 
     def thumbnail_tag(self, obj):
-        # We check both main_image and image_display to ensure a preview shows
-        image_url = getattr(obj, 'main_image', None) or getattr(obj, 'image_display', None)
-        if image_url:
-            url = image_url.url if hasattr(image_url, 'url') else image_url
-            return format_html('<img src="{}" style="width: 45px; height: 45px; border-radius: 5px; object-fit: cover;" />', url)
+        # Checks for Cloudinary image or local main_image
+        if hasattr(obj, 'main_image') and obj.main_image:
+            return format_html('<img src="{}" style="width: 45px; height: 45px; border-radius: 5px; object-fit: cover;" />', obj.main_image.url)
         return "No Image"
     thumbnail_tag.short_description = "Preview"
 
-# --- 4. Order & Transaction Management ---
+# --- 5. Order & Transaction Management ---
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
@@ -71,7 +87,7 @@ class OrderAdmin(admin.ModelAdmin):
         )
     get_receipt_button.short_description = "Billing"
 
-# --- 5. HRM & Employee Management ---
+# --- 6. HRM & Employee Management ---
 
 @admin.register(Employee)
 class EmployeeAdmin(admin.ModelAdmin):
@@ -104,20 +120,6 @@ class PayrollAdmin(admin.ModelAdmin):
         )
     get_payslip.short_description = "Payroll Action"
 
-# --- 6. Marketing & Advertisements ---
-
-@admin.register(Advertisement)
-class AdvertisementAdmin(admin.ModelAdmin):
-    list_display = ('ad_preview', 'name', 'location', 'is_active', 'created_at')
-    list_filter = ('location', 'is_active')
-    search_fields = ('name',)
-
-    def ad_preview(self, obj):
-        if obj.image:
-            return format_html('<img src="{}" style="width: 80px; height: auto; border-radius: 4px;" />', obj.image.url)
-        return "No Image"
-    ad_preview.short_description = "Ad Image"
-
 # --- 7. Final Registrations ---
 
 @admin.register(Department)
@@ -132,7 +134,3 @@ class AttendanceAdmin(admin.ModelAdmin):
 @admin.register(OrderItem)
 class OrderItemAdmin(admin.ModelAdmin):
     list_display = ('order', 'product', 'quantity', 'price_at_purchase')
-
-@admin.register(PerformanceReview)
-class PerformanceReviewAdmin(admin.ModelAdmin):
-    list_display = ('employee', 'review_date', 'rating')
