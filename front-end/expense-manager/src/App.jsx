@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import "./App.css";
 
 // --- CONFIGURATION ---
+// Set to empty string so Nginx handles the routing via relative paths.
 const API_BASE_URL = ""; 
 
 // --- SUB-COMPONENT: PRODUCT CARD ---
@@ -44,7 +45,6 @@ function ProductCard({ product, onAddToCart, onSelect }) {
 function App() {
   // --- 1. CORE STATES ---
   const [products, setProducts] = useState([]);
-  const [ads, setAds] = useState([]); // New state for dynamic ads
   const [category, setCategory] = useState("food");
   const [cart, setCart] = useState(() => {
     const savedCart = localStorage.getItem("shop_cart_data");
@@ -78,7 +78,7 @@ function App() {
     localStorage.setItem("shop_cart_data", JSON.stringify(cart));
   }, [cart]);
 
-  // Fetch products
+  // Fetch products (Nginx will proxy this to the backend)
   useEffect(() => {
     fetch(`${API_BASE_URL}/api/products/`)
       .then((res) => res.json())
@@ -89,22 +89,11 @@ function App() {
       .catch((err) => console.error("Error fetching products:", err));
   }, []);
 
-  // Fetch dynamic advertisements for the header
-  useEffect(() => {
-    fetch(`${API_BASE_URL}/api/ads/?location=header_main`)
-      .then((res) => res.json())
-      .then((data) => {
-        const adData = Array.isArray(data) ? data : (data.results || []);
-        setAds(adData);
-      })
-      .catch((err) => console.error("Error fetching ads:", err));
-  }, []);
-
   useEffect(() => {
     setVisibleCount(PAGE_SIZE);
   }, [category, searchTerm]);
 
-  // Fetch orders
+  // Fetch orders (Nginx will proxy this to the backend)
   useEffect(() => {
     if (view === "account" && user) {
       fetch(`${API_BASE_URL}/api/orders/?userId=${user.id}`)
@@ -169,6 +158,24 @@ function App() {
     }
   };
 
+  const verifyPaymentOnBackend = async (reference, djangoOrderId) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/payments/verify/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reference, order_id: djangoOrderId }),
+      });
+      if (response.ok) {
+        setIsSuccess(true);
+        setCart([]);
+        localStorage.removeItem("shop_cart_data");
+        window.open(`${API_BASE_URL}/api/invoices/generate?order_id=${djangoOrderId}`, "_blank");
+      }
+    } catch (err) {
+      console.error("Verification error", err);
+    }
+  };
+
   const checkoutWithPaystack = async () => {
     if (cart.length === 0) return alert("Cart is empty!");
     setIsProcessing(true);
@@ -193,9 +200,7 @@ function App() {
         onClose: () => setIsProcessing(false),
         callback: (res) => {
           setIsProcessing(false);
-          setIsSuccess(true);
-          setCart([]);
-          window.open(`${API_BASE_URL}/api/invoices/generate?order_id=${orderData.id}`, "_blank");
+          verifyPaymentOnBackend(res.reference, orderData.id);
         }
       });
       handler.openIframe();
@@ -232,12 +237,7 @@ function App() {
       <header>
         <h1>1-Stop Shop</h1>
         <div className="header-adv-frame">
-          {/* Now dynamically loops through ads or shows default if empty */}
-          {ads.length > 0 ? (
-            <img src={ads[0].image_url} alt="Advertisement" className="adv-banner" onClick={() => window.open(ads[0].link_url, "_blank")} style={{cursor: 'pointer'}} />
-          ) : (
-            <img src="/static/Shoping-ad.jpg" alt="Advertisement" className="adv-banner" />
-          )}
+          <img src="/static/Shoping-ad.jpg" alt="Advertisement" className="adv-banner" />
         </div>
         <div className="search-bar">
           <input type="text" placeholder="Search products..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
@@ -334,7 +334,6 @@ function App() {
             <div className="detail-layout" style={{ display: 'flex', gap: '30px', marginTop: '20px' }}>
               <div className="image-gallery-container" style={{ flex: 1 }}>
                 <div className="main-image-frame">
-                  {/* Displays Active Image (Thumbnail clicked) or falls back to Main Image */}
                   <img 
                     src={activeImage || selectedProduct.image_display} 
                     alt={selectedProduct.name} 
@@ -342,7 +341,6 @@ function App() {
                   />
                 </div>
                 
-                {/* THUMBNAIL ROW: Merges Main Image + Additional Images from Django */}
                 <div className="thumbnail-row" style={{ display: 'flex', gap: '10px', marginTop: '15px', overflowX: 'auto' }}>
                   <img 
                     src={selectedProduct.image_display}
@@ -356,12 +354,12 @@ function App() {
                   {selectedProduct.additional_images?.map((img, idx) => (
                     <img 
                       key={idx}
-                      src={img.image_url} // Uses image_url from ProductImageSerializer
+                      src={img.image}
                       alt={img.alt_text || `View ${idx + 1}`}
-                      onClick={() => setActiveImage(img.image_url)}
+                      onClick={() => setActiveImage(img.image)}
                       style={{ 
                         width: '60px', height: '60px', cursor: 'pointer', borderRadius: '4px', objectFit: 'cover',
-                        border: activeImage === img.image_url ? '2px solid #2e7d32' : '1px solid #ccc' 
+                        border: activeImage === img.image ? '2px solid #2e7d32' : '1px solid #ccc' 
                       }}
                     />
                   ))}
@@ -391,6 +389,17 @@ function App() {
                 <button 
                   className="see-more-btn"
                   onClick={() => setVisibleCount(prev => prev + PAGE_SIZE)}
+                  style={{
+                    padding: '12px 40px',
+                    backgroundColor: '#2e7d32',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '25px',
+                    cursor: 'pointer',
+                    fontSize: '1rem',
+                    fontWeight: 'bold',
+                    boxShadow: '0 4px 10px rgba(46, 125, 50, 0.2)'
+                  }}
                 >
                   See More Products
                 </button>
@@ -401,7 +410,35 @@ function App() {
       </main>
 
       <aside className={`right-sidebar ${cartOpen ? "open" : ""}`}>
-        {/* Cart items logic here... */}
+        <div className="cart-container">
+          <h3>Your Cart</h3>
+          <div className="cart-items-list">
+            {cart.map((item, index) => (
+              <div key={index} className="cart-item-row">
+                <div className="cart-item-info">
+                  <strong>{item.name} (x{item.quantity})</strong>
+                  <span>₦{(parseFloat(item.price) * item.quantity).toLocaleString()}</span>
+                </div>
+                <button onClick={() => setCart(cart.filter((_, i) => i !== index))}>×</button>
+              </div>
+            ))}
+            {cart.length === 0 && <p>Your bag is empty.</p>}
+          </div>
+
+          <div className="gift-card-input-wrapper">
+             <input type="text" placeholder="EOY Gift Code" value={giftCardCode} onChange={(e) => setGiftCardCode(e.target.value)} />
+             <button onClick={applyGiftCard}>Apply</button>
+          </div>
+
+          <div className="total-section">
+            <p>Subtotal: ₦{subTotalValue.toLocaleString()}</p>
+            <p className="final-total">Total: <strong>₦{totalDue.toLocaleString()}</strong></p>
+            <button className="vendor-btn paystack" disabled={isProcessing} onClick={checkoutWithPaystack}>
+              {isProcessing ? "Processing..." : "Pay Now"}
+            </button>
+            <button className="clear-cart-btn" onClick={clearCart}>Clear Cart</button>
+          </div>
+        </div>
       </aside>
     </div>
   );
