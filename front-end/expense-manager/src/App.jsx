@@ -135,7 +135,7 @@ function App() {
       const orderData = await response.json();
 
       const handler = window.PaystackPop.setup({
-        key: 'pk_live_YOUR_KEY_HERE', 
+        key: 'pk_live_21207f639d252b46e35e171dca6b075f79cba433', 
         email: user ? `${user.phone}@lekki-market.com` : 'guest@lekki.com',
         amount: Math.round(totalDue * 100), 
         currency: 'NGN',
