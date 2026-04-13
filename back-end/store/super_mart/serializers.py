@@ -7,10 +7,6 @@ from .models import (
 # --- 1. MARKETPLACE & INVENTORY SERIALIZERS ---
 
 class ProductImageSerializer(serializers.ModelSerializer):
-    """
-    Handles gallery images. We force the absolute URL to ensure
-    Cloudinary links are passed clearly to the React frontend.
-    """
     image_url = serializers.SerializerMethodField()
 
     class Meta:
@@ -19,48 +15,40 @@ class ProductImageSerializer(serializers.ModelSerializer):
 
     def get_image_url(self, obj):
         if obj.image:
-            # If Cloudinary already provided a full URL, use it
             if obj.image.url.startswith('http'):
                 return obj.image.url
-            
             request = self.context.get('request')
             if request:
                 return request.build_absolute_uri(obj.image.url)
-            
-            # Fallback to relative path for Nginx to proxy
             return f"/media/{obj.image.url.lstrip('/')}"
         return None
 
 class ProductSerializer(serializers.ModelSerializer):
-    # 'source=images' refers to the related_name on the ProductImage model
     additional_images = ProductImageSerializer(many=True, read_only=True, source='images')
     image_display = serializers.SerializerMethodField()
+    # Alias to ensure React 'product.image' works automatically
+    image = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
-        fields = ['id', 'name', 'price', 'category', 'image_display', 'additional_images', 'description']
+        fields = [
+            'id', 'name', 'price', 'category', 
+            'image', 'image_display', 'additional_images', 'description'
+        ]
 
     def get_image_display(self, obj):
-        """
-        Critical for Nginx Reverse Proxy:
-        Ensures images either point directly to Cloudinary or use a path
-        that the Frontend (Nginx) can route to the Backend.
-        """
         request = self.context.get('request')
         
-        # 1. Handle Main Image Field (Cloudinary)
+        # Priority 1: Cloudinary main_image
         if obj.main_image:
             image_url = obj.main_image.url
             if image_url.startswith('http'):
                 return image_url
-            
             if request:
                 return request.build_absolute_uri(image_url)
-            
-            # Proxy fallback
             return f"/media/{image_url.lstrip('/')}"
 
-        # 2. Handle Manual Static Fallback (if using local image_path strings)
+        # Priority 2: Manual static path fallback
         if hasattr(obj, 'image_path') and obj.image_path:
             path = f"/static/{obj.image_path.lstrip('/')}"
             if request:
@@ -68,21 +56,21 @@ class ProductSerializer(serializers.ModelSerializer):
             return path
             
         return None
-    
+
+    def get_image(self, obj):
+        return self.get_image_display(obj)
+
 class OrderItemSerializer(serializers.ModelSerializer):
     product_name = serializers.ReadOnlyField(source='product.name')
-    
     class Meta:
         model = OrderItem
         fields = ['id', 'product', 'product_name', 'quantity', 'price_at_purchase']
 
 class OrderSerializer(serializers.ModelSerializer):
     items = OrderItemSerializer(many=True, read_only=True)
-
     class Meta:
         model = Order
         fields = ['id', 'user_id', 'created_at', 'total_price', 'status', 'items']
-
 
 # --- 2. HRM & EMPLOYEE SERIALIZERS ---
 
@@ -104,8 +92,7 @@ class PerformanceReviewSerializer(serializers.ModelSerializer):
 class EmployeeSerializer(serializers.ModelSerializer):
     department_name = serializers.ReadOnlyField(source='department.name')
     payrolls = PayrollSerializer(many=True, read_only=True)
-    # Ensure related_name='attendances' is set in your model
-    attendances = AttendanceSerializer(many=True, read_only=True, source='attendances')
+    attendances = AttendanceSerializer(many=True, read_only=True)
 
     class Meta:
         model = Employee

@@ -1,14 +1,10 @@
 from django.db import models
 from cloudinary.models import CloudinaryField
+
 # --- 1. SHARED INFRASTRUCTURE ---
 
 class Department(models.Model):
-    """
-    Unified Department model. 
-    This table is shared with the Node.js Employee Service.
-    """
     name = models.CharField(max_length=100, unique=True)
-    # Adding timestamps to match Sequelize default behavior
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -16,7 +12,6 @@ class Department(models.Model):
         return self.name
     
     def save(self, *args, **kwargs):
-        # Emulate the 'trim' logic from your Node.js model
         if self.name:
             self.name = self.name.strip()
         super().save(*args, **kwargs)
@@ -44,7 +39,8 @@ class Product(models.Model):
     name = models.CharField(max_length=255)
     price = models.DecimalField(max_digits=12, decimal_places=2)
     category = models.CharField(max_length=50, choices=CATEGORY_CHOICES)
-    #main_image = models.ImageField(upload_to='products/main/', blank=True, null=True)
+    # FIX: Added description field to match serializer requirements
+    description = models.TextField(blank=True, null=True) 
     main_image = CloudinaryField('image', null=True, blank=True)
     image_path = models.CharField(max_length=500, blank=True, null=True)
 
@@ -82,16 +78,7 @@ class Employee(models.Model):
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
     email = models.EmailField(unique=True)
-    
-    # CRITICAL CHANGE: Refactored from CharField to ForeignKey
-    # to match the Node.js Sequelize association
-    department = models.ForeignKey(
-        Department, 
-        on_delete=models.SET_NULL, 
-        null=True, 
-        related_name='employees'
-    )
-    
+    department = models.ForeignKey(Department, on_delete=models.SET_NULL, null=True, related_name='employees')
     position = models.CharField(max_length=100)
     salary = models.DecimalField(max_digits=12, decimal_places=2)
     is_active = models.BooleanField(default=True)
