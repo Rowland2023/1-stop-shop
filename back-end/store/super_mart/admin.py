@@ -10,145 +10,79 @@ from .models import (
 # --- CONFIGURATION ---
 INVOICE_SERVICE_URL = os.environ.get('INVOICE_SERVICE_URL', 'https://invoice-service-ttn6.onrender.com')
 
-# --- 1. Global Site Branding ---
-admin.site.site_header = "Lagos Tech Hub: Unified Marketplace & HRM"
-admin.site.site_title = "Admin Portal"
-admin.site.index_title = "Command Center (PostgreSQL Powered)"
-
-# --- 2. Inlines ---
+# --- 1. THE MULTI-IMAGE INLINE ---
 
 class ProductImageInline(admin.TabularInline):
-    """Allows adding gallery images directly on the Product page"""
     model = ProductImage
-    extra = 1
-    fields = ('image', 'alt_text')
+    # This creates 3 empty slots by default, but you can add INFINITE images 
+    # by clicking "Add another Product Image" in the admin.
+    extra = 3 
+    fields = ('image', 'alt_text', 'preview_image')
+    readonly_fields = ('preview_image',)
 
-class OrderItemInline(admin.TabularInline):
-    model = OrderItem
-    extra = 0
-    readonly_fields = ('product', 'quantity', 'price_at_purchase') 
-    can_delete = False
-
-class AttendanceInline(admin.TabularInline):
-    model = Attendance
-    extra = 0
-    readonly_fields = ('date', 'status')
-    can_delete = False
-
-# --- 3. Advertisement Management ---
-
-@admin.register(Advertisement)
-class AdvertisementAdmin(admin.ModelAdmin):
-    # Matches your models.py: title, image, link_url, location, is_active
-    list_display = ('preview_img', 'title', 'location', 'is_active', 'created_at')
-    list_editable = ('is_active', 'location')
-    list_filter = ('location', 'is_active', 'created_at')
-    search_fields = ('title',)
-
-    def preview_img(self, obj):
+    def preview_image(self, obj):
         if obj.image:
-            return format_html(
-                '<img src="{}" style="width: 120px; height: auto; border-radius: 8px; border: 1px solid #ddd;" />', 
-                obj.image.url
-            )
-        return "No Image"
-    preview_img.short_description = "Ad Preview"
+            return format_html('<img src="{}" style="width: 80px; height: auto; border-radius: 5px;"/>', obj.image.url)
+        return ""
 
-# --- 4. Product & Inventory Management ---
+# --- 2. PRODUCT ADMIN (The Main Controller) ---
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
     list_display = ('thumbnail_tag', 'name', 'category', 'price')
     list_filter = ('category',)
-    search_fields = ('name', 'description')
+    search_fields = ('name',)
+    
+    # This connects the multi-image gallery to the Product page
     inlines = [ProductImageInline]
 
     fieldsets = (
-        ("Core Information", {
+        ("Main Details", {
             'fields': ('name', 'description', 'category', 'price')
         }),
-        ("Media Assets", {
-            'fields': ('main_image', 'image_path')
+        ("Primary Thumbnail", {
+            'fields': ('main_image', 'image_path'),
+            'description': "This is the main image seen on the shop list."
         }),
     )
 
     def thumbnail_tag(self, obj):
-        if hasattr(obj, 'main_image') and obj.main_image:
+        if obj.main_image:
             return format_html('<img src="{}" style="width: 45px; height: 45px; border-radius: 5px; object-fit: cover;" />', obj.main_image.url)
         return "No Image"
-    thumbnail_tag.short_description = "Thumbnail"
 
-# --- 5. Order & Transaction Management ---
+# --- 3. ADVERTISEMENT MANAGEMENT (Multi-Position) ---
 
-@admin.register(Order)
-class OrderAdmin(admin.ModelAdmin):
-    list_display = ('id', 'user_id', 'total_price', 'status', 'created_at', 'get_receipt_button')
-    list_editable = ('status',)
-    list_filter = ('status', 'created_at')
-    search_fields = ('id', 'user_id')
-    ordering = ('-created_at',)
-    inlines = [OrderItemInline]
+@admin.register(Advertisement)
+class AdvertisementAdmin(admin.ModelAdmin):
+    list_display = ('preview_img', 'title', 'location', 'is_active')
+    list_editable = ('is_active', 'location')
+    
+    def preview_img(self, obj):
+        if obj.image:
+            return format_html('<img src="{}" style="width: 100px; border-radius: 5px;" />', obj.image.url)
+        return "No Image"
 
-    def get_receipt_button(self, obj):
-        fastapi_url = f"{INVOICE_SERVICE_URL}/api/invoices/generate?order_id={obj.id}"
-        return format_html(
-            '<a class="button" href="{}" target="_blank" '
-            'style="background: #2e7d32; color: white; padding: 4px 8px; border-radius: 4px; text-decoration: none; font-weight: bold;">'
-            'View Invoice</a>', fastapi_url
-        )
-    get_receipt_button.short_description = "Billing"
-
-# --- 6. HRM & Employee Management ---
+# --- 4. HRM & OTHER REGISTRATIONS ---
 
 @admin.register(Employee)
 class EmployeeAdmin(admin.ModelAdmin):
-    list_display = ('employee_id', 'full_name', 'department', 'position', 'status_badge')
-    list_filter = ('department', 'is_active', 'position')
-    search_fields = ('first_name', 'last_name', 'employee_id')
-    inlines = [AttendanceInline]
-
-    def full_name(self, obj):
-        return f"{obj.first_name} {obj.last_name}"
-    
-    def status_badge(self, obj):
-        color = "#28a745" if obj.is_active else "#dc3545"
-        return format_html(
-            '<b style="color: white; background: {}; padding: 2px 6px; border-radius: 10px; font-size: 10px;">{}</b>', 
-            color, "ACTIVE" if obj.is_active else "INACTIVE"
-        )
-
-@admin.register(Payroll)
-class PayrollAdmin(admin.ModelAdmin):
-    list_display = ('employee', 'pay_period', 'amount', 'is_paid', 'get_payslip')
-    list_filter = ('is_paid', 'pay_period')
-    
-    def get_payslip(self, obj):
-        fastapi_url = f"{INVOICE_SERVICE_URL}/api/invoices/generate?user_id={obj.employee.employee_id}"
-        return format_html(
-            '<a class="button" href="{}" target="_blank" '
-            'style="background: #1565c0; color: white; padding: 4px 8px; border-radius: 4px; text-decoration: none; font-size: 11px; font-weight: bold;">'
-            'Generate Slip</a>', fastapi_url
-        )
+    list_display = ('employee_id', 'first_name', 'last_name', 'department', 'is_active')
+    inlines = [AttendanceInline] if 'AttendanceInline' in locals() else []
 
 @admin.register(PerformanceReview)
 class PerformanceReviewAdmin(admin.ModelAdmin):
-    list_display = ('employee', 'review_date', 'rating', 'reviewer')
-    list_filter = ('rating', 'review_date')
+    list_display = ('employee', 'review_date', 'rating')
 
-# --- 7. Final Registrations ---
+@admin.register(Order)
+class OrderAdmin(admin.ModelAdmin):
+    list_display = ('id', 'user_id', 'total_price', 'status', 'get_receipt_button')
+    
+    def get_receipt_button(self, obj):
+        url = f"{INVOICE_SERVICE_URL}/api/invoices/generate?order_id={obj.id}"
+        return format_html('<a class="button" href="{}" target="_blank" style="background:#2e7d32; color:white; padding:4px; border-radius:4px;">Invoice</a>', url)
 
-@admin.register(Department)
-class DepartmentAdmin(admin.ModelAdmin):
-    list_display = ('name',)
-
-@admin.register(Attendance)
-class AttendanceAdmin(admin.ModelAdmin):
-    list_display = ('employee', 'date', 'status')
-
-@admin.register(OrderItem)
-class OrderItemAdmin(admin.ModelAdmin):
-    list_display = ('order', 'product', 'quantity')
-
-@admin.register(ProductImage)
-class ProductImageAdmin(admin.ModelAdmin):
-    list_display = ('product', 'alt_text')
+# Final registrations for remaining models
+admin.site.register(Department)
+admin.site.register(Payroll)
+admin.site.register(Attendance)
