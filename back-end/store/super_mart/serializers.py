@@ -4,8 +4,6 @@ from .models import (
     Employee, Attendance, Payroll, PerformanceReview, ProductImage, Department
 )
 
-# --- 1. MARKETPLACE & INVENTORY SERIALIZERS ---
-
 class ProductImageSerializer(serializers.ModelSerializer):
     image_url = serializers.SerializerMethodField()
 
@@ -15,18 +13,21 @@ class ProductImageSerializer(serializers.ModelSerializer):
 
     def get_image_url(self, obj):
         if obj.image:
-            if obj.image.url.startswith('http'):
-                return obj.image.url
+            url = obj.image.url
+            # Add Cloudinary resizing (w_800) for gallery images
+            if 'cloudinary.com' in url:
+                url = url.replace('/upload/', '/upload/w_800,c_limit/')
+            if url.startswith('http'):
+                return url
             request = self.context.get('request')
             if request:
-                return request.build_absolute_uri(obj.image.url)
-            return f"/media/{obj.image.url.lstrip('/')}"
+                return request.build_absolute_uri(url)
+            return f"/media/{url.lstrip('/')}"
         return None
 
 class ProductSerializer(serializers.ModelSerializer):
     additional_images = ProductImageSerializer(many=True, read_only=True, source='images')
     image_display = serializers.SerializerMethodField()
-    # Alias to ensure React 'product.image' works automatically
     image = serializers.SerializerMethodField()
 
     class Meta:
@@ -39,16 +40,18 @@ class ProductSerializer(serializers.ModelSerializer):
     def get_image_display(self, obj):
         request = self.context.get('request')
         
-        # Priority 1: Cloudinary main_image
         if obj.main_image:
             image_url = obj.main_image.url
+            # Inject Cloudinary scaling: limit width to 1000px to prevent UI blowout
+            if 'cloudinary.com' in image_url:
+                image_url = image_url.replace('/upload/', '/upload/w_1000,c_limit/')
+            
             if image_url.startswith('http'):
                 return image_url
             if request:
                 return request.build_absolute_uri(image_url)
             return f"/media/{image_url.lstrip('/')}"
 
-        # Priority 2: Manual static path fallback
         if hasattr(obj, 'image_path') and obj.image_path:
             path = f"/static/{obj.image_path.lstrip('/')}"
             if request:
@@ -60,6 +63,7 @@ class ProductSerializer(serializers.ModelSerializer):
     def get_image(self, obj):
         return self.get_image_display(obj)
 
+# --- Remaining serializers remain as provided in your previous snippet ---
 class OrderItemSerializer(serializers.ModelSerializer):
     product_name = serializers.ReadOnlyField(source='product.name')
     class Meta:
@@ -71,8 +75,6 @@ class OrderSerializer(serializers.ModelSerializer):
     class Meta:
         model = Order
         fields = ['id', 'user_id', 'created_at', 'total_price', 'status', 'items']
-
-# --- 2. HRM & EMPLOYEE SERIALIZERS ---
 
 class AttendanceSerializer(serializers.ModelSerializer):
     class Meta:
