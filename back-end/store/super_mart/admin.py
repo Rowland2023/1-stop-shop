@@ -4,7 +4,7 @@ from django.utils.html import format_html
 from .models import (
     Employee, Attendance, Payroll, PerformanceReview, 
     Product, Order, OrderItem, ProductImage, Department,
-    Advertisement  # Ensure this is added to your models.py first
+    Advertisement 
 )
 
 # --- CONFIGURATION ---
@@ -15,11 +15,13 @@ admin.site.site_header = "Lagos Tech Hub: Unified Marketplace & HRM"
 admin.site.site_title = "Admin Portal"
 admin.site.index_title = "Command Center (PostgreSQL Powered)"
 
-# --- 2. Inlines ---
+# --- 2. Inlines (For nested adding) ---
 
 class ProductImageInline(admin.TabularInline):
+    """Allows adding multiple gallery images while creating a product"""
     model = ProductImage
     extra = 1
+    fields = ('image', 'alt_text')
 
 class OrderItemInline(admin.TabularInline):
     model = OrderItem
@@ -37,15 +39,15 @@ class AttendanceInline(admin.TabularInline):
 
 @admin.register(Advertisement)
 class AdvertisementAdmin(admin.ModelAdmin):
-    list_display = ('preview_img', 'title', 'is_active', 'created_at')
-    list_editable = ('is_active',)  # Quickly toggle ads on/off
-    list_filter = ('is_active', 'created_at')
+    list_display = ('preview_img', 'title', 'location', 'is_active', 'created_at')
+    list_editable = ('is_active',) 
+    list_filter = ('is_active', 'location', 'created_at')
     search_fields = ('title',)
 
     def preview_img(self, obj):
         if obj.image:
             return format_html(
-                '<img src="{}" style="width: 150px; height: auto; border-radius: 8px; border: 1px solid #ddd;" />', 
+                '<img src="{}" style="width: 120px; height: auto; border-radius: 5px; border: 1px solid #ccc;" />', 
                 obj.image.url
             )
         return "No Image"
@@ -57,15 +59,24 @@ class AdvertisementAdmin(admin.ModelAdmin):
 class ProductAdmin(admin.ModelAdmin):
     list_display = ('thumbnail_tag', 'name', 'category', 'price')
     list_filter = ('category',)
-    search_fields = ('name',)
-    inlines = [ProductImageInline]
+    search_fields = ('name', 'description')
+    inlines = [ProductImageInline] # Add gallery images on the same page
+    
+    # Organize the form layout for adding products
+    fieldsets = (
+        ("Basic Info", {
+            'fields': ('name', 'description', 'category', 'price')
+        }),
+        ("Primary Image", {
+            'fields': ('main_image', 'image_path')
+        }),
+    )
 
     def thumbnail_tag(self, obj):
-        # Checks for Cloudinary image or local main_image
         if hasattr(obj, 'main_image') and obj.main_image:
-            return format_html('<img src="{}" style="width: 45px; height: 45px; border-radius: 5px; object-fit: cover;" />', obj.main_image.url)
+            return format_html('<img src="{}" style="width: 50px; height: 50px; border-radius: 5px; object-fit: cover;" />', obj.main_image.url)
         return "No Image"
-    thumbnail_tag.short_description = "Preview"
+    thumbnail_tag.short_description = "Thumbnail"
 
 # --- 5. Order & Transaction Management ---
 
@@ -120,6 +131,12 @@ class PayrollAdmin(admin.ModelAdmin):
         )
     get_payslip.short_description = "Payroll Action"
 
+@admin.register(PerformanceReview)
+class PerformanceReviewAdmin(admin.ModelAdmin):
+    list_display = ('employee', 'review_date', 'rating', 'reviewer')
+    list_filter = ('rating', 'review_date')
+    search_fields = ('employee__first_name', 'employee__last_name', 'reviewer')
+
 # --- 7. Final Registrations ---
 
 @admin.register(Department)
@@ -134,3 +151,7 @@ class AttendanceAdmin(admin.ModelAdmin):
 @admin.register(OrderItem)
 class OrderItemAdmin(admin.ModelAdmin):
     list_display = ('order', 'product', 'quantity', 'price_at_purchase')
+
+@admin.register(ProductImage)
+class ProductImageAdmin(admin.ModelAdmin):
+    list_display = ('product', 'alt_text')
