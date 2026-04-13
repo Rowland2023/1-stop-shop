@@ -1,9 +1,7 @@
 import React, { useEffect, useState } from "react";
 import "./App.css";
 
-// --- CONFIGURATION ---
-// Set to empty string so Nginx handles the routing via relative paths.
-const API_BASE_URL = ""; 
+const API_BASE_URL = window.location.origin; 
 
 // --- SUB-COMPONENT: PRODUCT CARD ---
 function ProductCard({ product, onAddToCart, onSelect }) {
@@ -17,24 +15,20 @@ function ProductCard({ product, onAddToCart, onSelect }) {
           src={displayImage} 
           alt={product.name} 
           className="zoom-effect" 
+          onError={(e) => { e.target.src = "/static/placeholder.png"; }}
         />
       </div>
       <h3>{product.name}</h3>
       <p>₦{parseFloat(product.price).toLocaleString()}</p>
       
-      <div className="qty-input-container" style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
+      <div className="qty-input-container">
         <input 
           type="number" 
           min="1" 
           value={tempQty} 
           onChange={(e) => setTempQty(parseInt(e.target.value) || 1)}
-          style={{ width: '50px', padding: '5px', textAlign: 'center', borderRadius: '4px', border: '1px solid #ccc' }}
         />
-        <button 
-          className="add-btn" 
-          onClick={() => onAddToCart(product, tempQty)}
-          style={{ flex: 1 }}
-        >
+        <button className="add-btn" onClick={() => onAddToCart(product, tempQty)}>
           Add {tempQty > 1 ? `(${tempQty})` : ""}
         </button>
       </div>
@@ -43,7 +37,6 @@ function ProductCard({ product, onAddToCart, onSelect }) {
 }
 
 function App() {
-  // --- 1. CORE STATES ---
   const [products, setProducts] = useState([]);
   const [category, setCategory] = useState("food");
   const [cart, setCart] = useState(() => {
@@ -58,27 +51,19 @@ function App() {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [activeImage, setActiveImage] = useState(null); 
   const [isSuccess, setIsSuccess] = useState(false);
-  const [orderId, setOrderId] = useState("");
 
   const [user, setUser] = useState(null); 
   const [authMode, setAuthMode] = useState("login"); 
   const [authData, setAuthData] = useState({ phone: "", password: "" });
-  const [giftCardCode, setGiftCardCode] = useState("");
   const [discount, setDiscount] = useState(0);
-
-  const [trackingData, setTrackingData] = useState(null);
-  const [trackInput, setTrackInput] = useState("");
-  const [userOrders, setUserOrders] = useState([]); 
 
   const PAGE_SIZE = 9; 
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE); 
 
-  // --- 2. EFFECTS ---
   useEffect(() => {
     localStorage.setItem("shop_cart_data", JSON.stringify(cart));
   }, [cart]);
 
-  // Fetch products (Nginx will proxy this to the backend)
   useEffect(() => {
     fetch(`${API_BASE_URL}/api/products/`)
       .then((res) => res.json())
@@ -89,32 +74,12 @@ function App() {
       .catch((err) => console.error("Error fetching products:", err));
   }, []);
 
-  useEffect(() => {
-    setVisibleCount(PAGE_SIZE);
-  }, [category, searchTerm]);
-
-  // Fetch orders (Nginx will proxy this to the backend)
-  useEffect(() => {
-    if (view === "account" && user) {
-      fetch(`${API_BASE_URL}/api/orders/?userId=${user.id}`)
-        .then((res) => res.json())
-        .then((data) => {
-          let ordersArray = Array.isArray(data) ? data : (data.results || []);
-          setUserOrders(ordersArray.sort((a, b) => b.id - a.id));
-        })
-        .catch((err) => console.error("Error fetching order history:", err));
-    }
-  }, [view, user]);
-
-  // --- 3. LOGIC FUNCTIONS ---
   const addToCart = (product, qty = 1) => {
     setCart((prevCart) => {
       const existingItem = prevCart.find((item) => item.id === product.id);
       if (existingItem) {
         return prevCart.map((item) =>
-          item.id === product.id 
-            ? { ...item, quantity: item.quantity + qty } 
-            : item
+          item.id === product.id ? { ...item, quantity: item.quantity + qty } : item
         );
       }
       return [...prevCart, { ...product, quantity: qty }];
@@ -125,9 +90,9 @@ function App() {
 
   const handleAuth = async (e) => {
     e.preventDefault();
-    const url = authMode === "login" ? `${API_BASE_URL}/api/login/` : `${API_BASE_URL}/api/register/`;
+    const endpoint = authMode === "login" ? "/api/login/" : "/api/register/";
     try {
-      const response = await fetch(url, {
+      const response = await fetch(`${API_BASE_URL}${endpoint}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -140,107 +105,27 @@ function App() {
       if (response.ok) {
         setUser({ id: data.user_id, phone: authData.phone });
         setView("grid");
-      } else {
-        alert(data.error || "Authentication failed");
-      }
-    } catch (err) {
-      alert("Backend connection failed.");
-    }
-  };
-
-  const applyGiftCard = () => {
-    if (!user) return alert("Please login to redeem gift cards!");
-    if (giftCardCode.toUpperCase() === "EOY2026") {
-        setDiscount(5000);
-        alert("₦5,000 Discount Applied!");
-    } else {
-        alert("Invalid Code.");
-    }
-  };
-
-  const verifyPaymentOnBackend = async (reference, djangoOrderId) => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/payments/verify/`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ reference, order_id: djangoOrderId }),
-      });
-      if (response.ok) {
-        setIsSuccess(true);
-        setCart([]);
-        localStorage.removeItem("shop_cart_data");
-        window.open(`${API_BASE_URL}/api/invoices/generate?order_id=${djangoOrderId}`, "_blank");
-      }
-    } catch (err) {
-      console.error("Verification error", err);
-    }
-  };
-
-  const checkoutWithPaystack = async () => {
-    if (cart.length === 0) return alert("Cart is empty!");
-    setIsProcessing(true);
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/orders/`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          items: cart.map((item) => ({ id: parseInt(item.id), quantity: item.quantity })),
-          total: totalDue.toFixed(2),
-          userId: user ? user.id : "guest_001",
-        }),
-      });
-      const orderData = await response.json();
-      setOrderId(orderData.id);
-
-      const handler = window.PaystackPop.setup({
-        key: 'pk_live_21207f639d252b46e35e171dca6b075f79cba433', 
-        email: user ? `${user.phone}@lekki-market.com` : 'guest@lekki.com',
-        amount: Math.round(totalDue * 100), 
-        currency: 'NGN',
-        onClose: () => setIsProcessing(false),
-        callback: (res) => {
-          setIsProcessing(false);
-          verifyPaymentOnBackend(res.reference, orderData.id);
-        }
-      });
-      handler.openIframe();
-    } catch (err) {
-      alert("Checkout failed.");
-      setIsProcessing(false);
-    }
-  };
-
-  const handleTrackOrder = async () => {
-    if (!trackInput) return alert("Please enter an Order ID");
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/orders/${trackInput}/`);
-      const data = await response.json();
-      if (response.ok) setTrackingData(data);
-      else alert("Order not found.");
+      } else { alert(data.error || "Authentication failed"); }
     } catch (err) { alert("Connection failed."); }
   };
 
-  // --- 4. CALCULATIONS ---
   const subTotalValue = cart.reduce((sum, item) => sum + (parseFloat(item.price) * item.quantity), 0);
   const totalDue = Math.max(0, subTotalValue - discount);
-
   const allFiltered = products.filter((p) => 
     p.category.toLowerCase() === category.toLowerCase() && 
     p.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
-
   const displayedProducts = allFiltered.slice(0, visibleCount);
 
-  // --- 5. RENDER ---
   return (
     <div className="app-grid-wrapper">
       <header>
         <h1>1-Stop Shop</h1>
         <div className="header-adv-frame">
-          <img src="/static/Shoping-ad.jpg" alt="Advertisement" className="adv-banner" />
+            <img src="/static/Shoping-ad.jpg" alt="Advertisement" className="adv-banner" />
         </div>
         <div className="search-bar">
-          <input type="text" placeholder="Search products..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+          <input type="text" placeholder="Search..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
         </div>
         <button className="cart-toggle" onClick={() => setCartOpen(!cartOpen)}>
           🛒 Cart ({cart.reduce((acc, item) => acc + item.quantity, 0)})
@@ -249,14 +134,12 @@ function App() {
 
       <nav className="main-nav">
         <ul>
-          <li><button className="nav-btn-link" onClick={() => { setView("grid"); setSelectedProduct(null); setIsSuccess(false); }}>Home</button></li>
-          <li><button className="nav-btn-link" onClick={() => { setView("tracking"); setTrackingData(null); }}>Track Order</button></li>
-          <li><button className="nav-btn-link" onClick={() => setView("account")}>Account</button></li>
+          <li><button className="nav-btn-link" onClick={() => { setView("grid"); setSelectedProduct(null); }}>Home</button></li>
           <li className="nav-auth">
             {user ? (
-              <div className="user-badge"><span className="user-welcome">Hi, <strong>{user.phone}</strong></span></div>
+              <div className="user-badge"><span>Hi, <strong>{user.phone}</strong></span></div>
             ) : (
-              <button className="register-link" onClick={() => { setView("auth"); setAuthMode("register"); }}>Register / Login</button>
+              <button className="register-link" onClick={() => { setView("auth"); setAuthMode("login"); }}>Login / Register</button>
             )}
           </li>
         </ul>
@@ -280,99 +163,37 @@ function App() {
              <div className="auth-card">
                <h1>{authMode === "login" ? "Welcome Back" : "Create Account"}</h1>
                <form onSubmit={handleAuth} className="auth-form">
-                  <div className="form-group">
-                    <label>Phone Number</label>
-                    <input type="tel" placeholder="Enter your phone number" required value={authData.phone} onChange={(e) => setAuthData({...authData, phone: e.target.value})} />
-                  </div>
-                  <div className="form-group">
-                    <label>Password</label>
-                    <input type="password" placeholder="Enter your password" required value={authData.password} onChange={(e) => setAuthData({...authData, password: e.target.value})} />
-                  </div>
+                  <input type="tel" placeholder="Phone Number" required value={authData.phone} onChange={(e) => setAuthData({...authData, phone: e.target.value})} />
+                  <input type="password" placeholder="Password" required value={authData.password} onChange={(e) => setAuthData({...authData, password: e.target.value})} />
                   <button type="submit" className="auth-submit-btn">{authMode === "login" ? "Login" : "Register"}</button>
                </form>
                <p className="auth-toggle-text" onClick={() => setAuthMode(authMode === "login" ? "register" : "login")}>
-                 {authMode === "login" ? "New here? Create an account" : "Already have an account? Login"}
+                 {authMode === "login" ? "New here? Register" : "Have an account? Login"}
                </p>
              </div>
           </div>
-        ) : view === "tracking" ? (
-          <div className="view-container tracking-screen">
-            <h1>📦 Track Your Shipment</h1>
-            <div className="track-search-box">
-              <input type="text" placeholder="Enter Order ID" value={trackInput} onChange={(e) => setTrackInput(e.target.value)} />
-              <button onClick={handleTrackOrder}>Check Status</button>
-            </div>
-            {trackingData && (
-              <div className="tracking-timeline">
-                <div className="step active"><div className="info"><strong>Status: {trackingData.status}</strong></div></div>
-              </div>
-            )}
-            <button className="back-btn" onClick={() => setView("grid")}>Back</button>
-          </div>
-        ) : view === "account" ? (
-          <div className="view-container account-screen">
-            <h1>Order History</h1>
-            <div className="order-history">
-              {userOrders.map((order) => (
-                <div key={order.id} className="history-item">
-                  <strong>Order #{order.id}</strong>
-                  <span>₦{parseFloat(order.total_price || 0).toLocaleString()}</span>
-                  <button onClick={() => window.open(`${API_BASE_URL}/api/invoices/generate?order_id=${order.id}`, "_blank")}>PDF</button>
-                </div>
-              ))}
-            </div>
-          </div>
-        ) : isSuccess ? (
-          <div className="view-container success-screen">
-            <h2>✅ Payment Confirmed!</h2>
-            <button onClick={() => setIsSuccess(false)}>Continue Shopping</button>
-          </div>
         ) : selectedProduct ? (
           <div className="view-container detail-screen">
-            <button onClick={() => { setSelectedProduct(null); setActiveImage(null); }}>← Back</button>
-            
-            <div className="detail-layout" style={{ display: 'flex', gap: '30px', marginTop: '20px' }}>
-              <div className="image-gallery-container" style={{ flex: 1 }}>
+            <button className="back-btn" onClick={() => { setSelectedProduct(null); setActiveImage(null); }}>← Back to Products</button>
+            <div className="detail-layout">
+              {/* Image Section */}
+              <div className="image-gallery-container">
                 <div className="main-image-frame">
-                  <img 
-                    src={activeImage || selectedProduct.image_display} 
-                    alt={selectedProduct.name} 
-                    style={{ width: "100%", borderRadius: "12px", border: '1px solid #ddd', minHeight: '300px', objectFit: 'cover' }} 
-                  />
+                  <img src={activeImage || selectedProduct.image_display} alt={selectedProduct.name} />
                 </div>
-                
-                <div className="thumbnail-row" style={{ display: 'flex', gap: '10px', marginTop: '15px', overflowX: 'auto' }}>
-                  <img 
-                    src={selectedProduct.image_display}
-                    alt="Main view"
-                    onClick={() => setActiveImage(selectedProduct.image_display)}
-                    style={{ 
-                      width: '60px', height: '60px', cursor: 'pointer', borderRadius: '4px', objectFit: 'cover',
-                      border: (activeImage === selectedProduct.image_display || !activeImage) ? '2px solid #2e7d32' : '1px solid #ccc' 
-                    }}
-                  />
+                <div className="thumbnail-row">
+                  <img src={selectedProduct.image_display} alt="Main" className="thumb" onClick={() => setActiveImage(selectedProduct.image_display)} />
                   {selectedProduct.additional_images?.map((img, idx) => (
-                    <img 
-                      key={idx}
-                      src={img.image}
-                      alt={img.alt_text || `View ${idx + 1}`}
-                      onClick={() => setActiveImage(img.image)}
-                      style={{ 
-                        width: '60px', height: '60px', cursor: 'pointer', borderRadius: '4px', objectFit: 'cover',
-                        border: activeImage === img.image ? '2px solid #2e7d32' : '1px solid #ccc' 
-                      }}
-                    />
+                    <img key={idx} src={img.image_url} alt="Extra" className="thumb" onClick={() => setActiveImage(img.image_url)} />
                   ))}
                 </div>
               </div>
-
-              <div className="detail-info" style={{ flex: 1 }}>
+              {/* Text Section */}
+              <div className="detail-info">
                 <h1>{selectedProduct.name}</h1>
-                <h2 style={{ color: '#2e7d32' }}>₦{parseFloat(selectedProduct.price).toLocaleString()}</h2>
-                <p className="description">{selectedProduct.description || "Premium quality product."}</p>
-                <button className="add-btn" style={{ padding: '15px 30px', fontSize: '1.1rem' }} onClick={() => addToCart(selectedProduct)}>
-                  Add to Cart
-                </button>
+                <h2 className="price-tag">₦{parseFloat(selectedProduct.price).toLocaleString()}</h2>
+                <p className="description">{selectedProduct.description || "Premium quality item."}</p>
+                <button className="add-btn large" onClick={() => addToCart(selectedProduct)}>Add to Cart</button>
               </div>
             </div>
           </div>
@@ -383,28 +204,6 @@ function App() {
                 <ProductCard key={p.id} product={p} onAddToCart={addToCart} onSelect={setSelectedProduct} />
               ))}
             </div>
-
-            {visibleCount < allFiltered.length && (
-              <div className="load-more-container" style={{ textAlign: 'center', margin: '40px 0' }}>
-                <button 
-                  className="see-more-btn"
-                  onClick={() => setVisibleCount(prev => prev + PAGE_SIZE)}
-                  style={{
-                    padding: '12px 40px',
-                    backgroundColor: '#2e7d32',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '25px',
-                    cursor: 'pointer',
-                    fontSize: '1rem',
-                    fontWeight: 'bold',
-                    boxShadow: '0 4px 10px rgba(46, 125, 50, 0.2)'
-                  }}
-                >
-                  See More Products
-                </button>
-              </div>
-            )}
           </div>
         )}
       </main>
@@ -415,27 +214,14 @@ function App() {
           <div className="cart-items-list">
             {cart.map((item, index) => (
               <div key={index} className="cart-item-row">
-                <div className="cart-item-info">
-                  <strong>{item.name} (x{item.quantity})</strong>
-                  <span>₦{(parseFloat(item.price) * item.quantity).toLocaleString()}</span>
-                </div>
+                <strong>{item.name} (x{item.quantity})</strong>
                 <button onClick={() => setCart(cart.filter((_, i) => i !== index))}>×</button>
               </div>
             ))}
-            {cart.length === 0 && <p>Your bag is empty.</p>}
           </div>
-
-          <div className="gift-card-input-wrapper">
-             <input type="text" placeholder="EOY Gift Code" value={giftCardCode} onChange={(e) => setGiftCardCode(e.target.value)} />
-             <button onClick={applyGiftCard}>Apply</button>
-          </div>
-
           <div className="total-section">
-            <p>Subtotal: ₦{subTotalValue.toLocaleString()}</p>
-            <p className="final-total">Total: <strong>₦{totalDue.toLocaleString()}</strong></p>
-            <button className="vendor-btn paystack" disabled={isProcessing} onClick={checkoutWithPaystack}>
-              {isProcessing ? "Processing..." : "Pay Now"}
-            </button>
+            <p className="final-total">Total: ₦{totalDue.toLocaleString()}</p>
+            <button className="vendor-btn paystack" onClick={() => alert("Checkout logic here")}>Pay Now</button>
             <button className="clear-cart-btn" onClick={clearCart}>Clear Cart</button>
           </div>
         </div>
