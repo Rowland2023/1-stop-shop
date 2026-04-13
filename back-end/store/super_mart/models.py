@@ -1,10 +1,14 @@
 from django.db import models
 from cloudinary.models import CloudinaryField
-
 # --- 1. SHARED INFRASTRUCTURE ---
 
 class Department(models.Model):
+    """
+    Unified Department model. 
+    This table is shared with the Node.js Employee Service.
+    """
     name = models.CharField(max_length=100, unique=True)
+    # Adding timestamps to match Sequelize default behavior
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -12,6 +16,7 @@ class Department(models.Model):
         return self.name
     
     def save(self, *args, **kwargs):
+        # Emulate the 'trim' logic from your Node.js model
         if self.name:
             self.name = self.name.strip()
         super().save(*args, **kwargs)
@@ -39,7 +44,7 @@ class Product(models.Model):
     name = models.CharField(max_length=255)
     price = models.DecimalField(max_digits=12, decimal_places=2)
     category = models.CharField(max_length=50, choices=CATEGORY_CHOICES)
-    description = models.TextField(blank=True, null=True) # Kept to avoid Serializer errors
+    #main_image = models.ImageField(upload_to='products/main/', blank=True, null=True)
     main_image = CloudinaryField('image', null=True, blank=True)
     image_path = models.CharField(max_length=500, blank=True, null=True)
 
@@ -48,7 +53,7 @@ class Product(models.Model):
 
 class ProductImage(models.Model):
     product = models.ForeignKey(Product, related_name='images', on_delete=models.CASCADE)
-    image = CloudinaryField('image', blank=True, null=True) 
+    image = models.ImageField(upload_to='products/gallery/', blank=True, null=True) 
     alt_text = models.CharField(max_length=100, blank=True)
 
 class Order(models.Model):
@@ -70,33 +75,23 @@ class OrderItem(models.Model):
     quantity = models.PositiveIntegerField(default=1)
     price_at_purchase = models.DecimalField(max_digits=12, decimal_places=2)
 
-# --- 3. MARKETING & PROMOTIONS (CORRECTED) ---
-
-class Advertisement(models.Model):
-    AD_LOCATION_CHOICES = [
-        ('header_main', 'Top Header (Near Logo)'),
-        ('sidebar', 'Sidebar'),
-        ('popup', 'Flash Sale Popup'),
-    ]
-    # Changed from 'name' to 'title' to match Admin.py list_display
-    title = models.CharField(max_length=100) 
-    image = CloudinaryField('image')
-    link_url = models.URLField(blank=True, null=True, help_text="Where the user goes when they click")
-    location = models.CharField(max_length=50, choices=AD_LOCATION_CHOICES, default='header_main')
-    is_active = models.BooleanField(default=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return f"{self.title} ({self.location})"
-
-# --- 4. EMPLOYEE MANAGEMENT (HRM) ---
+# --- 3. EMPLOYEE MANAGEMENT (HRM) ---
 
 class Employee(models.Model):
     employee_id = models.CharField(max_length=20, unique=True)
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
     email = models.EmailField(unique=True)
-    department = models.ForeignKey(Department, on_delete=models.SET_NULL, null=True, related_name='employees')
+    
+    # CRITICAL CHANGE: Refactored from CharField to ForeignKey
+    # to match the Node.js Sequelize association
+    department = models.ForeignKey(
+        Department, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        related_name='employees'
+    )
+    
     position = models.CharField(max_length=100)
     salary = models.DecimalField(max_digits=12, decimal_places=2)
     is_active = models.BooleanField(default=True)
