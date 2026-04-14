@@ -14,17 +14,19 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /app
 
-# Install Python dependencies
-COPY store/requirements.txt . 
+# 1. FIX: Updated path to find requirements.txt from the 'market-place/' root
+COPY back-end/store/requirements.txt . 
+
+# 2. Install dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy project files
-COPY . .
+# 3. FIX: Copy the back-end contents into /app
+# This ensures manage.py is in the root of /app
+COPY back-end/ .
 
 # Expose Render's default port
 EXPOSE 10000
 
-# RUNTIME OPTIMIZATION: 
-# We run collectstatic and migrate at start, not during build.
-# This prevents 'ImportError' from killing the image creation.
+# RUNTIME OPTIMIZATION
+# Since manage.py is now in /app, these commands will work perfectly.
 CMD ["sh", "-c", "python manage.py collectstatic --no-input && python manage.py migrate && gunicorn store.wsgi:application --bind 0.0.0.0:10000 --timeout 120 --workers 3"]
