@@ -14,7 +14,7 @@ INVOICE_SERVICE_URL = os.environ.get('INVOICE_SERVICE_URL', 'https://invoice-ser
 admin.site.site_header = "Lagos Tech Hub: Unified Marketplace & HRM"
 admin.site.index_title = "Command Center"
 
-# --- 2. Inlines (Product Reviews / Order Items) ---
+# --- 2. Inlines ---
 class ProductImageInline(admin.TabularInline):
 
     """
@@ -36,19 +36,21 @@ class OrderItemInline(admin.TabularInline):
     readonly_fields = ('product', 'quantity', 'price_at_purchase')
     can_delete = False
 
-# --- 3. Advertisement Management (Header/Sidebar Ads) ---
+# --- 3. Advertisement Management (FIXED: Removed 'location' to prevent crash) ---
 @admin.register(Advertisement)
 class AdvertisementAdmin(admin.ModelAdmin):
-    # 'location' helps you distinguish between 'header' and 'sidebar'
-    list_display = ('ad_preview', 'title', 'location', 'is_active', 'created_at')
-    list_editable = ('is_active', 'location')
-    list_filter = ('location', 'is_active')
+    # We use 'title' and 'is_active' as they are standard fields
+    list_display = ('ad_preview', 'title', 'is_active', 'created_at')
+    list_editable = ('is_active',)
+    list_filter = ('is_active', 'created_at')
     
     def ad_preview(self, obj):
-        if obj.image:
-            return format_html('<img src="{}" style="width: 120px; height: auto; border-radius: 4px; border: 1px solid #eee;" />', obj.image.url)
+        if hasattr(obj, 'image') and obj.image:
+            return format_html('<img src="{}" style="width: 120px; height: auto; border-radius: 4px;" />', obj.image.url)
         return "No Image"
-    ad_preview.short_description = "Live Preview"
+    ad_preview.short_description = "Preview"
+
+# --- 4. Product & Review Optimization ---
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
     list_display = ('thumbnail_tag', 'name', 'category', 'price')
@@ -56,13 +58,9 @@ class ProductAdmin(admin.ModelAdmin):
     search_fields = ('name',)
     inlines = [ProductImageInline]
 
-    fieldsets = (
-        ("General Info", {'fields': ('name', 'category', 'price', 'main_image')}),
-        ("Review Description", {'fields': ('description',)}),
-    )
-
     def thumbnail_tag(self, obj):
-        img = getattr(obj, 'main_image', None)
+        # Safely check for different image field names
+        img = getattr(obj, 'main_image', getattr(obj, 'image_display', None))
         if img:
             return format_html('<img src="{}" style="width: 50px; height: 50px; border-radius: 5px; object-fit: cover;" />', img.url)
         return "No Image"
@@ -89,5 +87,6 @@ class PayrollAdmin(admin.ModelAdmin):
 class EmployeeAdmin(admin.ModelAdmin):
     list_display = ('employee_id', 'first_name', 'last_name', 'department')
 
+# Final Registrations (Checked for duplicates)
 admin.site.register(Department)
 admin.site.register(Attendance)
