@@ -447,3 +447,243 @@ header {
   border-radius: 4px;
   cursor: pointer;
 }
+
+.detail-layout {
+  display: flex;
+  gap: 30px;
+  align-items: flex-start;
+  margin-top: 20px;
+}
+
+.image-gallery-container {
+  flex: 1;
+  max-width: 500px; /* Constrains the entire gallery */
+}
+
+.main-image-frame {
+  width: 100%;
+  height: 400px; /* Fixes height so it doesn't push down the page */
+  border: 1px solid #ddd;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: #fff;
+  overflow: hidden;
+}
+
+.main-image-frame img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain; /* Prevents huge images from breaking the frame */
+}
+
+.thumbnail-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+  flex-wrap: wrap;
+}
+
+.thumb {
+  width: 70px;
+  height: 70px;
+  object-fit: cover;
+  cursor: pointer;
+  border: 2px solid transparent;
+  border-radius: 4px;
+}
+
+.thumb:hover {
+  border-color: #007bff;
+}
+
+.detail-info {
+  flex: 1;
+}
+
+.logo-section {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.header-ad-link {
+  display: flex;
+  align-items: center;
+}
+
+.header-promo-img {
+  max-height: 50px; /* Adjust based on your header height */
+  width: auto;
+  border-radius: 5px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  transition: transform 0.2s;
+}
+
+.header-promo-img:hover {
+  transform: scale(1.03);
+}
+
+
+/* Fix for the Top Advertisement */
+.header-adv-frame {
+  width: 100%;
+  height: 120px; /* Fixed height for the banner */
+  overflow: hidden;
+  border-radius: 8px;
+  background: #eee;
+}
+
+.adv-banner {
+  width: 100%;
+  height: 100%;
+  object-fit: contain; /* Ensures the whole ad is visible without cropping */
+}
+
+/* Fix for the "Oversized" Review/Detail Images */
+.main-image-frame {
+  width: 100%;
+  max-width: 500px; /* Limits width */
+  height: 400px;    /* Fixed height for uniformity */
+  margin: 0 auto;
+  overflow: hidden;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.review-image-main {
+  width: 100%;
+  height: 100%;
+  object-fit: contain; /* Prevents zooming/oversizing */
+}
+
+/* Thumbnail Styling */
+.thumbnail-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+  justify-content: center;
+}
+
+.thumb-item {
+  width: 60px;
+  height: 60px;
+  border: 2px solid #ddd;
+  border-radius: 6px;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.thumb-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.thumb-item:hover {
+  border-color: #2e7d32;
+}
+
+/* Header & Logo */
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 15px 30px;
+  background: #fff;
+}
+
+.header-logo {
+  border: 1px solid #ddd;
+  object-fit: contain;
+}
+
+/* Nav Container */
+.main-nav {
+  border-top: 1px solid #eee;
+  border-bottom: 1px solid #eee;
+  background: #ffffff;
+}
+
+.main-nav ul {
+  display: flex;
+  align-items: center;
+  list-style: none;
+  padding: 12px 30px;
+  margin: 0;
+}
+
+/* Push navigation links to sides and search to center */
+.main-nav li {
+  margin: 0 10px;
+}
+
+/* Search Container Logic */
+.nav-search-container {
+  flex: 1; /* Makes the search take up the middle space */
+  display: flex;
+  justify-content: center;
+}
+
+.search-group {
+  display: flex;
+  width: 100%;
+  max-width: 550px;
+  height: 48px;
+}
+
+.nav-search-input {
+  flex: 1;
+  padding: 0 20px;
+  border: 2px solid #ddd;
+  border-right: none;
+  border-radius: 30px 0 0 30px; /* Big curved left edges */
+  font-size: 16px;
+  outline: none;
+}
+
+.nav-search-btn {
+  padding: 0 35px;
+  background-color: #ff8c00; /* Bright Orange */
+  color: white;
+  border: none;
+  border-radius: 0 30px 30px 0; /* Big curved right edges */
+  font-weight: bold;
+  font-size: 16px;
+  cursor: pointer;
+  text-transform: uppercase;
+  transition: background 0.2s ease;
+}
+
+.nav-search-btn:hover {
+  background-color: #e67e00;
+}
+
+.nav-btn-link {
+  background: none;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  color: #333;
+  font-size: 15px;
+}
+
+.register-link {
+  background: #333;
+  color: #fff;
+  padding: 8px 15px;
+  border-radius: 5px;
+  border: none;
+  cursor: pointer;
+}
+
+/* Responsiveness */
+@media (max-width: 850px) {
+  .main-nav ul {
+    flex-direction: column;
+    gap: 15px;
+  }
+  .nav-search-container {
+    width: 100%;
+  }
+}

@@ -1,6 +1,7 @@
 # Use a slim version of Python for a smaller footprint
 FROM python:3.11-slim
 
+
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
@@ -29,3 +30,4 @@ EXPOSE 10000
 # We run collectstatic and migrate at container startup.
 # This ensures that build-time logic errors don't stop the image creation.
 CMD ["sh", "-c", "python manage.py collectstatic --no-input && python manage.py migrate && gunicorn store.wsgi:application --bind 0.0.0.0:10000 --timeout 120 --workers 3"]
+
