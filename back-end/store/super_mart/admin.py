@@ -17,6 +17,11 @@ admin.site.index_title = "Command Center (PostgreSQL Powered)"
 
 # --- 2. Inlines ---
 class ProductImageInline(admin.TabularInline):
+
+    """
+    This enables the 'Product Review Tag' / Multi-image logic.
+    Users can upload several images that appear as a gallery on the frontend.
+    """
     model = ProductImage
     extra = 5  # Provides 5 empty slots for multiple image uploads
     fields = ('image', 'alt_text', 'image_preview')
@@ -26,7 +31,6 @@ class ProductImageInline(admin.TabularInline):
         if obj.image:
             return format_html('<img src="{}" style="width: 100px; height: auto; border-radius: 4px; border: 1px solid #ddd;" />', obj.image.url)
         return "Pending Upload"
-
 class OrderItemInline(admin.TabularInline):
     model = OrderItem
     extra = 0
@@ -70,9 +74,9 @@ class ProductAdmin(admin.ModelAdmin):
         if obj.image_display:
             return format_html('<img src="{}" style="width: 50px; height: 50px; border-radius: 5px; object-fit: cover;" />', obj.image_display.url)
         return "No Image"
-    thumbnail_tag.short_description = "General Image"
 
-# --- 5. Orders & Transactions ---
+    thumbnail_tag.short_description = "General Image"
+# --- 5. Transactions (Orders & Items) ---
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
     list_display = ('id', 'user_id', 'total_price', 'status', 'created_at', 'invoice_slip')
@@ -115,4 +119,3 @@ class EmployeeAdmin(admin.ModelAdmin):
 # --- 7. Final Registrations ---
 admin.site.register(Department)
 admin.site.register(Attendance)
-admin.site.register(PerformanceReview)
