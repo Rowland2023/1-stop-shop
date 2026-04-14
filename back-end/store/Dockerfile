@@ -14,18 +14,17 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /app
 
-# Install Python dependencies
-# Using path relative to market-place/ root
+# 1. Install dependencies first (for caching)
 COPY back-end/store/requirements.txt . 
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy project files from back-end into /app
-COPY back-end/ .
+# 2. CRITICAL FIX: Use the trailing slash to copy CONTENTS, not the folder itself
+# This puts manage.py directly into /app
+COPY back-end/ ./
 
-# Expose Render's default port
+# 3. Expose Render's default port
 EXPOSE 10000
 
-# RUNTIME EXECUTION: 
-# We run collectstatic and migrate at container startup.
-# This ensures that build-time logic errors don't stop the image creation.
-CMD ["sh", "-c", "python manage.py collectstatic --no-input && python manage.py migrate && gunicorn store.wsgi:application --bind 0.0.0.0:10000 --timeout 120 --workers 3"]
+# 4. Runtime execution
+# Added --log-level debug to help us see if anything else pops up
+CMD ["sh", "-c", "python manage.py collectstatic --no-input && python manage.py migrate && gunicorn store.wsgi:application --bind 0.0.0.0:10000 --timeout 120 --workers 3 --log-level debug"]
