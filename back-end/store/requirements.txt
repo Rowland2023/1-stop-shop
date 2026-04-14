@@ -9,3 +9,6 @@ django-jazzmin
 Pillow
 dj-database-url
 gunicorn
+django-cloudinary-storage
+cloudinary
+whitenoise==6.6.0

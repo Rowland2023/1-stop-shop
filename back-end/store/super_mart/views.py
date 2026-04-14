@@ -1,5 +1,5 @@
 from django.db import transaction
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
 from rest_framework import viewsets, status
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
@@ -39,22 +39,12 @@ def register_user(request):
 @authentication_classes([])
 @permission_classes([AllowAny])
 def login_user(request):
-    """Satisfies api/login/ path"""
     username = request.data.get('username')
     password = request.data.get('password')
     user = authenticate(username=username, password=password)
     if user:
         return Response({"message": "Login successful", "username": user.username})
     return Response({"error": "Invalid credentials"}, status=401)
-
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def user_profile(request):
-    """Satisfies api/profile/ path if exists in urls.py"""
-    return Response({
-        "username": request.user.username,
-        "email": request.user.email
-    })
 
 # --- 2. MARKETPLACE: PRODUCT VIEWSET ---
 
