@@ -1,14 +1,10 @@
 from django.db import models
+from cloudinary.models import CloudinaryField
 
 # --- 1. SHARED INFRASTRUCTURE ---
 
 class Department(models.Model):
-    """
-    Unified Department model. 
-    This table is shared with the Node.js Employee Service.
-    """
     name = models.CharField(max_length=100, unique=True)
-    # Adding timestamps to match Sequelize default behavior
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -16,7 +12,6 @@ class Department(models.Model):
         return self.name
     
     def save(self, *args, **kwargs):
-        # Emulate the 'trim' logic from your Node.js model
         if self.name:
             self.name = self.name.strip()
         super().save(*args, **kwargs)
@@ -29,31 +24,34 @@ class Product(models.Model):
         ('electronics', 'Electronics'),
         ('office', 'Office Supplies'),
         ('style&fashion', 'Style & Fashion'),
-        ('home', 'Home & Garden'),  
-        ('toys', 'Toys & Games '),
-        ('health', 'Health & Beauty'),
-        ('sports', 'Sports & Outdoors'),
-        ('automotive', 'Automotive'),
-        ('books', 'Books & Media'),
-        ('miscKitchen', 'Kitchen & Dining'),
         ('sex-toys', 'Sex-Toys'),
         ('rent-house','House-Rent'),
         ('car-sales','Car-Sales'),
         ('kitchen-items','Kitchen-Items'),
+        # ... keep your others
     ]
     name = models.CharField(max_length=255)
+    description = models.TextField(blank=True, null=True) # Added for React Detail Page
     price = models.DecimalField(max_digits=12, decimal_places=2)
     category = models.CharField(max_length=50, choices=CATEGORY_CHOICES)
-    main_image = models.ImageField(upload_to='products/main/', blank=True, null=True)
-    image_path = models.CharField(max_length=500, blank=True, null=True)
+    
+    # Use Cloudinary for consistency
+    main_image = CloudinaryField('image', null=True, blank=True)
 
     def __str__(self):
         return self.name
 
 class ProductImage(models.Model):
+    """Gallery/Review images for the product"""
     product = models.ForeignKey(Product, related_name='images', on_delete=models.CASCADE)
-    image = models.ImageField(upload_to='products/gallery/', blank=True, null=True) 
+    # CHANGE: Switched from ImageField to CloudinaryField
+    image = CloudinaryField('image', null=True, blank=True) 
     alt_text = models.CharField(max_length=100, blank=True)
+
+    def __str__(self):
+        return f"Review Image for {self.product.name}"
+
+# --- 3. ORDERS ---
 
 class Order(models.Model):
     STATUS_CHOICES = [
@@ -64,7 +62,7 @@ class Order(models.Model):
         ('Cancelled', 'Cancelled'),
     ]
     user_id = models.CharField(max_length=100)
-    total_price = models.DecimalField(max_digits=10, decimal_places=2)
+    total_price = models.DecimalField(max_digits=12, decimal_places=2)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Pending')
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -74,23 +72,14 @@ class OrderItem(models.Model):
     quantity = models.PositiveIntegerField(default=1)
     price_at_purchase = models.DecimalField(max_digits=12, decimal_places=2)
 
-# --- 3. EMPLOYEE MANAGEMENT (HRM) ---
+# --- 4. HRM ---
 
 class Employee(models.Model):
     employee_id = models.CharField(max_length=20, unique=True)
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
     email = models.EmailField(unique=True)
-    
-    # CRITICAL CHANGE: Refactored from CharField to ForeignKey
-    # to match the Node.js Sequelize association
-    department = models.ForeignKey(
-        Department, 
-        on_delete=models.SET_NULL, 
-        null=True, 
-        related_name='employees'
-    )
-    
+    department = models.ForeignKey(Department, on_delete=models.SET_NULL, null=True, related_name='employees')
     position = models.CharField(max_length=100)
     salary = models.DecimalField(max_digits=12, decimal_places=2)
     is_active = models.BooleanField(default=True)
