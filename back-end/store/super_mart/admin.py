@@ -13,10 +13,15 @@ INVOICE_SERVICE_URL = os.environ.get('INVOICE_SERVICE_URL', 'https://invoice-ser
 # --- 1. Global Site Branding ---
 admin.site.site_header = "Lagos Tech Hub: Unified Marketplace & HRM"
 admin.site.site_title = "Admin Portal"
-admin.site.index_title = "Command Center (PostgreSQL Powered)"
+admin.site.index_title = "Command Center"
 
 # --- 2. Inlines ---
 class ProductImageInline(admin.TabularInline):
+
+    """
+    This enables the 'Product Review Tag' / Multi-image logic.
+    Users can upload several images that appear as a gallery on the frontend.
+    """
     model = ProductImage
     extra = 3  
     fields = ('image', 'alt_text', 'image_preview')
@@ -28,6 +33,7 @@ class ProductImageInline(admin.TabularInline):
         return "Pending Upload"
 
 # --- 3. Product & Inventory Management ---
+
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
     list_display = ('thumbnail_tag', 'name', 'category', 'price')
@@ -51,9 +57,11 @@ class ProductImageAdmin(admin.ModelAdmin):
     def image_preview(self, obj):
         if obj.image:
             return format_html('<img src="{}" style="width: 50px; height: auto;" />', obj.image.url)
+        if hasattr(obj, 'main_image') and obj.main_image:
+            return format_html('<img src="{}" style="width: 45px; height: 45px; border-radius: 5px; object-fit: cover;" />', obj.main_image.url)
         return "No Image"
 
-# --- 4. Other Models ---
+# --- 5. HRM & Transactions (Maintaining your existing logic) ---
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
     list_display = ('id', 'user_id', 'total_price', 'status')
@@ -68,3 +76,4 @@ admin.site.register(Attendance)
 admin.site.register(Payroll)
 admin.site.register(PerformanceReview)
 admin.site.register(Advertisement)
+

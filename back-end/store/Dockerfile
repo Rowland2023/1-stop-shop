@@ -1,5 +1,5 @@
 FROM python:3.11-slim
-
+# Set environment 
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
@@ -23,6 +23,5 @@ COPY back-end/ .
 WORKDIR /app/store
 
 EXPOSE 10000
-
 # Now 'python manage.py' will work because we are in /app/store
 CMD ["sh", "-c", "python manage.py collectstatic --no-input && python manage.py migrate && gunicorn store.wsgi:application --bind 0.0.0.0:10000 --timeout 120 --workers 3"]
