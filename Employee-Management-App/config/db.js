@@ -1,30 +1,20 @@
-const { Pool } = require('pg');
+const mongoose = require('mongoose');
 
 const connectDB = async () => {
-  const connectionString = process.env.DATABASE_URL;
+  const uri = process.env.MONGO_URI;
 
-  if (!connectionString) {
-    throw new Error('Missing DATABASE_URL in environment variables');
+  if (!uri) {
+    throw new Error('Missing MONGO_URI in environment variables');
   }
 
-  // A Pool is better for web apps than a single Client connection
-  const pool = new Pool({
-    connectionString: connectionString,
-    // Optional: Render often requires SSL in production
-    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
-  });
-
   try {
-    // Testing the connection
-    const client = await pool.connect();
-    console.log('✅ PostgreSQL connected');
-    
-    // Release the client back to the pool
-    client.release();
-    
-    return pool; 
+    await mongoose.connect(uri, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true
+    });
+    console.log('✅ MongoDB connected');
   } catch (err) {
-    console.error('❌ PostgreSQL connection error:', err.message);
+    console.error('❌ MongoDB connection error:', err);
     throw err;
   }
 };

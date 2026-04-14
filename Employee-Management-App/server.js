@@ -1,23 +1,18 @@
-require('dotenv').config();
 const app = require('./app');
-const { connectDB } = require('./config/db');
-require('./models'); // Initializes associations
+const mongoose = require('mongoose');
 
 const PORT = process.env.PORT || 3000;
+// Note: 'mongodb' matches the service name in your docker-compose.yml
+const MONGO_URI = process.env.MONGO_URI || 'mongodb://mongodb:27017/employee';
 
-const startServer = async () => {
-  try {
-    // connectDB now handles the PostgreSQL connection and .sync()
-    await connectDB();
-    
+mongoose.connect(MONGO_URI)
+  .then(() => {
+    console.log('Connected to MongoDB via Service: mongodb');
     app.listen(PORT, '0.0.0.0', () => {
-      console.log(`✅ Employee Service active on port ${PORT}`);
-      console.log(`📡 Database: PostgreSQL via service "database"`);
+      console.log(`Employee Service active on port ${PORT}`);
     });
-  } catch (err) {
-    console.error('❌ Database connection failed. Exiting...', err);
-    process.exit(1); 
-  }
-};
-
-startServer();
+  })
+  .catch(err => {
+    console.error('Database connection failed. Exiting...', err);
+    process.exit(1); // Tell Docker the container failed
+  });

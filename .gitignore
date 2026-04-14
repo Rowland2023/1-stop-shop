@@ -6,5 +6,3 @@ node_modules/
 __pycache__/
 .env
 .DS_Store
-back-end/store/static/images/
-back-end/store/static/*.jpg
