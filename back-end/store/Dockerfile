@@ -1,10 +1,11 @@
-# Optimized for Python 3.11 Slim
+# Use a slim version of Python for a smaller footprint
 FROM python:3.11-slim
 
+# Set environment variables
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
-# Install system dependencies for PostgreSQL and Pillow
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
     libpq-dev \
     gcc \
@@ -13,18 +14,18 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /app
 
-# 1. Copy requirements from the specific subfolder relative to market-place/
+# Install Python dependencies
+# Using path relative to market-place/ root
 COPY back-end/store/requirements.txt . 
-
-# 2. Install dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# 3. Copy the backend code into the container root
+# Copy project files from back-end into /app
 COPY back-end/ .
 
-# 4. Port exposure for Render
+# Expose Render's default port
 EXPOSE 10000
 
-# 5. Runtime execution: We move collectstatic here to prevent Build-Time failures.
-# This ensures that even if models change, the build will finish and you can debug on-the-fly.
+# RUNTIME EXECUTION: 
+# We run collectstatic and migrate at container startup.
+# This ensures that build-time logic errors don't stop the image creation.
 CMD ["sh", "-c", "python manage.py collectstatic --no-input && python manage.py migrate && gunicorn store.wsgi:application --bind 0.0.0.0:10000 --timeout 120 --workers 3"]
