@@ -46,11 +46,11 @@ class Migration(migrations.Migration):
             name='category',
             field=models.CharField(choices=[('food', 'Food & Drinks'), ('electronics', 'Electronics'), ('office', 'Office Supplies'), ('style&fashion', 'Style & Fashion'), ('home', 'Home & Garden'), ('toys', 'Toys & Games '), ('health', 'Health & Beauty'), ('sports', 'Sports & Outdoors'), ('automotive', 'Automotive'), ('books', 'Books & Media'), ('miscKitchen', 'Kitchen & Dining'), ('sex-toys', 'Sex-Toys'), ('rent-house', 'House-Rent'), ('car-sales', 'Car-Sales'), ('kitchen-items', 'Kitchen-Items')], max_length=50),
         ),
-        migrations.AlterField(
-            model_name='product',
-            #name='image_path',
-            field=models.CharField(blank=True, max_length=500, null=True),
-        ),
+        #migrations.AlterField(
+        #    model_name='product',
+        #    name='image_path',
+        #    field=models.CharField(blank=True, max_length=500, null=True),
+        #),
         migrations.CreateModel(
             name='Attendance',
             fields=[
