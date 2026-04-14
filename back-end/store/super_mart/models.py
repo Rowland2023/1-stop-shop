@@ -1,4 +1,5 @@
 from django.db import models
+from cloudinary.models import CloudinaryField
 
 # --- 1. SHARED INFRASTRUCTURE ---
 
@@ -41,28 +42,48 @@ class Product(models.Model):
         ('rent-house','House-Rent'),
         ('car-sales','Car-Sales'),
         ('kitchen-items','Kitchen-Items'),
+        # ... keep your others
     ]
     name = models.CharField(max_length=255)
+
     description = models.TextField(blank=True, null=True) # Added for the "Description Section"
     price = models.DecimalField(max_digits=12, decimal_places=2)
     category = models.CharField(max_length=50, choices=CATEGORY_CHOICES)
     # image_display is the "General Image" used in Admin/Frontend
     image_display = models.ImageField(upload_to='products/main/', blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    description = models.TextField(blank=True, null=True) # Added for React Detail Page
+    price = models.DecimalField(max_digits=12, decimal_places=2)
+    category = models.CharField(max_length=50, choices=CATEGORY_CHOICES)
+    
+    # Use Cloudinary for consistency
+    main_image = CloudinaryField('image', null=True, blank=True)
+
 
     def __str__(self):
         return self.name
 
 class ProductImage(models.Model):
+
     """Used for the 'Product Review Tags' / Multiple Gallery Images"""
     product = models.ForeignKey(Product, related_name='additional_images', on_delete=models.CASCADE)
     image = models.ImageField(upload_to='products/gallery/') 
+
+    """Gallery/Review images for the product"""
+    product = models.ForeignKey(Product, related_name='images', on_delete=models.CASCADE)
+    # CHANGE: Switched from ImageField to CloudinaryField
+    image = CloudinaryField('image', null=True, blank=True) 
     alt_text = models.CharField(max_length=100, blank=True)
+
+    def __str__(self):
+        return f"Review Image for {self.product.name}"
+
+# --- 3. ORDERS ---
 
 class Order(models.Model):
     STATUS_CHOICES = [('Pending', 'Pending'), ('Processing', 'Processing'), ('Shipped', 'Shipped'), ('Delivered', 'Delivered')]
     user_id = models.CharField(max_length=100)
-    total_price = models.DecimalField(max_digits=10, decimal_places=2)
+    total_price = models.DecimalField(max_digits=12, decimal_places=2)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Pending')
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -72,7 +93,7 @@ class OrderItem(models.Model):
     quantity = models.PositiveIntegerField(default=1)
     price_at_purchase = models.DecimalField(max_digits=12, decimal_places=2)
 
-# --- 3. EMPLOYEE MANAGEMENT (HRM) ---
+# --- 4. HRM ---
 
 class Employee(models.Model):
     employee_id = models.CharField(max_length=20, unique=True)
