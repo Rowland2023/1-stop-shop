@@ -1,0 +1,11 @@
+django<6.0
+djangorestframework
+django-cors-headers
+requests
+celery
+redis
+psycopg2-binary
+django-jazzmin
+Pillow
+dj-database-url
+gunicorn
