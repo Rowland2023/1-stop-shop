@@ -1,11 +1,8 @@
-# Use a slim version of Python for a smaller footprint
 FROM python:3.11-slim
 
-# Set environment variables
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
-# Install system dependencies
 RUN apt-get update && apt-get install -y \
     libpq-dev \
     gcc \
@@ -14,17 +11,18 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /app
 
-# 1. Install dependencies first (for caching)
+# Copy the requirements from the store folder
 COPY back-end/store/requirements.txt . 
 RUN pip install --no-cache-dir -r requirements.txt
 
-# 2. CRITICAL FIX: Use the trailing slash to copy CONTENTS, not the folder itself
-# This puts manage.py directly into /app
-COPY back-end/ ./
+# Copy everything from back-end into /app
+COPY back-end/ .
 
-# 3. Expose Render's default port
+# --- THE FIX ---
+# Change directory to where manage.py actually lives
+WORKDIR /app/store
+
 EXPOSE 10000
 
-# 4. Runtime execution
-# Added --log-level debug to help us see if anything else pops up
-CMD ["sh", "-c", "python manage.py collectstatic --no-input && python manage.py migrate && gunicorn store.wsgi:application --bind 0.0.0.0:10000 --timeout 120 --workers 3 --log-level debug"]
+# Now 'python manage.py' will work because we are in /app/store
+CMD ["sh", "-c", "python manage.py collectstatic --no-input && python manage.py migrate && gunicorn store.wsgi:application --bind 0.0.0.0:10000 --timeout 120 --workers 3"]
