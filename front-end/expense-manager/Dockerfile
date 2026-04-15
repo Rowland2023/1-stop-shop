@@ -19,11 +19,11 @@ RUN rm /etc/nginx/conf.d/default.conf
 
 # 2. Copy your custom nginx.conf
 # Note: Ensure the path to your nginx.conf is correct (e.g., ./nginx.conf)
-COPY nginx/nginx.conf /etc/nginx/conf.d/default.conf
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 # 3. Copy the 'dist' folder from the build-stage to Nginx's HTML folder
 # Note: Vite uses 'dist', Create-React-App uses 'build'. Match this to your project.
-COPY --from=build-stage /app/dist /usr/share/nginx/html
+COPY ./build /usr/share/nginx/html
 
 # 4. Tell Render to use Port 10000
 EXPOSE 10000
