@@ -1,16 +1,22 @@
 FROM nginx:alpine
 
-# 1. Clear out ANY existing configs to prevent duplicates
-RUN rm -rf /etc/nginx/conf.d/*
+# 1. Eliminate every possible config source
+RUN rm -rf /etc/nginx/conf.d/* && \
+    rm -rf /etc/nginx/nginx.conf && \
+    rm -rf /etc/nginx/templates
 
-# 2. Copy your template to the 'templates' folder
-# The 20-envsubst-on-templates.sh script will process this automatically
-COPY default.conf.template /etc/nginx/templates/default.conf.template
+# 2. Copy your clean, standalone config
+COPY nginx.conf /etc/nginx/nginx.conf
 
 # 3. Copy your React build
 COPY ./build /usr/share/nginx/html
 
+# 4. Standard Render permissions fix
+RUN touch /var/run/nginx.pid && \
+    chown -R nginx:nginx /var/run/nginx.pid /var/cache/nginx /var/log/nginx
+
 EXPOSE 10000
 
-# Do NOT use a custom ENTRYPOINT here. 
-# We WANT the default /docker-entrypoint.sh to run so it can process the template.
+# 5. THE FIX: Directly execute the binary. 
+# This skips all those .sh scripts in your logs.
+ENTRYPOINT ["nginx", "-g", "daemon off;", "-c", "/etc/nginx/nginx.conf"]
