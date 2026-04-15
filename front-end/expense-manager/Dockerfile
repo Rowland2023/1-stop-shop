@@ -1,26 +1,25 @@
-FROM nginx:alpine
+# --- STAGE 1: BUILD ---
+FROM node:20-alpine AS build-stage
+WORKDIR /app
+COPY package*.json ./
+RUN npm install
+COPY . .
+RUN npm run build
 
-# 1. Forcefully remove EVERYTHING in the config directories
-# This stops the entrypoint scripts from finding templates to build duplicates
-RUN rm -rf /etc/nginx/conf.d/* && \
-    rm -rf /etc/nginx/nginx.conf && \
-    rm -rf /etc/nginx/templates
+# --- STAGE 2: PRODUCTION ---
+FROM nginx:stable-alpine
 
-# 2. Copy your clean, single-block config
-COPY nginx.conf /etc/nginx/nginx.conf
+# 1. Clean out the directory
+RUN rm -rf /etc/nginx/conf.d/*
 
-# 3. Copy your React build
-COPY ./build /usr/share/nginx/html
+# 2. Copy your config as 'proxy.conf'
+# This name prevents the '10-listen-on-ipv6' script from messing with it
+COPY nginx/nginx.conf.template /etc/nginx/conf.d/proxy.conf
 
-# 4. Fix permissions for the nginx user
-RUN touch /var/run/nginx.pid && \
-    chown -R nginx:nginx /var/run/nginx.pid && \
-    chown -R nginx:nginx /var/cache/nginx && \
-    chown -R nginx:nginx /var/log/nginx
+# 3. Copy build files
+COPY --from=build-stage /app/dist /usr/share/nginx/html
 
-# 5. Verify the syntax - if this fails, the build stops here
-RUN nginx -t
-
+# 4. Do NOT use ENTRYPOINT []. Let Render use the default.
 EXPOSE 10000
 
 CMD ["nginx", "-g", "daemon off;"]
