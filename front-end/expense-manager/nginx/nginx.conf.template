@@ -1,0 +1,15 @@
+server {
+    listen ${PORT}; # Using the KEY here
+    server_name localhost;
+
+    location / {
+        root   /usr/share/nginx/html;
+        index  index.html;
+        try_files $uri $uri/ /index.html;
+    }
+
+    location /api/ {
+        proxy_pass https://back-end-wdk7.onrender.com/api/;
+        proxy_set_header Host back-end-wdk7.onrender.com;
+    }
+}
