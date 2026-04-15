@@ -1,20 +1,25 @@
-FROM nginx:alpine
+# --- STAGE 1: BUILD ---
+FROM node:20-alpine AS build-stage
+WORKDIR /app
+COPY package*.json ./
+RUN npm install
+COPY . .
+RUN npm run build
 
-# Remove default configs to avoid duplicate listen directives
-RUN rm -rf /etc/nginx/conf.d/* \
-    && rm -rf /etc/nginx/nginx.conf \
-    && rm -rf /etc/nginx/templates
+# --- STAGE 2: PRODUCTION ---
+FROM nginx:stable-alpine
 
-# Copy your custom config and build output
-COPY nginx.conf /etc/nginx/nginx.conf
-COPY ./build /usr/share/nginx/html
+# 1. DELETE the default file so the script has nothing to "fix"
+RUN rm -f /etc/nginx/conf.d/default.conf
 
-# Fix permissions for Render's read-only filesystem layers
-RUN touch /var/run/nginx.pid \
-    && chown -R nginx:nginx /var/run/nginx.pid /var/cache/nginx /var/log/nginx
+# 2. Copy your config with a UNIQUE name
+# The script ONLY targets "default.conf", so it will ignore "frontend.conf"
+COPY nginx/nginx.conf /etc/nginx/conf.d/frontend.conf
 
-# Expose the dynamic port (informational only)
-EXPOSE ${PORT}
+# 3. Copy build files
+COPY --from=build-stage /app/dist /usr/share/nginx/html
 
-# Start Nginx directly
-ENTRYPOINT ["nginx", "-g", "daemon off;"]
+EXPOSE 10000
+
+# 4. We use the standard Nginx start command
+CMD ["nginx", "-g", "daemon off;"]
