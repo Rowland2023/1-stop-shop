@@ -13,7 +13,7 @@ COPY ./build /usr/share/nginx/html
 RUN touch /var/run/nginx.pid && \
     chown -R nginx:nginx /var/run/nginx.pid /var/cache/nginx /var/log/nginx
 
-EXPOSE ${PORT}
+EXPOSE 10000
 
 
 # THE CRITICAL CHANGE: Bypass the /docker-entrypoint.sh script entirely
