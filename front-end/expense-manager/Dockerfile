@@ -1,13 +1,16 @@
 FROM nginx:alpine
 
-# 1. Clean out defaults
+# 1. Clear out ANY existing configs to prevent duplicates
 RUN rm -rf /etc/nginx/conf.d/*
 
-# 2. Put your config in the TEMPLATES folder, NOT the conf.d folder
-# Nginx will automatically look here and swap ${PORT} for 10000
-COPY nginx.conf.template /etc/nginx/templates/default.conf.template
+# 2. Copy your template to the 'templates' folder
+# The 20-envsubst-on-templates.sh script will process this automatically
+COPY default.conf.template /etc/nginx/templates/default.conf.template
 
+# 3. Copy your React build
 COPY ./build /usr/share/nginx/html
 
 EXPOSE 10000
-# Don't use ENTRYPOINT here; let the default CMD handle the template swap
+
+# Do NOT use a custom ENTRYPOINT here. 
+# We WANT the default /docker-entrypoint.sh to run so it can process the template.
