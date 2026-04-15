@@ -1,15 +1,15 @@
 FROM nginx:alpine
 
-# Remove ALL existing configs to prevent any duplicates
-RUN rm -rf /etc/nginx/conf.d/* && rm -rf /etc/nginx/nginx.conf
+# Remove everything that could possibly hold a config
+RUN rm -rf /etc/nginx/conf.d/* \
+    && rm -rf /etc/nginx/nginx.conf \
+    && rm -rf /etc/nginx/templates  # <--- CRITICAL: Remove the templates too
 
-# Copy your custom config to the PRIMARY config path
 COPY nginx.conf /etc/nginx/nginx.conf
-
-# Copy your built frontend files
 COPY ./build /usr/share/nginx/html
 
-# Inform Render we are on 10000
-EXPOSE 10000
+# Final check: This will fail the build if a duplicate exists
+RUN nginx -t
 
+EXPOSE 10000
 CMD ["nginx", "-g", "daemon off;"]
