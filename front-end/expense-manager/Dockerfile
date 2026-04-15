@@ -1,26 +1,15 @@
-# --- STAGE 1: BUILD ---
-FROM node:20-alpine AS build-stage
-WORKDIR /app
-COPY package*.json ./
-RUN npm install
-COPY . .
-RUN npm run build
+FROM nginx:alpine
 
-# --- STAGE 2: PRODUCTION ---
-FROM nginx:stable-alpine
+# Remove ALL existing configs to prevent any duplicates
+RUN rm -rf /etc/nginx/conf.d/* && rm -rf /etc/nginx/nginx.conf
 
-# 1. Create the templates directory
-RUN mkdir -p /etc/nginx/templates
+# Copy your custom config to the PRIMARY config path
+COPY nginx.conf /etc/nginx/nginx.conf
 
-# 2. Copy your template there. 
-# The Nginx entrypoint will automatically process this into /etc/nginx/conf.d/default.conf
-COPY nginx/nginx.conf.template /etc/nginx/templates/default.conf.template
+# Copy your built frontend files
+COPY ./build /usr/share/nginx/html
 
-# 3. Copy the build files
-COPY --from=build-stage /app/dist /usr/share/nginx/html
-
-# 4. Render's default port
-ENV PORT 10000
+# Inform Render we are on 10000
 EXPOSE 10000
 
 CMD ["nginx", "-g", "daemon off;"]
