@@ -1,17 +1,16 @@
 FROM nginx:alpine
 
-# THE DIFFERENCE: This line was missing in your previous 'Status Quo' attempts.
-# It kills the automation that creates the duplicate.
-RUN rm /docker-entrypoint.d/20-envsubst-on-templates.sh
+# Remove the default entrypoint script that injects templates
+RUN rm /docker-entrypoint.d/20-envsubst-on-templates.sh \
+    && rm -rf /etc/nginx/conf.d/*
 
-RUN rm -rf /etc/nginx/conf.d/*
-
+# Copy your static build and custom config
 COPY ./build /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Permissions fix to prevent 'status 1' crashes
-RUN touch /var/run/nginx.pid && \
-    chown -R nginx:nginx /var/run/nginx.pid /var/cache/nginx /var/log/nginx
+# Fix permissions to avoid crashes
+RUN touch /var/run/nginx.pid \
+    && chown -R nginx:nginx /var/run/nginx.pid /var/cache/nginx /var/log/nginx
 
 EXPOSE 10000
 CMD ["nginx", "-g", "daemon off;"]
