@@ -1,31 +1,26 @@
-# Stage 1: Build the React App
-FROM node:18-alpine AS build-stage
+# --- STAGE 1: BUILD ---
+FROM node:20-alpine AS build-stage
 WORKDIR /app
 COPY package*.json ./
 RUN npm install
 COPY . .
-# This creates the /app/build folder inside the container
 RUN npm run build
 
-# Stage 2: Setup Nginx
+# --- STAGE 2: PRODUCTION ---
 FROM nginx:alpine
 
-# Remove automation scripts that cause the "duplicate listen" error
-RUN rm -f /docker-entrypoint.d/* \
-    && rm -rf /etc/nginx/conf.d/*
+# 1. Clean out the directories that trigger the Nginx helper scripts
+RUN rm -f /docker-entrypoint.d/* && rm -rf /etc/nginx/conf.d/*
 
-# Copy the build output from Stage 1 (no longer depends on your local/git build folder)
-COPY --from=build-stage /app/build /usr/share/nginx/html
+# 2. Correct Path: Using the folder structure you provided
+COPY nginx/nginx.conf /etc/nginx/conf.d/default.conf
 
-# Copy your local nginx.conf
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# 3. Copy build files 
+# Check if your build output is 'dist' (Vite) or 'build' (CRA)
+# Based on your previous logs, I'll use /app/dist
+COPY --from=build-stage /app/dist /usr/share/nginx/html
 
-# Fix permissions for Render
-RUN touch /var/run/nginx.pid \
-    && chown -R nginx:nginx /var/run/nginx.pid /var/cache/nginx /var/log/nginx
+# 4. The Kill Switch: Bypass the entrypoint scripts to stop the "duplicate listen" error
+ENTRYPOINT ["nginx", "-g", "daemon off;"]
 
 EXPOSE 10000
-
-# Use the absolute path to ensure we bypass any remaining shell logic
-ENTRYPOINT ["nginx"]
-CMD ["-g", "daemon off;"]
