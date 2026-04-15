@@ -1,16 +1,26 @@
-FROM nginx:alpine
+# --- STAGE 1: BUILD ---
+FROM node:20-alpine AS build-stage
+WORKDIR /app
+COPY package*.json ./
+RUN npm install
+COPY . .
+RUN npm run build
 
-# 1. Delete ALL default configurations to prevent collisions
-RUN rm /etc/nginx/conf.d/default.conf && rm /etc/nginx/nginx.conf
+# --- STAGE 2: PRODUCTION ---
+FROM nginx:stable-alpine
 
-# 2. Copy your custom config directly to the main nginx path
-# This prevents the entrypoint scripts from messing with it
-COPY nginx.conf /etc/nginx/nginx.conf
+# 1. Create the templates directory
+RUN mkdir -p /etc/nginx/templates
 
-# 3. Copy your React build files
-COPY ./build /usr/share/nginx/html
+# 2. Copy your template there. 
+# The Nginx entrypoint will automatically process this into /etc/nginx/conf.d/default.conf
+COPY nginx/nginx.conf.template /etc/nginx/templates/default.conf.template
 
-# 4. Port 10000 for Render
+# 3. Copy the build files
+COPY --from=build-stage /app/dist /usr/share/nginx/html
+
+# 4. Render's default port
+ENV PORT 10000
 EXPOSE 10000
 
 CMD ["nginx", "-g", "daemon off;"]
