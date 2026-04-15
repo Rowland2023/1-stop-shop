@@ -1,28 +1,23 @@
-# --- STAGE 1: BUILD ---
-FROM node:20-alpine AS build-stage
-WORKDIR /app
-COPY package*.json ./
-RUN npm install
-COPY . .
-RUN npm run build
+FROM nginx:alpine
 
-# --- STAGE 2: PRODUCTION ---
-FROM nginx:stable-alpine
+# 1. Clean out the default directories during build
+RUN rm -rf /etc/nginx/conf.d/* && \
+    rm -rf /etc/nginx/nginx.conf && \
+    rm -rf /etc/nginx/templates
 
-# 1. COMPLETELY WIPE the directories where the "duplicate" error comes from
-RUN rm -rf /etc/nginx/conf.d/*
-RUN rm -rf /docker-entrypoint.d/*
+# 2. Copy your clean, verified config
+COPY nginx.conf /etc/nginx/nginx.conf
 
-# 2. OVERWRITE the main nginx.conf instead of adding a sub-config
-# This ignores everything in conf.d entirely
-COPY nginx/nginx.conf /etc/nginx/nginx.conf
+# 3. Copy your React build files
+COPY ./build /usr/share/nginx/html
 
-# 3. Copy your frontend files (assuming 'dist' is your output)
-COPY --from=build-stage /app/dist /usr/share/nginx/html
+# 4. Permissions fix for Render
+RUN touch /var/run/nginx.pid && \
+    chown -R nginx:nginx /var/run/nginx.pid && \
+    chown -R nginx:nginx /var/cache/nginx && \
+    chown -R nginx:nginx /var/log/nginx
 
-# 4. Explicitly tell Render the port
-ENV PORT 10000
 EXPOSE 10000
 
-# 5. Start Nginx using the main config only
-CMD ["nginx", "-g", "daemon off;"]
+# 5. THE FIX: Bypass the entrypoint script to prevent config regeneration
+ENTRYPOINT ["nginx", "-g", "daemon off;", "-c", "/etc/nginx/nginx.conf"]
