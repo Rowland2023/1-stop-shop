@@ -1,5 +1,5 @@
 from django.db import models
-
+from cloudinary.models import CloudinaryField
 # --- 1. MARKETPLACE & INVENTORY ---
 
 class Product(models.Model):
@@ -21,25 +21,20 @@ class Product(models.Model):
         ('kitchen-items','Kitchen-Items'),
     ]
     name = models.CharField(max_length=255)
-    price = models.DecimalField(max_digits=12, decimal_places=2)
-    category = models.CharField(max_length=50, choices=CATEGORY_CHOICES)
-    
-    # PRODUCTION READY: Allows existing products to remain without requiring an image immediately
-    main_image = models.ImageField(upload_to='products/main/', blank=True, null=True)
-    # LEGACY: Keep for your manual static/ paths during transition
-    image_path = models.CharField(max_length=500, blank=True, null=True)
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+    category = models.CharField(max_length=100)
+    # Using CloudinaryField for automatic storage handling
+    main_image = CloudinaryField('image', null=True, blank=True)
+    # image_path is kept for legacy static fallback if needed
+    image_path = models.CharField(max_length=500, null=True, blank=True)
 
     def __str__(self):
         return self.name
-
+    
 class ProductImage(models.Model):
     product = models.ForeignKey(Product, related_name='images', on_delete=models.CASCADE)
-    # UPGRADED & PRODUCTION READY: Added null=True to avoid migration prompts
-    image = models.ImageField(upload_to='products/gallery/', blank=True, null=True) 
-    alt_text = models.CharField(max_length=100, blank=True)
-
-    def __str__(self):
-        return f"Gallery Image for {self.product.name}"
+    image = CloudinaryField('image')
+    alt_text = models.CharField(max_length=255, blank=True)
 
 class Order(models.Model):
     STATUS_CHOICES = [

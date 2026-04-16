@@ -1,25 +1,34 @@
 from pathlib import Path
 import os
-import dj_database_url  # You may need to run: pip install dj-database-url
+import dj_database_url
 
+# Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-_m6@*&@vaop567))d(y20&&+_ne_$0p%-^e7ap94(gfsw4izjm')
+# SECURITY WARNING: keep the secret key used in production secret!
+SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-your-dev-key-here')
 
-# Set to False in production!
-DEBUG = os.environ.get('DEBUG', 'True') == 'True'
+# SECURITY WARNING: don't run with debug turned on in production!
+DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
-ALLOWED_HOSTS = ['back-end-wdk7.onrender.com', 'frontend-rdmj.onrender.com', 'localhost', '127.0.0.1']
+ALLOWED_HOSTS = [
+    'back-end-wdk7.onrender.com', 
+    'frontend-rdmj.onrender.com', 
+    'localhost', 
+    '127.0.0.1'
+]
 
 # --- Application definition ---
 
 INSTALLED_APPS = [
     'jazzmin',
+    'cloudinary_storage',  # Must be before staticfiles
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
+    'cloudinary',          # Required for Cloudinary interaction
     'django.contrib.staticfiles',
     'corsheaders',
     'rest_framework',
@@ -27,7 +36,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-    'corsheaders.middleware.CorsMiddleware',  # MUST BE AT THE TOP
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware', # For static files on Render
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -40,16 +49,32 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'store.urls'
 
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [],
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'context_processors': [
+                'django.template.context_processors.debug',
+                'django.template.context_processors.request',
+                'django.contrib.auth.context_processors.auth',
+                'django.contrib.messages.context_processors.messages',
+            ],
+        },
+    },
+]
+
+WSGI_APPLICATION = 'store.wsgi.application'
+
 # --- CORS & SECURITY ---
 
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:8001",
-    "http://127.0.0.1:8001",
     "http://localhost:3000",
-    "https://frontend-rdmj.onrender.com", # Your Render Frontend
+    "http://localhost:5173",
+    "https://frontend-rdmj.onrender.com",
 ]
 
-# CRITICAL for Registration/Login to work
 CSRF_TRUSTED_ORIGINS = [
     "https://frontend-rdmj.onrender.com",
     "https://back-end-wdk7.onrender.com",
@@ -59,7 +84,6 @@ USE_X_FORWARDED_HOST = True
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 # --- Database ---
-# Uses DATABASE_URL environment variable on Render, falls back to SQLite for local dev
 DATABASES = {
     'default': dj_database_url.config(
         default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
@@ -67,28 +91,26 @@ DATABASES = {
     )
 }
 
-# --- REST Framework ---
-
-REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.SessionAuthentication',
-        'rest_framework.authentication.BasicAuthentication',
-    ],
-    'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.AllowAny',
-    ],
+# --- Cloudinary Configuration (For Product Images) ---
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': os.environ.get('CLOUDINARY_CLOUD_NAME'),
+    'API_KEY': os.environ.get('CLOUDINARY_API_KEY'),
+    'API_SECRET': os.environ.get('CLOUDINARY_API_SECRET'),
 }
 
 # --- Static & Media Files ---
 
 STATIC_URL = 'static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+# WhiteNoise configuration for production performance
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
+# Media config now routes to Cloudinary
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-# --- Jazzmin Settings (Keeping your UI tweaks) ---
+# --- Jazzmin Settings ---
 
 JAZZMIN_SETTINGS = {
     "site_title": "Lagos Tech Hub Admin",
@@ -111,3 +133,9 @@ JAZZMIN_SETTINGS = {
 }
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Internationalization
+LANGUAGE_CODE = 'en-us'
+TIME_ZONE = 'UTC'
+USE_I18N = True
+USE_TZ = True

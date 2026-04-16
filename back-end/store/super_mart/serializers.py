@@ -7,9 +7,17 @@ from .models import (
 # --- 1. MARKETPLACE & INVENTORY SERIALIZERS ---
 
 class ProductImageSerializer(serializers.ModelSerializer):
+    url = serializers.SerializerMethodField()
+
     class Meta:
         model = ProductImage
-        fields = ['image', 'alt_text']
+        fields = ['url', 'alt_text']
+
+    def get_url(self, obj):
+        # CloudinaryField objects have a .url property
+        if obj.image:
+            return obj.image.url
+        return None
 
 class ProductSerializer(serializers.ModelSerializer):
     additional_images = ProductImageSerializer(many=True, read_only=True, source='images')
@@ -20,11 +28,16 @@ class ProductSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'price', 'category', 'image_display', 'additional_images']
 
     def get_image_display(self, obj):
-        # Return upload URL if exists, else fallback to the static path
+        # 1. Priority: Cloudinary Upload
         if obj.main_image:
             return obj.main_image.url
+        
+        # 2. Fallback: Local static path (only if explicitly needed)
         if obj.image_path:
-            return f"/static/{obj.image_path}"
+            # Clean path to avoid double slashes
+            path = obj.image_path.lstrip('/')
+            return f"https://frontend-rdmj.onrender.com/static/{path}"
+            
         return None
     
 class OrderItemSerializer(serializers.ModelSerializer):
