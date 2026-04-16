@@ -2,29 +2,27 @@
 FROM node:20-alpine AS build-stage
 WORKDIR /app
 
-# Copy the entire repo so we have the subfolder structure
+# 1. Copy the entire repo
 COPY . .
 
-# Move into the folder where package.json actually lives
-WORKDIR /app/front-end/expense-manager
-
-RUN npm install
-RUN npm run build
+# 2. Build the project
+# We use '&&' to stay in the same shell context for the build
+RUN cd front-end/expense-manager && npm install && npm run build
 
 # --- STAGE 2: PRODUCTION ---
 FROM nginx:alpine
 
-# Clean out the directories
+# Clean default Nginx files
 RUN rm -rf /etc/nginx/conf.d/* && rm -rf /docker-entrypoint.d/*
 
-# 1. Copy the build artifacts from the correct subfolder
-# Vite puts 'dist' inside the folder where 'npm run build' was executed
+# 3. THE FIX: Grab the files from the specific absolute paths
+# Based on your logs, the files live here in the build-stage:
 COPY --from=build-stage /app/front-end/expense-manager/dist /usr/share/nginx/html
 
-# 2. Copy the config from the subfolder where you stored it
+# 4. Grab the config
 COPY --from=build-stage /app/front-end/expense-manager/nginx/nginx.conf /etc/nginx/conf.d/default.conf
 
-# 3. Permissions fix for Render
+# 5. Permissions fix for Render
 RUN touch /var/run/nginx.pid && \
     chown -R nginx:nginx /var/run/nginx.pid /var/cache/nginx /var/log/nginx
 
