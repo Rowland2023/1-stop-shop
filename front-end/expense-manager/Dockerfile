@@ -2,33 +2,31 @@
 FROM node:20-alpine AS build-stage
 WORKDIR /app
 
-# 1. Copy everything
+# 1. Copy the entire repo
 COPY . .
 
-# 2. THE FAIL-SAFE BUILD: 
-# This command finds the directory containing package.json and builds there
-RUN TARGET_DIR=$(find . -name "package.json" -not -path "*/node_modules/*" -exec dirname {} \;) && \
-    echo "Building in: $TARGET_DIR" && \
-    cd "$TARGET_DIR" && \
-    npm install && \
-    npm run build
+# 2. Move to the app folder and install/build
+WORKDIR /app/front-end/expense-manager
+RUN npm install
+RUN npm run build
 
 # --- STAGE 2: PRODUCTION ---
 FROM nginx:alpine
 
-RUN rm -rf /etc/nginx/conf.d/* && rm -rf /docker-entrypoint.d/*
+# 3. CRITICAL: Remove default config to prevent "Duplicate Port" error
+RUN rm /etc/nginx/conf.d/default.conf
 
-# 3. GRAB THE FILES
-# We use a wildcard to grab the dist folder wherever it was created
-COPY --from=build-stage /app/**/dist /usr/share/nginx/html
+# 4. Copy the freshly built files
+# Based on your logs, they are in /app/front-end/expense-manager/dist
+COPY --from=build-stage /app/front-end/expense-manager/dist /usr/share/nginx/html
 
-# 4. GRAB THE CONFIG
-# This looks for any nginx.conf in your subfolders and copies it
-COPY --from=build-stage /app/**/nginx.conf /etc/nginx/conf.d/default.conf
+# 5. Copy your Nginx config
+COPY --from=build-stage /app/front-end/expense-manager/nginx/nginx.conf /etc/nginx/conf.d/default.conf
 
-# 5. Permissions
+# 6. Render Permissions Fix
 RUN touch /var/run/nginx.pid && \
     chown -R nginx:nginx /var/run/nginx.pid /var/cache/nginx /var/log/nginx
 
 EXPOSE 10000
-ENTRYPOINT ["nginx", "-g", "daemon off;"]
+
+CMD ["nginx", "-g", "daemon off;"]
