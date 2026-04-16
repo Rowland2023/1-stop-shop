@@ -29,32 +29,42 @@ class ProductSerializer(serializers.ModelSerializer):
 
     def get_image_display(self, obj):
         # 1. Priority: Cloudinary Upload
+        # If main_image exists, it returns the full https://res.cloudinary.com/... URL
         if obj.main_image:
             return obj.main_image.url
         
-        # 2. Fallback: Local static path (only if explicitly needed)
+        # 2. Fallback: Local static path
         if obj.image_path:
             # Clean path to avoid double slashes
             path = obj.image_path.lstrip('/')
-            return f"https://frontend-rdmj.onrender.com/static/{path}"
+            # Use the BACKEND domain to serve static fallbacks
+            return f"https://back-end-wdk7.onrender.com/static/{path}"
             
         return None
     
 class OrderItemSerializer(serializers.ModelSerializer):
-    # This pulls the product name into the order item for the PDF/Frontend
+    # This pulls the product name and its current image into the order item
     product_name = serializers.ReadOnlyField(source='product.name')
+    product_image = serializers.SerializerMethodField()
     
     class Meta:
         model = OrderItem
-        fields = ['id', 'product', 'product_name', 'quantity', 'price_at_purchase']
+        fields = ['id', 'product', 'product_name', 'product_image', 'quantity', 'price_at_purchase']
+
+    def get_product_image(self, obj):
+        if obj.product.main_image:
+            return obj.product.main_image.url
+        return None
 
 class OrderSerializer(serializers.ModelSerializer):
-    # This allows you to see all items inside an order (Nested Serializer)
+    # This is critical for your tracking: ensures nested items show up
     items = OrderItemSerializer(many=True, read_only=True)
+    # Using ChoiceField ensures the string representation matches what the frontend expects
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
 
     class Meta:
         model = Order
-        fields = ['id', 'user_id', 'created_at', 'total_price', 'status', 'items']
+        fields = ['id', 'user_id', 'created_at', 'total_price', 'status', 'status_display', 'items']
 
 
 # --- 2. HRM & EMPLOYEE SERIALIZERS ---
