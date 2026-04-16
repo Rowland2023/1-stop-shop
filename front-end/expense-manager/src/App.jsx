@@ -4,7 +4,7 @@ import "./App.css";
 // --- GLOBAL CONFIG ---
 // This looks for the Render environment variable. 
 // If empty, it defaults to your local proxy (important for your Nginx setup).
-const BASE_URL = process.env.REACT_APP_API_URL || "";
+const BASE_URL = import.meta.env.VITE_API_URL || "";
 
 // --- SUB-COMPONENT: PRODUCT CARD ---
 function ProductCard({ product, onAddToCart, onSelect }) {
