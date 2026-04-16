@@ -4,24 +4,22 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install
 COPY . .
-# This creates the 'dist' (or 'build') folder
 RUN npm run build
 
 # --- STAGE 2: PRODUCTION ---
 FROM nginx:alpine
 
-# Clear the conflicting Nginx scripts
+# Clean conflict-prone directories
 RUN rm -rf /etc/nginx/conf.d/* && rm -rf /docker-entrypoint.d/*
 
-# 1. Correct the Source Path for your config
+# 1. Copy config from the subfolder we identified earlier
 COPY nginx/nginx.conf /etc/nginx/conf.d/default.conf
 
-# 2. Correct the Source Path for your Build Files
-# If your project is Vite, use 'dist'. If Create-React-App, use 'build'.
-# Since the Dockerfile is in 'expense-manager', this path is relative to that.
+# 2. TRACE CHECK: 
+# If your project uses Vite, the folder is 'dist'. 
+# If you are NOT using a build tool and just want to serve raw files, 
+# you would use 'COPY . /usr/share/nginx/html'
 COPY --from=build-stage /app/dist /usr/share/nginx/html
 
-# 3. Bypass the buggy entrypoint to maintain the port 10000 fix
 ENTRYPOINT ["nginx", "-g", "daemon off;"]
-
 EXPOSE 10000
