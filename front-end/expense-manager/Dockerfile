@@ -2,32 +2,28 @@
 FROM node:20-alpine AS build-stage
 WORKDIR /app
 
-# 1. Copy everything
+# 1. Copy everything from the CURRENT folder (expense-manager)
 COPY . .
 
-# 2. Let's find exactly where the package.json is.
-# We will use WORKDIR to move into the directory.
-# If your folder names are capitalized, change them here!
-WORKDIR /app/front-end/expense-manager
-
-# 3. Install and Build
+# 2. Install and Build (You are already in /app, which is expense-manager)
 RUN npm install && npm run build
 
 # --- STAGE 2: PRODUCTION ---
 FROM nginx:alpine
 
-# Remove default config to prevent the "Duplicate Port" error
+# Remove default config
 RUN rm /etc/nginx/conf.d/default.conf
 
-# 4. Copy built files from the build-stage
-# We use the absolute path from Stage 1
-COPY --from=build-stage /app/front-end/expense-manager/dist /usr/share/nginx/html
+# 3. COPY THE DIST FILES
+# Since we built in /app, the dist folder is at /app/dist
+COPY --from=build-stage /app/dist /usr/share/nginx/html
 
-# 5. Copy Nginx config
-# Double check: Is it in a folder named 'nginx' or just 'expense-manager'?
-COPY --from=build-stage /app/front-end/expense-manager/nginx/nginx.conf /etc/nginx/conf.d/default.conf
+# 4. COPY THE NGINX CONFIG
+# If nginx.conf is in a folder named 'nginx' inside your current directory:
+COPY --from=build-stage /app/nginx/nginx.conf /etc/nginx/conf.d/default.conf
+# IF it's just sitting in the root, use: COPY --from=build-stage /app/nginx.conf ...
 
-# Render Permissions
+# Render Permissions Fix
 RUN touch /var/run/nginx.pid && \
     chown -R nginx:nginx /var/run/nginx.pid /var/cache/nginx /var/log/nginx
 
