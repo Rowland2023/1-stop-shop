@@ -9,21 +9,23 @@ from .models import (
 def secure_url(image_field):
     """
     Ensures Cloudinary returns a full HTTPS URL. 
-    Handles cases where the field might be a CloudinaryResource or a string.
+    Handles cases where the field might be a CloudinaryResource, an ImageField, or a string path.
     """
     if not image_field:
         return None
     
-    # Get the URL from the CloudinaryField
+    # 1. Try to get the .url property (Standard for CloudinaryField/ImageField)
     url = getattr(image_field, 'url', str(image_field))
     
-    # If it's a relative path (common in some Cloudinary configs), build the full URL
+    # 2. If it's a relative path (e.g., 'image/upload/...'), build the full URL
     if url and not url.startswith('http'):
-        cloud_name = os.environ.get('CLOUDINARY_CLOUD_NAME', 'your_cloud_name')
-        url = f"https://res.cloudinary.com/{cloud_name}/{url}"
+        cloud_name = os.environ.get('CLOUDINARY_CLOUD_NAME')
+        # If cloud_name is missing, it falls back to a relative path which may break
+        if cloud_name:
+            url = f"https://res.cloudinary.com/{cloud_name}/{url}"
     
-    # Force HTTPS
-    if url.startswith('http://'):
+    # 3. Force HTTPS to avoid Mixed Content errors on Render
+    if url and url.startswith('http://'):
         url = url.replace('http://', 'https://', 1)
         
     return url
@@ -31,13 +33,14 @@ def secure_url(image_field):
 # --- 1. MARKETPLACE & INVENTORY SERIALIZERS ---
 
 class ProductImageSerializer(serializers.ModelSerializer):
-    url = serializers.SerializerMethodField()
+    # We use 'image' here to match your model's field name and the JSON output you shared
+    image = serializers.SerializerMethodField()
 
     class Meta:
         model = ProductImage
-        fields = ['url', 'alt_text']
+        fields = ['image', 'alt_text']
 
-    def get_url(self, obj):
+    def get_image(self, obj):
         return secure_url(obj.image)
 
 class ProductSerializer(serializers.ModelSerializer):
@@ -49,18 +52,18 @@ class ProductSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'price', 'category', 'image_display', 'additional_images']
 
     def get_image_display(self, obj):
-        # 1. Primary: Check the 'main_image' field
+        # 1. Priority: Main Image field
         if obj.main_image:
             return secure_url(obj.main_image)
         
-        # 2. Smart Fallback: Use the first image from the Gallery (additional_images)
-        # This fixes the "null" issue when images are only in the inline gallery
+        # 2. Smart Fallback: If main_image is null, use the first image from additional_images
+        # This prevents the 'null' result in your JSON for items like the Laptop (ID 34)
         first_gallery_item = obj.images.first()
         if first_gallery_item and first_gallery_item.image:
             return secure_url(first_gallery_item.image)
         
-        # 3. Last Resort: Local static fallback from Backend
-        if obj.image_path:
+        # 3. Legacy Fallback: Local static path string
+        if hasattr(obj, 'image_path') and obj.image_path:
             path = obj.image_path.lstrip('/')
             return f"https://back-end-wdk7.onrender.com/static/{path}"
             
@@ -75,7 +78,7 @@ class OrderItemSerializer(serializers.ModelSerializer):
         fields = ['id', 'product', 'product_name', 'product_image', 'quantity', 'price_at_purchase']
 
     def get_product_image(self, obj):
-        # Use the same logic for order history thumbnails
+        # Reach through the foreign key to the product's images
         if obj.product.main_image:
             return secure_url(obj.product.main_image)
         
