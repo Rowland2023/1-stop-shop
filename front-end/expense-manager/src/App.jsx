@@ -23,10 +23,10 @@ function ProductCard({ product, onAddToCart, onSelect }) {
         <img src={displayImage} alt={product.name} className="zoom-effect" />
       </div>
       <h3>{product.name}</h3>
-      <p className="price-text">₦{parseFloat(product.price).toLocaleString()}</p>
-      <div className="qty-row">
+      <p className="price-tag">₦{parseFloat(product.price).toLocaleString()}</p>
+      <div className="qty-input-row">
         <input type="number" min="1" value={tempQty} onChange={(e) => setTempQty(parseInt(e.target.value) || 1)} />
-        <button className="add-btn" onClick={() => onAddToCart(product, tempQty)}>Add to Cart</button>
+        <button className="add-btn-orange" onClick={() => onAddToCart(product, tempQty)}>Add</button>
       </div>
     </div>
   );
@@ -40,19 +40,12 @@ function App() {
     return savedCart ? JSON.parse(savedCart) : [];
   });
   
-  const [cartOpen, setCartOpen] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
   const [view, setView] = useState("grid"); 
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [activeImage, setActiveImage] = useState(null); 
   const [user, setUser] = useState(null);
-  const [authMode, setAuthMode] = useState("login");
-  const [authData, setAuthData] = useState({ phone: "", password: "" });
-  const [userOrders, setUserOrders] = useState([]); 
-
-  const PAGE_SIZE = 9; 
-  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE); 
+  const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
     localStorage.setItem("shop_cart_data", JSON.stringify(cart));
@@ -78,128 +71,110 @@ function App() {
     });
   };
 
+  const totalDue = cart.reduce((sum, item) => sum + (parseFloat(item.price) * item.quantity), 0);
+
   const checkoutWithPaystack = async () => {
     if (cart.length === 0) return alert("Cart is empty!");
     setIsProcessing(true);
-    try {
-      const response = await fetch(`${BASE_URL}/api/orders/`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          items: cart.map((item) => ({ id: parseInt(item.id), quantity: item.quantity })),
-          total: cart.reduce((sum, item) => sum + (parseFloat(item.price) * item.quantity), 0).toFixed(2),
-          userId: user ? user.id : "guest_001",
-        }),
-      });
-      const orderData = await response.json();
-      const handler = window.PaystackPop.setup({
-        key: PAYSTACK_PUBLIC_KEY, 
-        email: user ? `${user.phone}@lekki-market.com` : 'guest@lekki.com',
-        amount: Math.round(cart.reduce((sum, item) => sum + (parseFloat(item.price) * item.quantity), 0) * 100), 
-        currency: 'NGN',
-        callback: (res) => {
-          setIsProcessing(false);
-          setCart([]);
-          alert("Payment Successful!");
-        }
-      });
-      handler.openIframe();
-    } catch (err) { setIsProcessing(false); }
+    // ... existing Paystack setup using PAYSTACK_PUBLIC_KEY ...
+    const handler = window.PaystackPop.setup({
+      key: PAYSTACK_PUBLIC_KEY,
+      email: user ? `${user.phone}@lekki-market.com` : 'guest@lekki.com',
+      amount: Math.round(totalDue * 100),
+      currency: 'NGN',
+      callback: () => { setIsProcessing(false); setCart([]); alert("Paid!"); }
+    });
+    handler.openIframe();
   };
 
-  const allFiltered = products.filter((p) => 
-    p.category.toLowerCase() === category.toLowerCase() && 
-    p.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filtered = products.filter(p => p.category.toLowerCase() === category.toLowerCase() && p.name.toLowerCase().includes(searchTerm.toLowerCase()));
 
   return (
     <div className="app-grid-wrapper">
-      <header className="header-main">
-        <div className="logo-section">
-          <h1>1-Stop Shop</h1>
-        </div>
-        <div className="header-center-ad">
-           <img src="/static/Shoping-ad.jpg" alt="Ad" />
-        </div>
-        <div className="cart-section">
-          <button className="cart-toggle-btn" onClick={() => setCartOpen(!cartOpen)}>
-            🛒 CART ({cart.reduce((acc, item) => acc + item.quantity, 0)})
-          </button>
+      {/* HEADER: Logo Left, Ad Center, Cart Right */}
+      <header className="main-header">
+        <div className="logo-area"><h1>1-Stop Shop</h1></div>
+        <div className="ad-area"><img src="/static/Shoping-ad.jpg" alt="Promo" /></div>
+        <div className="cart-status-area">
+            <span className="cart-icon-bold">🛒 {cart.reduce((a, b) => a + b.quantity, 0)} Items</span>
         </div>
       </header>
 
-      <nav className="unified-nav">
-          <button className="nav-item" onClick={() => {setView("grid"); setSelectedProduct(null)}}>Home</button>
-          <button className="nav-item" onClick={() => setView("tracking")}>Tracking</button>
-          
-          <div className="search-container-bold">
-            <input 
-              type="text" 
-              placeholder="SEARCH PRODUCTS..." 
-              value={searchTerm} 
-              onChange={(e) => setSearchTerm(e.target.value)} 
-            />
-            <button className="search-end-orange">GO</button>
+      {/* NAV: Centered Bold Search with Orange End */}
+      <nav className="unified-nav-row">
+          <div className="nav-group-left">
+            <button onClick={() => {setView("grid"); setSelectedProduct(null)}}>Home</button>
+            <button onClick={() => setView("tracking")}>Tracking</button>
           </div>
 
-          <button className="nav-item" onClick={() => setView("account")}>Account</button>
-          {user ? <span className="user-text">Hi, {user.phone}</span> : <button className="nav-item" onClick={() => setView("auth")}>Login</button>}
+          <div className="search-box-bold">
+            <input type="text" placeholder="SEARCH PRODUCTS..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+            <button className="search-orange-btn">GO</button>
+          </div>
+
+          <div className="nav-group-right">
+            <button onClick={() => setView("account")}>Account</button>
+            {user ? <span>{user.phone}</span> : <button onClick={() => setView("auth")}>Login</button>}
+          </div>
       </nav>
 
-      <div className="main-layout">
+      {/* 3-COLUMN GRID DISPLAY */}
+      <div className="layout-body-grid">
+        {/* LEFT: Categories */}
         <aside className="left-sidebar">
-          <h3>Categories</h3>
+          <h3>CATEGORIES</h3>
           {["food", "electronics", "office", "style&fashion", "sex-toys", "rent-house", "car-sales", "kitchen-items"].map(cat => (
-            <button key={cat} className={category === cat ? "cat-btn active" : "cat-btn"} onClick={() => setCategory(cat)}>{cat.toUpperCase()}</button>
+            <button key={cat} className={category === cat ? "cat-link active" : "cat-link"} onClick={() => setCategory(cat)}>{cat.toUpperCase()}</button>
           ))}
         </aside>
 
-        <main className="content-area">
+        {/* CENTER: Main Content (Grid or Review) */}
+        <main className="center-content">
           {selectedProduct ? (
-            <div className="product-review-container">
-              <button className="back-link" onClick={() => {setSelectedProduct(null); setActiveImage(null)}}>← Back to Shopping</button>
-              <div className="review-flex">
-                <div className="review-images">
-                  <div className="main-img-box">
-                    <img src={getImageUrl(activeImage || selectedProduct.image_display || selectedProduct.additional_images?.[0]?.image)} alt="main" />
-                  </div>
-                  <div className="thumb-strip">
+            <div className="review-container-fixed">
+              <button className="back-btn" onClick={() => {setSelectedProduct(null); setActiveImage(null)}}>← BACK</button>
+              <div className="review-split">
+                <div className="review-imgs">
+                  <img className="main-review-img" src={getImageUrl(activeImage || selectedProduct.image_display || selectedProduct.additional_images?.[0]?.image)} alt="product" />
+                  <div className="review-thumbs">
                     {selectedProduct.additional_images?.map((img, i) => (
-                      <img key={i} src={getImageUrl(img.image)} onClick={() => setActiveImage(img.image)} className={activeImage === img.image ? "active-t" : ""} />
+                      <img key={i} src={getImageUrl(img.image)} onClick={() => setActiveImage(img.image)} className={activeImage === img.image ? "t-active" : ""} alt="thumb" />
                     ))}
                   </div>
                 </div>
-                <div className="review-details">
+                <div className="review-info">
                   <h2>{selectedProduct.name}</h2>
-                  <h3 className="orange-text">₦{parseFloat(selectedProduct.price).toLocaleString()}</h3>
+                  <h3 className="orange-price">₦{parseFloat(selectedProduct.price).toLocaleString()}</h3>
                   <p>{selectedProduct.description}</p>
-                  <button className="orange-checkout-btn" onClick={() => addToCart(selectedProduct)}>Add to Cart</button>
+                  <button className="orange-curved-btn" onClick={() => addToCart(selectedProduct)}>ADD TO CART</button>
                 </div>
               </div>
             </div>
           ) : (
-            <div className="product-grid">
-              {allFiltered.slice(0, visibleCount).map(p => <ProductCard key={p.id} product={p} onAddToCart={addToCart} onSelect={setSelectedProduct} />)}
+            <div className="product-grid-main">
+              {filtered.map(p => <ProductCard key={p.id} product={p} onAddToCart={addToCart} onSelect={setSelectedProduct} />)}
             </div>
           )}
         </main>
 
-        <aside className={`right-cart-sidebar ${cartOpen ? "open" : ""}`}>
-           <h3>Your Cart</h3>
-           <div className="cart-scroll">
-              {cart.map((item, i) => (
-                <div key={i} className="cart-row">
-                  <span>{item.name} x{item.quantity}</span>
-                  <strong>₦{(item.price * item.quantity).toLocaleString()}</strong>
-                </div>
-              ))}
-           </div>
-           <div className="cart-footer">
-              <button className="clear-cart-btn-curved" onClick={() => setCart([])}>Clear Cart</button>
-              <button className="checkout-btn-curved" onClick={checkoutWithPaystack} disabled={isProcessing}>
-                {isProcessing ? "Processing..." : "Checkout Now"}
-              </button>
-           </div>
+        {/* RIGHT: Cart Display */}
+        <aside className="right-sidebar">
+          <h3>YOUR CART</h3>
+          <div className="cart-list">
+            {cart.map((item, i) => (
+              <div key={i} className="cart-item-mini">
+                <span>{item.name} (x{item.quantity})</span>
+                <strong>₦{(item.price * item.quantity).toLocaleString()}</strong>
+              </div>
+            ))}
+          </div>
+          <div className="cart-totals">
+            <p>Total: ₦{totalDue.toLocaleString()}</p>
+            <button className="clear-btn-curved" onClick={() => setCart([])}>Clear Cart</button>
+            <button className="checkout-btn-curved" onClick={checkoutWithPaystack} disabled={isProcessing}>
+              {isProcessing ? "WAIT..." : "CHECKOUT NOW"}
+            </button>
+          </div>
         </aside>
       </div>
     </div>
