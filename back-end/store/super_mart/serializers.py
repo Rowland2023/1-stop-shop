@@ -8,21 +8,20 @@ from .models import (
 # --- HELPER UTILITY ---
 def secure_url(image_field):
     """
-    Ensures Cloudinary returns a full HTTPS URL. 
-    Handles cases where the field might be a CloudinaryResource, an ImageField, or a string path.
+    Ensures Cloudinary returns a full HTTPS URL.
+    Handles CloudinaryResource objects, ImageFields, and raw path strings.
     """
     if not image_field:
         return None
     
-    # 1. Try to get the .url property (Standard for CloudinaryField/ImageField)
+    # 1. Try to get the .url property (Standard for CloudinaryField)
     url = getattr(image_field, 'url', str(image_field))
     
-    # 2. If it's a relative path (e.g., 'image/upload/...'), build the full URL
+    # 2. Fix relative paths (e.g., 'image/upload/...') 
+    # This uses your cloud name: dscxqsew5
     if url and not url.startswith('http'):
-        cloud_name = os.environ.get('CLOUDINARY_CLOUD_NAME')
-        # If cloud_name is missing, it falls back to a relative path which may break
-        if cloud_name:
-            url = f"https://res.cloudinary.com/{cloud_name}/{url}"
+        cloud_name = os.environ.get('CLOUDINARY_CLOUD_NAME', 'dscxqsew5')
+        url = f"https://res.cloudinary.com/{cloud_name}/{url}"
     
     # 3. Force HTTPS to avoid Mixed Content errors on Render
     if url and url.startswith('http://'):
@@ -33,7 +32,7 @@ def secure_url(image_field):
 # --- 1. MARKETPLACE & INVENTORY SERIALIZERS ---
 
 class ProductImageSerializer(serializers.ModelSerializer):
-    # We use 'image' here to match your model's field name and the JSON output you shared
+    # This ensures the gallery images return full URLs in the JSON
     image = serializers.SerializerMethodField()
 
     class Meta:
@@ -52,12 +51,12 @@ class ProductSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'price', 'category', 'image_display', 'additional_images']
 
     def get_image_display(self, obj):
-        # 1. Priority: Main Image field
+        # 1. Primary Choice: The 'main_image' field
         if obj.main_image:
             return secure_url(obj.main_image)
         
-        # 2. Smart Fallback: If main_image is null, use the first image from additional_images
-        # This prevents the 'null' result in your JSON for items like the Laptop (ID 34)
+        # 2. Smart Fallback: Use the first image from the gallery (ProductImage model)
+        # This fixes the 'null' issue for items like your Laptop (ID 34/35)
         first_gallery_item = obj.images.first()
         if first_gallery_item and first_gallery_item.image:
             return secure_url(first_gallery_item.image)
@@ -78,7 +77,7 @@ class OrderItemSerializer(serializers.ModelSerializer):
         fields = ['id', 'product', 'product_name', 'product_image', 'quantity', 'price_at_purchase']
 
     def get_product_image(self, obj):
-        # Reach through the foreign key to the product's images
+        # Reach through the foreign key to find the best available image
         if obj.product.main_image:
             return secure_url(obj.product.main_image)
         
