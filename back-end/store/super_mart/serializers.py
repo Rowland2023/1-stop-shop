@@ -4,7 +4,7 @@ from .models import (
     Employee, Attendance, Payroll, PerformanceReview, ProductImage
 )
 
-# Helper function to ensure Cloudinary URLs use HTTPS
+# Helper function to ensure Cloudinary/Media URLs use HTTPS
 def secure_url(url):
     if url and url.startswith('http://'):
         return url.replace('http://', 'https://', 1)
@@ -33,14 +33,13 @@ class ProductSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'price', 'category', 'image_display', 'additional_images']
 
     def get_image_display(self, obj):
-        # 1. Priority: Cloudinary Upload
+        # 1. Priority: Cloudinary Upload (main_image)
         if obj.main_image:
             return secure_url(obj.main_image.url)
         
-        # 2. Fallback: Local static path (served from BACKEND)
-        if obj.image_path:
-            path = obj.image_path.lstrip('/')
-            return f"https://back-end-wdk7.onrender.com/static/{path}"
+        # 2. Fallback: Local ImageField (image)
+        if obj.image:
+            return secure_url(obj.image.url)
             
         return None
     
@@ -53,9 +52,10 @@ class OrderItemSerializer(serializers.ModelSerializer):
         fields = ['id', 'product', 'product_name', 'product_image', 'quantity', 'price_at_purchase']
 
     def get_product_image(self, obj):
-        # Use secure_url and check main_image correctly
         if obj.product.main_image:
             return secure_url(obj.product.main_image.url)
+        if obj.product.image:
+            return secure_url(obj.product.image.url)
         return None
 
 class OrderSerializer(serializers.ModelSerializer):

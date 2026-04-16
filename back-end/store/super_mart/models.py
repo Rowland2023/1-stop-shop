@@ -1,5 +1,6 @@
 from django.db import models
 from cloudinary.models import CloudinaryField
+
 # --- 1. MARKETPLACE & INVENTORY ---
 
 class Product(models.Model):
@@ -22,11 +23,13 @@ class Product(models.Model):
     ]
     name = models.CharField(max_length=255)
     price = models.DecimalField(max_digits=10, decimal_places=2)
-    category = models.CharField(max_length=100)
-    # Using CloudinaryField for automatic storage handling
+    category = models.CharField(max_length=100, choices=CATEGORY_CHOICES)
+    
+    # Primary Storage: Cloudinary
     main_image = CloudinaryField('image', null=True, blank=True)
-    # image_path is kept for legacy static fallback if needed
-    image_path = models.CharField(max_length=500, null=True, blank=True)
+    
+    # Fallback Storage: Local Server (Standard Django ImageField)
+    image = models.ImageField(upload_to='products/', null=True, blank=True)
 
     def __str__(self):
         return self.name
@@ -44,14 +47,9 @@ class Order(models.Model):
         ('Delivered', 'Delivered'),
         ('Cancelled', 'Cancelled'),
     ]
-
     user_id = models.CharField(max_length=100)
     total_price = models.DecimalField(max_digits=10, decimal_places=2)
-    status = models.CharField(
-        max_length=20, 
-        choices=STATUS_CHOICES, 
-        default='Pending'
-    )
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Pending')
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -62,9 +60,6 @@ class OrderItem(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField(default=1)
     price_at_purchase = models.DecimalField(max_digits=12, decimal_places=2)
-
-    def __str__(self):
-        return f"{self.quantity} x {self.product.name} (Order {self.order.id})"
 
 # --- 2. EMPLOYEE MANAGEMENT (HRM) ---
 
@@ -89,23 +84,14 @@ class Attendance(models.Model):
     check_out = models.TimeField(null=True, blank=True)
     status = models.CharField(max_length=20, choices=[('Present', 'Present'), ('Absent', 'Absent'), ('Late', 'Late')])
 
-    def __str__(self):
-        return f"{self.employee.last_name} - {self.date} ({self.status})"
-
 class Payroll(models.Model):
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='payrolls')
     pay_period = models.CharField(max_length=50) 
     amount = models.DecimalField(max_digits=12, decimal_places=2)
     is_paid = models.BooleanField(default=False)
 
-    def __str__(self):
-        return f"Payroll {self.pay_period} - {self.employee.last_name}"
-
 class PerformanceReview(models.Model):
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='reviews')
     review_date = models.DateField()
     rating = models.IntegerField(choices=[(i, str(i)) for i in range(1, 6)])
     reviewer = models.CharField(max_length=100)
-
-    def __str__(self):
-        return f"Review {self.review_date} - {self.employee.last_name} ({self.rating}/5)"
