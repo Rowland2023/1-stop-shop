@@ -1,25 +1,35 @@
-# --- STAGE 1: BUILD ---
-FROM node:20-alpine AS build-stage
+# Stage 1: Build
+FROM node:18-alpine AS build-stage
 WORKDIR /app
-COPY package*.json ./
-RUN npm install
+
+# 1. Copy everything to ensure context is preserved
 COPY . .
+
+# 2. MOVE into the actual project folder to run the build
+WORKDIR /app/front-end/expense-manager
+
+# 3. Install and Build where the package.json actually lives
+RUN npm install
 RUN npm run build
 
-# --- STAGE 2: PRODUCTION ---
+# Stage 2: Serve
 FROM nginx:alpine
 
-# Clean conflict-prone directories
-RUN rm -rf /etc/nginx/conf.d/* && rm -rf /docker-entrypoint.d/*
+# Surgical strike to prevent the port 10000 conflict
+RUN rm -f /docker-entrypoint.d/* && rm -rf /etc/nginx/conf.d/*
 
-# SOLUTION: Remove the "./front-end/expense-manager/" prefix.
-# If this Dockerfile is inside the expense-manager folder, 
-# 'nginx/' is all you need.
-COPY nginx/nginx.conf /etc/nginx/conf.d/default.conf
+# 4. THE CRITICAL COPY: 
+# We copy from the 'dist' folder INSIDE the subfolder we just built in
+COPY --from=build-stage /app/front-end/expense-manager/dist /usr/share/nginx/html
 
-# Same for the build files
-COPY --from=build-stage /app/dist /usr/share/nginx/html
+# 5. Copy your config
+COPY front-end/expense-manager/nginx/nginx.conf /etc/nginx/conf.d/default.conf
 
-# The bypass fix we verified earlier
-ENTRYPOINT ["nginx", "-g", "daemon off;"]
+# Permissions fix
+RUN touch /var/run/nginx.pid && \
+    chown -R nginx:nginx /var/run/nginx.pid /var/cache/nginx /var/log/nginx
+
 EXPOSE 10000
+
+# Run directly to avoid entrypoint logic
+ENTRYPOINT ["nginx", "-g", "daemon off;"]
