@@ -1,37 +1,25 @@
 # --- STAGE 1: BUILD ---
-FROM node:20-alpine AS build
+FROM node:20-alpine AS build-stage
 WORKDIR /app
-
-# 1. Copy the whole repo
+COPY package*.json ./
+RUN npm install
 COPY . .
+RUN npm run build
 
-# 2. Find the project, build it, and move files to a predictable top-level folder
-RUN PROJ_PATH=$(find . -name "package.json" -not -path "*/node_modules/*" -exec dirname {} \;) && \
-    echo "Building in: $PROJ_PATH" && \
-    cd "$PROJ_PATH" && \
-    npm install && \
-    npm run build && \
-    # Flatten the dist folder
-    mkdir -p /app/final_dist && \
-    cp -r dist/* /app/final_dist/ && \
-    # Flatten the nginx.conf - find it wherever it is and move it to /app/final_nginx.conf
-    find /app -name "nginx.conf" -exec cp {} /app/final_nginx.conf \;
-
-# --- STAGE 2: SERVE ---
+# --- STAGE 2: PRODUCTION ---
 FROM nginx:alpine
 
-# Remove default configs
-RUN rm -rf /etc/nginx/conf.d/*
+# 1. Wipe the default configs completely
+RUN rm -rf /etc/nginx/conf.d/* /etc/nginx/nginx.conf
 
-# 3. Copy from the "Flat" predictable locations
-COPY --from=build /app/final_dist /usr/share/nginx/html
-COPY --from=build /app/final_nginx.conf /etc/nginx/conf.d/default.conf
+# 2. Copy your config to the MAIN nginx config path, not the sub-folder
+# This forces Nginx to use YOUR rules as the primary rules.
+COPY nginx/nginx.conf /etc/nginx/nginx.conf
 
-# 4. Render Permissions
-RUN touch /var/run/nginx.pid && \
-    chown -R nginx:nginx /var/run/nginx.pid /var/cache/nginx /var/log/nginx
+# 3. Ensure the folder exists and copy the dist contents
+RUN mkdir -p /usr/share/nginx/html
+COPY --from=build-stage /app/dist /usr/share/nginx/html
 
-USER nginx
+# 4. Explicitly start nginx using the config we just moved
+ENTRYPOINT ["nginx", "-g", "daemon off;"]
 EXPOSE 10000
-
-CMD ["nginx", "-g", "daemon off;"]
