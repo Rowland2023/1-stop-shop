@@ -8,31 +8,28 @@ from .models import (
 # --- HELPER UTILITY ---
 def secure_url(image_field):
     """
-    Ensures Cloudinary returns a full HTTPS URL.
-    Handles CloudinaryResource objects, ImageFields, and raw path strings.
+    Normalize Cloudinary and local image paths into full HTTPS URLs.
     """
     if not image_field:
         return None
-    
-    # 1. Try to get the .url property (Standard for CloudinaryField)
+
+    # Try CloudinaryField .url property first
     url = getattr(image_field, 'url', str(image_field))
-    
-    # 2. Fix relative paths (e.g., 'image/upload/...') 
-    # This uses your cloud name: dscxqsew5
+
+    # Fix relative Cloudinary paths (e.g. 'image/upload/...') 
     if url and not url.startswith('http'):
         cloud_name = os.environ.get('CLOUDINARY_CLOUD_NAME', 'dscxqsew5')
         url = f"https://res.cloudinary.com/{cloud_name}/{url}"
-    
-    # 3. Force HTTPS to avoid Mixed Content errors on Render
+
+    # Force HTTPS
     if url and url.startswith('http://'):
         url = url.replace('http://', 'https://', 1)
-        
+
     return url
 
 # --- 1. MARKETPLACE & INVENTORY SERIALIZERS ---
 
 class ProductImageSerializer(serializers.ModelSerializer):
-    # This ensures the gallery images return full URLs in the JSON
     image = serializers.SerializerMethodField()
 
     class Meta:
@@ -51,23 +48,21 @@ class ProductSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'price', 'category', 'image_display', 'additional_images']
 
     def get_image_display(self, obj):
-        # 1. Primary Choice: The 'main_image' field
+        # Primary: main_image
         if obj.main_image:
             return secure_url(obj.main_image)
-        
-        # 2. Smart Fallback: Use the first image from the gallery (ProductImage model)
-        # This fixes the 'null' issue for items like your Laptop (ID 34/35)
+
+        # Fallback: first gallery image
         first_gallery_item = obj.images.first()
         if first_gallery_item and first_gallery_item.image:
             return secure_url(first_gallery_item.image)
-        
-        # 3. Legacy Fallback: Local static path string
-        if hasattr(obj, 'image_path') and obj.image_path:
-            path = obj.image_path.lstrip('/')
-            return f"https://back-end-wdk7.onrender.com/static/{path}"
-            
+
+        # Legacy fallback: local ImageField
+        if obj.image:
+            return secure_url(obj.image)
+
         return None
-    
+
 class OrderItemSerializer(serializers.ModelSerializer):
     product_name = serializers.ReadOnlyField(source='product.name')
     product_image = serializers.SerializerMethodField()
@@ -77,14 +72,13 @@ class OrderItemSerializer(serializers.ModelSerializer):
         fields = ['id', 'product', 'product_name', 'product_image', 'quantity', 'price_at_purchase']
 
     def get_product_image(self, obj):
-        # Reach through the foreign key to find the best available image
         if obj.product.main_image:
             return secure_url(obj.product.main_image)
-        
         first_img = obj.product.images.first()
         if first_img:
             return secure_url(first_img.image)
-            
+        if obj.product.image:
+            return secure_url(obj.product.image)
         return None
 
 class OrderSerializer(serializers.ModelSerializer):
