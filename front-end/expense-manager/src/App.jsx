@@ -1,15 +1,27 @@
 import React, { useEffect, useState } from "react";
 import "./App.css";
 
-// --- GLOBAL CONFIG ---
-// This looks for the Render environment variable. 
-// If empty, it defaults to your local proxy (important for your Nginx setup).
+// --- CONFIG ---
 const BASE_URL = import.meta.env.VITE_API_URL || "";
+// Updated with your Cloudinary Cloud Name
+const CLOUDINARY_BASE = "https://res.cloudinary.com/dscxqsew5/image/upload/";
+
+// Helper to resolve image URLs correctly
+const getImageUrl = (path) => {
+  if (!path) return "/static/placeholder.png";
+  // If the backend already provides a full URL, use it
+  if (path.startsWith("http")) return path;
+  // Prepend Cloudinary base if it's just a relative path
+  return `${CLOUDINARY_BASE}${path}`;
+};
 
 // --- SUB-COMPONENT: PRODUCT CARD ---
 function ProductCard({ product, onAddToCart, onSelect }) {
   const [tempQty, setTempQty] = useState(1);
-  const displayImage = product.image_display || "/static/placeholder.png";
+
+  // Fallback: Use image_display, or the first additional image, or placeholder
+  const rawPath = product.image_display || (product.additional_images?.[0]?.image);
+  const displayImage = getImageUrl(rawPath);
 
   return (
     <div className="product-card">
@@ -65,7 +77,7 @@ function App() {
     localStorage.setItem("shop_cart_data", JSON.stringify(cart));
   }, [cart]);
 
-  // FIX: Added BASE_URL
+  // Fetch Products
   useEffect(() => {
     fetch(`${BASE_URL}/api/products/`)
       .then((res) => res.json())
@@ -80,7 +92,7 @@ function App() {
     setVisibleCount(PAGE_SIZE);
   }, [category, searchTerm]);
 
-  // FIX: Added BASE_URL
+  // Fetch Order History
   useEffect(() => {
     if (view === "account" && user) {
       fetch(`${BASE_URL}/api/orders/?userId=${user.id}`)
@@ -105,16 +117,11 @@ function App() {
     });
   };
 
-  const clearCart = () => { if (window.confirm("Empty cart?")) setCart([]); };
-
-  // FIX: Added BASE_URL and verified absolute path
   const handleAuth = async (e) => {
     e.preventDefault();
     const endpoint = authMode === "login" ? "/api/login/" : "/api/register/";
-    const url = `${BASE_URL}${endpoint}`;
-    
     try {
-      const response = await fetch(url, {
+      const response = await fetch(`${BASE_URL}${endpoint}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -131,21 +138,10 @@ function App() {
         alert(data.error || "Authentication failed");
       }
     } catch (err) {
-      alert("Backend connection failed. Please check your internet or server status.");
+      alert("Backend connection failed.");
     }
   };
 
-  const applyGiftCard = () => {
-    if (!user) return alert("Please login to redeem gift cards!");
-    if (giftCardCode.toUpperCase() === "EOY2026") {
-        setDiscount(5000);
-        alert("₦5,000 Discount Applied!");
-    } else {
-        alert("Invalid Code.");
-    }
-  };
-
-  // FIX: Added BASE_URL
   const verifyPaymentOnBackend = async (reference, djangoOrderId) => {
     try {
       const response = await fetch(`${BASE_URL}/api/payments/verify`, {
@@ -164,7 +160,6 @@ function App() {
     }
   };
 
-  // FIX: Added BASE_URL
   const checkoutWithPaystack = async () => {
     if (cart.length === 0) return alert("Cart is empty!");
     setIsProcessing(true);
@@ -199,18 +194,6 @@ function App() {
     }
   };
 
-  // FIX: Added BASE_URL
-  const handleTrackOrder = async () => {
-    if (!trackInput) return alert("Please enter an Order ID");
-    try {
-      const response = await fetch(`${BASE_URL}/api/orders/${trackInput}/`);
-      const data = await response.json();
-      if (response.ok) setTrackingData(data);
-      else alert("Order not found.");
-    } catch (err) { alert("Connection failed."); }
-  };
-
-  // --- REMAINDER OF RENDER LOGIC UNCHANGED ---
   const subTotalValue = cart.reduce((sum, item) => sum + (parseFloat(item.price) * item.quantity), 0);
   const totalDue = Math.max(0, subTotalValue - discount);
   const allFiltered = products.filter((p) => 
@@ -236,7 +219,7 @@ function App() {
 
       <nav className="main-nav">
         <ul>
-          <li><button className="nav-btn-link" onClick={() => { setView("grid"); setSelectedProduct(null); setIsSuccess(false); }}>Home</button></li>
+          <li><button className="nav-btn-link" onClick={() => { setView("grid"); setSelectedProduct(null); setIsSuccess(false); setActiveImage(null); }}>Home</button></li>
           <li><button className="nav-btn-link" onClick={() => { setView("tracking"); setTrackingData(null); }}>Track Order</button></li>
           <li><button className="nav-btn-link" onClick={() => setView("account")}>Account</button></li>
           <li className="nav-auth">
@@ -254,7 +237,7 @@ function App() {
         <nav className="side-nav">
           {["food", "electronics", "office", "style&fashion", "sex-toys", "rent-house", "car-sales", "kitchen-items"].map((catId) => (
             <button key={catId} className={category === catId ? "active" : ""} 
-              onClick={() => { setCategory(catId); setView("grid"); setSelectedProduct(null); }}>
+              onClick={() => { setCategory(catId); setView("grid"); setSelectedProduct(null); setActiveImage(null); }}>
               {catId.toUpperCase()}
             </button>
           ))}
@@ -282,52 +265,52 @@ function App() {
                </p>
              </div>
           </div>
-        ) : view === "tracking" ? (
-          <div className="view-container tracking-screen">
-            <h1>📦 Track Your Shipment</h1>
-            <div className="track-search-box">
-              <input type="text" placeholder="Enter Order ID" value={trackInput} onChange={(e) => setTrackInput(e.target.value)} />
-              <button onClick={handleTrackOrder}>Check Status</button>
-            </div>
-            {trackingData && (
-              <div className="tracking-timeline">
-                <div className="step active"><div className="info"><strong>Status: {trackingData.status}</strong></div></div>
-              </div>
-            )}
-            <button className="back-btn" onClick={() => setView("grid")}>Back</button>
-          </div>
         ) : view === "account" ? (
           <div className="view-container account-screen">
             <h1>Order History</h1>
             <div className="order-history">
-              {userOrders.map((order) => (
+              {userOrders.length > 0 ? userOrders.map((order) => (
                 <div key={order.id} className="history-item">
                   <strong>Order #{order.id}</strong>
                   <span>₦{parseFloat(order.total_price || 0).toLocaleString()}</span>
                   <button onClick={() => window.open(`${BASE_URL}/api/invoices/generate?order_id=${order.id}`, "_blank")}>PDF</button>
                 </div>
-              ))}
+              )) : <p>No orders yet.</p>}
             </div>
-          </div>
-        ) : isSuccess ? (
-          <div className="view-container success-screen">
-            <h2>✅ Payment Confirmed!</h2>
-            <button onClick={() => setIsSuccess(false)}>Continue Shopping</button>
           </div>
         ) : selectedProduct ? (
           <div className="view-container detail-screen">
-            <button onClick={() => { setSelectedProduct(null); setActiveImage(null); }}>← Back</button>
+            <button className="back-btn" onClick={() => { setSelectedProduct(null); setActiveImage(null); }}>← Back</button>
             <div className="detail-layout" style={{ display: 'flex', gap: '30px', marginTop: '20px' }}>
               <div className="image-gallery-container" style={{ flex: 1 }}>
                 <div className="main-image-frame">
-                  <img src={activeImage || selectedProduct.image_display} alt={selectedProduct.name} style={{ width: "100%", borderRadius: "12px", objectFit: 'cover' }} />
+                  <img 
+                    src={getImageUrl(activeImage || selectedProduct.image_display || selectedProduct.additional_images?.[0]?.image)} 
+                    alt={selectedProduct.name} 
+                    style={{ width: "100%", borderRadius: "12px", objectFit: 'cover', maxHeight: '500px' }} 
+                  />
+                </div>
+                {/* THUMBNAIL LIST */}
+                <div className="thumb-row" style={{ display: 'flex', gap: '10px', marginTop: '15px', overflowX: 'auto' }}>
+                    {selectedProduct.additional_images?.map((imgObj, idx) => (
+                        <img 
+                            key={idx} 
+                            src={getImageUrl(imgObj.image)} 
+                            onClick={() => setActiveImage(imgObj.image)}
+                            style={{ 
+                                width: '70px', height: '70px', objectFit: 'cover', cursor: 'pointer', 
+                                borderRadius: '6px', border: activeImage === imgObj.image ? '2px solid #2e7d32' : '1px solid #ddd' 
+                            }}
+                            alt="thumb"
+                        />
+                    ))}
                 </div>
               </div>
               <div className="detail-info" style={{ flex: 1 }}>
                 <h1>{selectedProduct.name}</h1>
                 <h2 style={{ color: '#2e7d32' }}>₦{parseFloat(selectedProduct.price).toLocaleString()}</h2>
-                <p className="description">{selectedProduct.description || "Premium quality product."}</p>
-                <button className="add-btn" onClick={() => addToCart(selectedProduct)}>Add to Cart</button>
+                <p className="description">{selectedProduct.description || "Premium product selection."}</p>
+                <button className="add-btn" style={{ padding: '15px 30px', fontSize: '1.1rem' }} onClick={() => addToCart(selectedProduct)}>Add to Cart</button>
               </div>
             </div>
           </div>
@@ -360,7 +343,9 @@ function App() {
           </div>
           <div className="total-section">
             <p>Total: <strong>₦{totalDue.toLocaleString()}</strong></p>
-            <button className="vendor-btn paystack" disabled={isProcessing} onClick={checkoutWithPaystack}>Pay Now</button>
+            <button className="vendor-btn paystack" disabled={isProcessing} onClick={checkoutWithPaystack}>
+                {isProcessing ? "Connecting..." : "Pay Now"}
+            </button>
           </div>
         </div>
       </aside>
