@@ -4,25 +4,32 @@ FROM python:3.11-slim
 ENV PYTHONUNBUFFERED 1
 WORKDIR /app
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y libpq-dev gcc && rm -rf /var/lib/apt/lists/*
+# Install system dependencies (including netcat/curl for debugging if needed)
+RUN apt-get update && apt-get install -y \
+    libpq-dev \
+    gcc \
+    && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-# --- NEW: STATIC FILES HANDLING ---
-# Set dummy environment variables so collectstatic runs during build
+# --- STATIC & MEDIA PREPARATION ---
+# Create the media directory explicitly so permissions are set
+RUN mkdir -p /app/media /app/staticfiles
+
+# Set dummy environment variables for build-time operations
 ENV SECRET_KEY=build-time-key-only
 ENV DEBUG=False
-# This ensures fallback images in /static/ are moved to /staticfiles/ for Whitenoise
+
+# Collect static files for Whitenoise to serve CSS/JS
 RUN python manage.py collectstatic --no-input
 
-# Expose the port (Render will use this)
+# Expose the port (Render default)
 EXPOSE 8000
 
-# --- THE FIX: COMBINED COMMAND ---
-# This runs migrations FIRST, then starts the server. 
-# If migrate fails, the logs will tell us why (likely a DB connection string issue).
+# --- THE EXECUTION ---
+# Migrations run first. If they fail, the container crashes and prevents 
+# a broken app from trying to serve traffic.
 CMD ["sh", "-c", "python manage.py migrate --no-input && gunicorn store.wsgi:application --bind 0.0.0.0:8000"]
