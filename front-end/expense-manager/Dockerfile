@@ -1,25 +1,21 @@
-# --- STAGE 1: BUILD ---
-FROM node:20-alpine AS build-stage
+# Stage 1: Build (Inside front-end/expense-manager)
+FROM node:18-alpine AS build-stage
 WORKDIR /app
-COPY package*.json ./
+# Copy the package files from your specific nested directory
+COPY front-end/expense-manager/package*.json ./
 RUN npm install
-COPY . .
+COPY front-end/expense-manager/ ./
 RUN npm run build
 
-# --- STAGE 2: PRODUCTION ---
+# Stage 2: Serve
 FROM nginx:alpine
-
-# Clean conflict-prone directories
-RUN rm -rf /etc/nginx/conf.d/* && rm -rf /docker-entrypoint.d/*
-
-# 1. Copy config from the subfolder we identified earlier
-COPY nginx/nginx.conf /etc/nginx/conf.d/default.conf
-
-# 2. TRACE CHECK: 
-# If your project uses Vite, the folder is 'dist'. 
-# If you are NOT using a build tool and just want to serve raw files, 
-# you would use 'COPY . /usr/share/nginx/html'
+RUN rm -f /docker-entrypoint.d/* && rm -rf /etc/nginx/conf.d/*
+# Vite outputs to 'dist'
 COPY --from=build-stage /app/dist /usr/share/nginx/html
+COPY front-end/expense-manager/nginx/nginx.conf /etc/nginx/conf.d/default.conf
 
-ENTRYPOINT ["nginx", "-g", "daemon off;"]
+# Permissions & Entrypoint
+RUN touch /var/run/nginx.pid && \
+    chown -R nginx:nginx /var/run/nginx.pid /var/cache/nginx /var/log/nginx
 EXPOSE 10000
+ENTRYPOINT ["nginx", "-g", "daemon off;"]
