@@ -2,39 +2,34 @@
 FROM node:20-alpine AS build
 WORKDIR /app
 
-# 1. Copy package files
-COPY package*.json ./
-
-# 2. THE FIX: Install ALL dependencies (including Vite)
-# We need devDependencies to run the 'build' command
-RUN npm install
-
-# 3. Copy the rest of the source code
+# Copy the entire repository
 COPY . .
 
-# 4. Generate the 'dist' folder
+# Move into your specific sub-folder
+WORKDIR /app/front-end/expense-manager
+
+# Install and build
+RUN npm install
 RUN npm run build
 
 # --- STAGE 2: SERVE ---
 FROM nginx:alpine
 
-# 1. Remove default config to prevent port/host conflicts
+# 1. Remove default Nginx configs
 RUN rm -rf /etc/nginx/conf.d/*
 
-# 2. Copy build output from Stage 1
-COPY --from=build /app/dist /usr/share/nginx/html
+# 2. COPY the built files from the deep sub-folder to the Nginx root
+# This "flattens" your structure so Nginx can find it easily
+COPY --from=build /app/front-end/expense-manager/dist /usr/share/nginx/html
 
-# 3. Copy custom config
-# Ensure your local path 'nginx/nginx.conf' is correct
-COPY nginx/nginx.conf /etc/nginx/conf.d/default.conf
+# 3. Copy your nginx config
+COPY --from=build /app/front-end/expense-manager/nginx/nginx.conf /etc/nginx/conf.d/default.conf
 
-# 4. Permissions fix for Render's non-root execution
+# 4. Render Permissions Fix
 RUN touch /var/run/nginx.pid && \
     chown -R nginx:nginx /var/run/nginx.pid /var/cache/nginx /var/log/nginx
 
-EXPOSE 10000
-
-# 5. Run as nginx user for better security/compatibility
 USER nginx
+EXPOSE 10000
 
 CMD ["nginx", "-g", "daemon off;"]
