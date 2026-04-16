@@ -9,12 +9,7 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-_m6@*&@vaop567))d(y20
 # Set to False in production!
 DEBUG = os.environ.get('DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = [
-    'back-end-wdk7.onrender.com', 
-    'back-end-wdk7', 
-    'localhost', 
-    '127.0.0.1'
-]
+ALLOWED_HOSTS = ['back-end-wdk7.onrender.com', 'frontend-rdmj.onrender.com', 'localhost', '127.0.0.1']
 
 # --- Application definition ---
 
@@ -51,12 +46,12 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:8001",
     "http://127.0.0.1:8001",
     "http://localhost:3000",
-    "https://front-end-6f9m.onrender.com", # Your Render Frontend
+    "https://frontend-rdmj.onrender.com", # Your Render Frontend
 ]
 
 # CRITICAL for Registration/Login to work
 CSRF_TRUSTED_ORIGINS = [
-    "https://front-end-6f9m.onrender.com",
+    "https://frontend-rdmj.onrender.com",
     "https://back-end-wdk7.onrender.com",
 ]
 
