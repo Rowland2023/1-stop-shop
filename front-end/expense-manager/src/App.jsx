@@ -57,8 +57,8 @@ function App() {
   const [userOrders, setUserOrders] = useState([]); 
   
   // PAGINATION STATES
-  const PAGE_SIZE = 9; 
-  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE); 
+  const [currentPage, setCurrentPage] = useState(1);
+  const ordersPerPage = 10;
 
   // --- 1. FETCH DATA ---
 
