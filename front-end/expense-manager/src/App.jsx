@@ -32,6 +32,7 @@ function ProductCard({ product, onAddToCart, onSelect }) {
   );
 }
 
+
 function App() {
   const [products, setProducts] = useState([]);
   const [category, setCategory] = useState("food");
@@ -47,15 +48,17 @@ function App() {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [activeImage, setActiveImage] = useState(null); 
   const [user, setUser] = useState(null);
+  const [authMode, setAuthMode] = useState("login");
+  const [authData, setAuthData] = useState({ phone: "", password: "" });
   const [userOrders, setUserOrders] = useState([]); 
-  const [orderId, setOrderId] = useState(null); // Fixed missing state
-  const [visibleCount, setVisibleCount] = useState(9); 
+
+  const PAGE_SIZE = 9;
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE); 
 
   useEffect(() => {
     localStorage.setItem("shop_cart_data", JSON.stringify(cart));
   }, [cart]);
 
-  // Fetch Products
   useEffect(() => {
     fetch(`${BASE_URL}/api/products/`)
       .then((res) => res.json())
@@ -66,18 +69,105 @@ function App() {
       .catch((err) => console.error("Error fetching products:", err));
   }, []);
 
-  // Fetch Order History (Fixed Localhost URL)
   useEffect(() => {
-    if (view === "account" && user) {
-      fetch(`${BASE_URL}/api/orders/?userId=${user.id}`)
+    if (view === "account") {
+      setCurrentPage(1);
+      fetch("http://127.0.0.1:8000/api/orders/")
         .then((res) => res.json())
         .then((data) => {
-          let ordersArray = Array.isArray(data) ? data : (data.results || []);
-          setUserOrders(ordersArray.sort((a, b) => b.id - a.id));
+          let ordersArray = [];
+          if (Array.isArray(data)) { ordersArray = data; } 
+          else if (data.results) { ordersArray = data.results; } 
+          else if (data.orders) { ordersArray = data.orders; }
+
+          const myOrders = ordersArray.filter(order => 
+            order.userId === "001" || order.user === 1 || order.user_id === 1 || !order.user || order.id === 57
+          );
+          setUserOrders(myOrders.sort((a, b) => b.id - a.id));
         })
         .catch((err) => console.error("Error fetching order history:", err));
     }
-  }, [view, user]);
+  }, [view]);
+
+  // --- 2. PAYMENT & CHECKOUT LOGIC ---
+
+  const verifyPaymentOnBackend = async (reference, djangoOrderId) => {
+    try {
+      const response = await fetch("http://localhost:8001/api/payments/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reference, order_id: djangoOrderId }),
+      });
+      
+      if (response.ok) {
+        setIsSuccess(true);
+        setCart([]);
+        setCartOpen(false);
+        window.open(`http://localhost:8001/api/invoices/generate?order_id=${djangoOrderId}`, "_blank");
+      }
+    } catch (err) {
+      console.error("Verification failed", err);
+    }
+  };
+
+    const checkoutWithPaystack = async () => {
+    if (cart.length === 0) return alert("Cart is empty!");
+    setIsProcessing(true);
+    try {
+      const response = await fetch(`${BASE_URL}/api/orders/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          items: cart.map((item) => ({ id: parseInt(item.id), quantity: item.quantity })),
+          total: cart.reduce((sum, item) => sum + (parseFloat(item.price) * item.quantity), 0).toFixed(2),
+          userId: user ? user.id : "guest_001",
+        }),
+      });
+
+      const orderData = await response.json();
+      if (!response.ok) throw new Error("Server failed to create order");
+      setOrderId(orderData.id);
+      const handler = window.PaystackPop.setup({
+        key: 'pk_live_21207f639d252b46e35e171dca6b075f79cba433', 
+        email: 'innovator@lekki.com',
+        amount: Math.round(totalDue * 100), 
+        currency: 'NGN',
+        // ADDED DESCRIPTION LABEL
+        label: `Lagos Tech Hub - Order #${orderData.id}`,
+        ref: 'LTH-' + orderData.id + '-' + Date.now(),
+        metadata: {
+          order_id: orderData.id
+        },
+        onClose: () => setIsProcessing(false),
+        callback: (response) => {
+          setIsProcessing(false);
+          verifyPaymentOnBackend(response.reference, orderData.id);
+        }
+      });
+      handler.openIframe();
+
+    } catch (err) {
+      alert(`Checkout failed: ${err.message}`);
+      setIsProcessing(false);
+    }
+  };
+
+  // --- 3. FILTER & CART LOGIC ---
+
+  const subTotalValue = cart.reduce((sum, item) => sum + parseFloat(item.price || 0), 0);
+  //const shippingFee = cart.length > 0 ? 1500 : 0;
+  const totalDue = subTotalValue + shippingFee;
+
+  const indexOfLastOrder = currentPage * ordersPerPage;
+  const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
+  const currentOrders = userOrders.slice(indexOfFirstOrder, indexOfLastOrder);
+  const totalPages = Math.ceil(userOrders.length / ordersPerPage);
+
+  // IMPROVED: Case-insensitive category filtering
+  const filteredProducts = products.filter((p) => 
+    p.category.toLowerCase() === category.toLowerCase() && 
+    p.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   const addToCart = (product, qty = 1) => {
     setCart((prevCart) => {
@@ -89,66 +179,26 @@ function App() {
     });
   };
 
-  const totalDue = cart.reduce((sum, item) => sum + (parseFloat(item.price) * item.quantity), 0);
-
-  const verifyPaymentOnBackend = async (reference, djangoOrderId) => {
+  const handleTrackOrder = async () => {
+    if (!trackInput) return alert("Please enter an Order ID");
     try {
-      const response = await fetch(`${BASE_URL}/api/payments/verify`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ reference, order_id: djangoOrderId }),
-      });
-      if (response.ok) {
-        setCart([]);
-        alert("Payment Verified!");
-        window.open(`${BASE_URL}/api/invoices/generate?order_id=${djangoOrderId}`, "_blank");
-      }
-    } catch (err) { console.error("Verification error", err); }
+      const response = await fetch(`http://127.0.0.1:8000/api/orders/${trackInput}/`);
+      const data = await response.json();
+      if (response.ok) { setTrackingData(data); } 
+      else { alert("Order not found."); setTrackingData(null); }
+    } catch (err) { alert("Connection failed."); }
   };
-
-  const checkoutWithPaystack = async () => {
-    if (cart.length === 0) return alert("Cart is empty!");
-    setIsProcessing(true);
-    try {
-      const response = await fetch(`${BASE_URL}/api/orders/`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          items: cart.map((item) => ({ id: parseInt(item.id), quantity: item.quantity })),
-          total: totalDue.toFixed(2),
-          userId: user ? user.id : "guest_001",
-        }),
-      });
-      const orderData = await response.json();
-      
-      const handler = window.PaystackPop.setup({
-        key: PAYSTACK_PUBLIC_KEY,
-        email: user ? `${user.phone}@lekki-market.com` : 'guest@lekki.com',
-        amount: Math.round(totalDue * 100),
-        currency: 'NGN',
-        callback: (response) => {
-          setIsProcessing(false);
-          verifyPaymentOnBackend(response.reference, orderData.id);
-        },
-        onClose: () => setIsProcessing(false)
-      });
-      handler.openIframe();
-    } catch (err) {
-      alert("Checkout failed");
-      setIsProcessing(false);
-    }
-  };
-
-  const allFiltered = products.filter((p) => 
-    p.category.toLowerCase() === category.toLowerCase() && 
-    p.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+ 
 
   return (
     <div className="app-grid-wrapper">
       <header className="header-main">
-        <div className="logo-section"><h1>1-Stop Shop</h1></div>
-        <div className="header-center-ad"><img src="/static/Shoping-ad.jpg" alt="Ad" /></div>
+        <div className="logo-section">
+          <h1>1-Stop Shop</h1>
+        </div>
+        <div className="header-center-ad">
+           <img src="/static/Shoping-ad.jpg" alt="Ad" />
+        </div>
         <div className="cart-section">
           <button className="cart-toggle-btn" onClick={() => setCartOpen(!cartOpen)}>
             🛒 CART ({cart.reduce((acc, item) => acc + item.quantity, 0)})
@@ -159,11 +209,19 @@ function App() {
       <nav className="unified-nav">
           <button className="nav-item" onClick={() => {setView("grid"); setSelectedProduct(null)}}>Home</button>
           <button className="nav-item" onClick={() => setView("tracking")}>Tracking</button>
+          
           <div className="search-container-bold">
-            <input type="text" placeholder="SEARCH PRODUCTS..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+            <input 
+              type="text" 
+              placeholder="SEARCH PRODUCTS..." 
+              value={searchTerm} 
+              onChange={(e) => setSearchTerm(e.target.value)} 
+            />
             <button className="search-end-orange">GO</button>
           </div>
+
           <button className="nav-item" onClick={() => setView("account")}>Account</button>
+          {user ? <span className="user-text">Hi, {user.phone}</span> : <button className="nav-item" onClick={() => setView("auth")}>Login</button>}
       </nav>
 
       <div className="main-layout">
@@ -177,7 +235,7 @@ function App() {
         <main className="content-area">
           {selectedProduct ? (
             <div className="product-review-container">
-              <button className="back-link" onClick={() => {setSelectedProduct(null); setActiveImage(null)}}>← Back</button>
+              <button className="back-link" onClick={() => {setSelectedProduct(null); setActiveImage(null)}}>← Back to Shopping</button>
               <div className="review-flex">
                 <div className="review-images">
                   <div className="main-img-box">
@@ -185,7 +243,7 @@ function App() {
                   </div>
                   <div className="thumb-strip">
                     {selectedProduct.additional_images?.map((img, i) => (
-                      <img key={i} src={getImageUrl(img.image)} onClick={() => setActiveImage(img.image)} className={activeImage === img.image ? "active-t" : ""} alt="thumb" />
+                      <img key={i} src={getImageUrl(img.image)} onClick={() => setActiveImage(img.image)} className={activeImage === img.image ? "active-t" : ""} />
                     ))}
                   </div>
                 </div>
@@ -217,7 +275,7 @@ function App() {
            <div className="cart-footer">
               <button className="clear-cart-btn-curved" onClick={() => setCart([])}>Clear Cart</button>
               <button className="checkout-btn-curved" onClick={checkoutWithPaystack} disabled={isProcessing}>
-                {isProcessing ? "Wait..." : "Checkout Now"}
+                {isProcessing ? "Processing..." : "Checkout Now"}
               </button>
            </div>
         </aside>
@@ -227,3 +285,5 @@ function App() {
 }
 
 export default App;
+
+
