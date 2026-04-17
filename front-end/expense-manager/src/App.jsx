@@ -1,71 +1,35 @@
 import React, { useEffect, useState } from "react";
 import "./App.css";
 
-// --- CONFIG ---
-const BASE_URL = import.meta.env.VITE_API_URL || "";
-const CLOUDINARY_BASE = "https://res.cloudinary.com/dscxqsew5/";
-const PAYSTACK_PUBLIC_KEY = 'pk_live_21207f639d252b46e35e171dca6b075f79cba433';
-
-const getImageUrl = (path) => {
-  if (!path) return "/static/placeholder.png";
-  if (path.startsWith("http")) return path;
-  return `${CLOUDINARY_BASE}${path}`;
-};
-
-function ProductCard({ product, onAddToCart, onSelect }) {
-  const [tempQty, setTempQty] = useState(1);
-  const rawPath = product.image_display || (product.additional_images?.[0]?.image);
-  const displayImage = getImageUrl(rawPath);
-
-  return (
-    <div className="product-card">
-      <div className="img-frame" onClick={() => onSelect(product)}>
-        <img src={displayImage} alt={product.name} className="zoom-effect" />
-      </div>
-      <h3>{product.name}</h3>
-      <p className="price-text">₦{parseFloat(product.price).toLocaleString()}</p>
-      <div className="qty-row">
-        <input type="number" min="1" value={tempQty} onChange={(e) => setTempQty(parseInt(e.target.value) || 1)} />
-        <button className="add-btn" onClick={() => onAddToCart(product, tempQty)}>Add to Cart</button>
-      </div>
-    </div>
-  );
-}
-
-
 function App() {
   const [products, setProducts] = useState([]);
   const [category, setCategory] = useState("food");
-  const [cart, setCart] = useState(() => {
-    const savedCart = localStorage.getItem("shop_cart_data");
-    return savedCart ? JSON.parse(savedCart) : [];
-  });
-  
+  const [cart, setCart] = useState([]);
   const [cartOpen, setCartOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+
+  // VIEW STATES
   const [view, setView] = useState("grid"); 
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedProduct, setSelectedProduct] = useState(null);
-  const [activeImage, setActiveImage] = useState(null); 
-  const [user, setUser] = useState(null);
-  const [authMode, setAuthMode] = useState("login");
-  const [authData, setAuthData] = useState({ phone: "", password: "" });
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [orderId, setOrderId] = useState("");
+
+  // TRACKING & ACCOUNT STATES
+  const [trackingData, setTrackingData] = useState(null);
+  const [trackInput, setTrackInput] = useState("");
   const [userOrders, setUserOrders] = useState([]); 
+  
+  // PAGINATION STATES
+  const [currentPage, setCurrentPage] = useState(1);
+  const ordersPerPage = 10;
 
-  const PAGE_SIZE = 9;
-  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE); 
+  // --- 1. FETCH DATA ---
 
   useEffect(() => {
-    localStorage.setItem("shop_cart_data", JSON.stringify(cart));
-  }, [cart]);
-
-  useEffect(() => {
-    fetch(`${BASE_URL}/api/products/`)
+    fetch("http://127.0.0.1:8000/api/products/")
       .then((res) => res.json())
-      .then((data) => {
-          const productData = Array.isArray(data) ? data : (data.results || []);
-          setProducts(productData);
-      })
+      .then((data) => setProducts(data))
       .catch((err) => console.error("Error fetching products:", err));
   }, []);
 
@@ -110,23 +74,28 @@ function App() {
     }
   };
 
-    const checkoutWithPaystack = async () => {
-    if (cart.length === 0) return alert("Cart is empty!");
+  const checkoutWithPaystack = async () => {
+    if (cart.length === 0) return alert("Your cart is empty!");
+    if (!window.PaystackPop) return alert("Paystack SDK not loaded. Check index.html.");
+    
     setIsProcessing(true);
+
     try {
-      const response = await fetch(`${BASE_URL}/api/orders/`, {
+      const response = await fetch("http://127.0.0.1:8000/api/orders/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          items: cart.map((item) => ({ id: parseInt(item.id), quantity: item.quantity })),
-          total: cart.reduce((sum, item) => sum + (parseFloat(item.price) * item.quantity), 0).toFixed(2),
-          userId: user ? user.id : "guest_001",
+          items: cart.map((item) => ({ id: parseInt(item.id), quantity: 1 })),
+          total: totalDue.toFixed(2),
+          userId: "001",
         }),
       });
 
       const orderData = await response.json();
       if (!response.ok) throw new Error("Server failed to create order");
+
       setOrderId(orderData.id);
+
       const handler = window.PaystackPop.setup({
         key: 'pk_live_21207f639d252b46e35e171dca6b075f79cba433', 
         email: 'innovator@lekki.com',
@@ -155,7 +124,7 @@ function App() {
   // --- 3. FILTER & CART LOGIC ---
 
   const subTotalValue = cart.reduce((sum, item) => sum + parseFloat(item.price || 0), 0);
-  //const shippingFee = cart.length > 0 ? 1500 : 0;
+  const shippingFee = cart.length > 0 ? 1500 : 0;
   const totalDue = subTotalValue + shippingFee;
 
   const indexOfLastOrder = currentPage * ordersPerPage;
@@ -169,14 +138,12 @@ function App() {
     p.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const addToCart = (product, qty = 1) => {
-    setCart((prevCart) => {
-      const existingItem = prevCart.find((item) => item.id === product.id);
-      if (existingItem) {
-        return prevCart.map((item) => item.id === product.id ? { ...item, quantity: item.quantity + qty } : item);
-      }
-      return [...prevCart, { ...product, quantity: qty }];
-    });
+  const addToCart = (product) => setCart([...cart, product]);
+  
+  const clearCart = () => {
+    if (cart.length > 0 && window.confirm("Are you sure you want to empty your cart?")) {
+      setCart([]);
+    }
   };
 
   const handleTrackOrder = async () => {
@@ -188,102 +155,139 @@ function App() {
       else { alert("Order not found."); setTrackingData(null); }
     } catch (err) { alert("Connection failed."); }
   };
- 
 
   return (
     <div className="app-grid-wrapper">
-      <header className="header-main">
-        <div className="logo-section">
-          <h1>1-Stop Shop</h1>
+      <header>
+        <h1>MeBuy</h1>
+        <div className="search-bar">
+          <input type="text" placeholder="Search..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
         </div>
-        <div className="header-center-ad">
-           <img src="/static/Shoping-ad.jpg" alt="Ad" />
-        </div>
-        <div className="cart-section">
-          <button className="cart-toggle-btn" onClick={() => setCartOpen(!cartOpen)}>
-            🛒 CART ({cart.reduce((acc, item) => acc + item.quantity, 0)})
-          </button>
-        </div>
+        <button className="cart-toggle" onClick={() => setCartOpen(!cartOpen)}>🛒 Cart ({cart.length})</button>
       </header>
 
-      <nav className="unified-nav">
-          <button className="nav-item" onClick={() => {setView("grid"); setSelectedProduct(null)}}>Home</button>
-          <button className="nav-item" onClick={() => setView("tracking")}>Tracking</button>
-          
-          <div className="search-container-bold">
-            <input 
-              type="text" 
-              placeholder="SEARCH PRODUCTS..." 
-              value={searchTerm} 
-              onChange={(e) => setSearchTerm(e.target.value)} 
-            />
-            <button className="search-end-orange">GO</button>
-          </div>
-
-          <button className="nav-item" onClick={() => setView("account")}>Account</button>
-          {user ? <span className="user-text">Hi, {user.phone}</span> : <button className="nav-item" onClick={() => setView("auth")}>Login</button>}
+      <nav className="main-nav">
+        <ul>
+          <li><button className="nav-btn-link" onClick={() => { setView("grid"); setSelectedProduct(null); setIsSuccess(false); }}>Home</button></li>
+          <li><button className="nav-btn-link" onClick={() => { setView("tracking"); setTrackingData(null); }}>Track Order</button></li>
+          <li><button className="nav-btn-link" onClick={() => setView("account")}>Account</button></li>
+          <li className="nav-auth"><button className="register-link">Register</button></li>
+        </ul>
       </nav>
 
-      <div className="main-layout">
-        <aside className="left-sidebar">
-          <h3>Categories</h3>
-          {["food", "electronics", "office", "style&fashion", "sex-toys", "rent-house", "car-sales", "kitchen-items"].map(cat => (
-            <button key={cat} className={category === cat ? "cat-btn active" : "cat-btn"} onClick={() => setCategory(cat)}>{cat.toUpperCase()}</button>
+      <aside className="left-sidebar">
+        <h3>Categories</h3>
+        <nav className="side-nav">
+          {/* UPDATED: Clean lowercase keys with pretty labels */}
+          {["food", "electronics", "office", "clothing", "sex-toys","rent-house","car-sales","kitchen-items"].map((catId) => (
+            <button key={catId} className={category === catId ? "active" : ""} 
+              onClick={() => { setCategory(catId); setView("grid"); setSelectedProduct(null); }}>
+              {catId.toUpperCase()}
+            </button>
           ))}
-        </aside>
+        </nav>
+      </aside>
 
-        <main className="content-area">
-          {selectedProduct ? (
-            <div className="product-review-container">
-              <button className="back-link" onClick={() => {setSelectedProduct(null); setActiveImage(null)}}>← Back to Shopping</button>
-              <div className="review-flex">
-                <div className="review-images">
-                  <div className="main-img-box">
-                    <img src={getImageUrl(activeImage || selectedProduct.image_display || selectedProduct.additional_images?.[0]?.image)} alt="main" />
-                  </div>
-                  <div className="thumb-strip">
-                    {selectedProduct.additional_images?.map((img, i) => (
-                      <img key={i} src={getImageUrl(img.image)} onClick={() => setActiveImage(img.image)} className={activeImage === img.image ? "active-t" : ""} />
-                    ))}
-                  </div>
-                </div>
-                <div className="review-details">
-                  <h2>{selectedProduct.name}</h2>
-                  <h3 className="orange-text">₦{parseFloat(selectedProduct.price).toLocaleString()}</h3>
-                  <p>{selectedProduct.description}</p>
-                  <button className="orange-checkout-btn" onClick={() => addToCart(selectedProduct)}>Add to Cart</button>
-                </div>
+      <main>
+        {view === "tracking" ? (
+          <div className="view-container tracking-screen">
+            <h1>📦 Track Your Shipment</h1>
+            <div className="track-search-box">
+              <input type="text" placeholder="Enter Order ID" className="track-input" value={trackInput} onChange={(e) => setTrackInput(e.target.value)} />
+              <button className="track-btn-action" onClick={handleTrackOrder}>Check Status</button>
+            </div>
+            {trackingData && (
+              <div className="tracking-timeline">
+                <div className="step completed"><div className="bullet"></div><div className="info"><strong>Order Confirmed</strong><span>#{trackingData.id}</span></div></div>
+                <div className="step active"><div className="bullet"></div><div className="info"><strong>Status: {trackingData.status}</strong></div></div>
+                <div className="step"><div className="bullet"></div><div className="info"><strong>In Transit</strong></div></div>
               </div>
-            </div>
-          ) : (
-            <div className="product-grid">
-              {allFiltered.slice(0, visibleCount).map(p => <ProductCard key={p.id} product={p} onAddToCart={addToCart} onSelect={setSelectedProduct} />)}
-            </div>
-          )}
-        </main>
-
-        <aside className={`right-cart-sidebar ${cartOpen ? "open" : ""}`}>
-           <h3>Your Cart</h3>
-           <div className="cart-scroll">
-              {cart.map((item, i) => (
-                <div key={i} className="cart-row">
-                  <span>{item.name} x{item.quantity}</span>
-                  <strong>₦{(item.price * item.quantity).toLocaleString()}</strong>
+            )}
+            <button className="back-btn" onClick={() => setView("grid")}>Back</button>
+          </div>
+        ) : view === "account" ? (
+          <div className="view-container account-screen">
+            <h1>Order History</h1>
+            <div className="order-history">
+              {currentOrders.map((order) => (
+                <div key={order.id} className="history-item">
+                  <div className="order-meta">
+                    <strong>Order #{order.id}</strong>
+                    <span>₦{parseFloat(order.total_price || order.total || 0).toLocaleString()}</span>
+                  </div>
+                  <button className="re-download-btn" onClick={() => window.open(`http://localhost:8001/api/invoices/generate?order_id=${order.id}`, "_blank")}>
+                    Download PDF
+                  </button>
                 </div>
               ))}
-           </div>
-           <div className="cart-footer">
-              <button className="clear-cart-btn-curved" onClick={() => setCart([])}>Clear Cart</button>
-              <button className="checkout-btn-curved" onClick={checkoutWithPaystack} disabled={isProcessing}>
-                {isProcessing ? "Processing..." : "Checkout Now"}
+              <div className="pagination-controls">
+                <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)}>Prev</button>
+                <span>{currentPage} / {totalPages}</span>
+                <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)}>Next</button>
+              </div>
+            </div>
+          </div>
+        ) : isSuccess ? (
+          <div className="view-container success-screen">
+            <h2>✅ Payment Confirmed!</h2>
+            <p>Order ID: #{orderId}</p>
+            <button className="back-btn" onClick={() => setIsSuccess(false)}>Continue Shopping</button>
+          </div>
+        ) : selectedProduct ? (
+          <div className="view-container detail-screen">
+            <button className="back-link" onClick={() => setSelectedProduct(null)}>← Back</button>
+            <div className="detail-layout">
+              <img src={`http://127.0.0.1:8000/static/${selectedProduct.image_path}`} alt={selectedProduct.name} />
+              <div className="detail-info">
+                <h1>{selectedProduct.name}</h1>
+                <p className="detail-price">₦{parseFloat(selectedProduct.price).toLocaleString()}</p>
+                <button className="add-btn" onClick={() => addToCart(selectedProduct)}>Add to Cart</button>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="product-grid">
+            {filteredProducts.map((p) => (
+              <div key={p.id} className="product-card">
+                <div className="img-frame" onClick={() => setSelectedProduct(p)}>
+                  <img src={`http://127.0.0.1:8000/static/${p.image_path}`} alt={p.name} className="zoom-effect" />
+                </div>
+                <h3>{p.name}</h3>
+                <p>₦{parseFloat(p.price).toLocaleString()}</p>
+                <button className="add-btn" onClick={() => addToCart(p)}>Add to Cart</button>
+              </div>
+            ))}
+          </div>
+        )}
+      </main>
+
+      <aside className={`right-sidebar ${cartOpen ? "open" : ""}`}>
+        <div className="cart-container">
+          <h3>Your Cart</h3>
+          <div className="cart-items-list">
+            {cart.map((item, index) => (
+              <div key={index} className="cart-item">
+                <span>{item.name}</span>
+                <span>₦{parseFloat(item.price).toLocaleString()}</span>
+              </div>
+            ))}
+          </div>
+          <div className="total-section">
+            <p>Total: <strong>₦{totalDue.toLocaleString()}</strong></p>
+            <div className="payment-vendors">
+              <button className="vendor-btn paystack" disabled={isProcessing} onClick={checkoutWithPaystack}>
+                {isProcessing ? "Connecting..." : "Pay with Paystack"}
               </button>
-           </div>
-        </aside>
-      </div>
+              <button className="clear-cart-btn" onClick={clearCart} disabled={isProcessing || cart.length === 0}>
+                Clear Cart
+              </button>
+            </div>
+          </div>
+        </div>
+      </aside>
     </div>
   );
 }
 
 export default App;
-
 
