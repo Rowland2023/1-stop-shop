@@ -16,10 +16,13 @@ function App() {
   const [category, setCategory] = useState("food");
   const [cart, setCart] = useState([]);
   const [cartOpen, setCartOpen] = useState(false);
-  const [user, setUser] = useState(null); // Safety: Initialize as null
+  const [user, setUser] = useState(null); 
   const [view, setView] = useState("grid"); 
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [trackInput, setTrackInput] = useState("");
+  const [trackingData, setTrackingData] = useState(null);
+  const [userOrders, setUserOrders] = useState([]);
+  const [authMode, setAuthMode] = useState("login");
 
   useEffect(() => {
     fetch(`${BASE_URL}/api/products/`)
@@ -28,6 +31,16 @@ function App() {
       .catch((err) => console.error("Fetch error:", err));
   }, []);
 
+  // Fetch orders when Account view is opened
+  useEffect(() => {
+    if (view === "account") {
+      fetch(`${BASE_URL}/api/orders/`)
+        .then((res) => res.json())
+        .then((data) => setUserOrders(Array.isArray(data) ? data : (data.results || [])))
+        .catch((err) => console.error("Order fetch error:", err));
+    }
+  }, [view]);
+
   const totalDue = cart.reduce((sum, item) => sum + parseFloat(item.price || 0), 0) + (cart.length > 0 ? 1500 : 0);
 
   const filteredProducts = products.filter((p) => 
@@ -35,12 +48,22 @@ function App() {
     p.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const handleTrackOrder = async () => {
+    if (!trackInput) return alert("Please enter an Order ID");
+    try {
+      const response = await fetch(`${BASE_URL}/api/orders/${trackInput}/`);
+      const data = await response.json();
+      if (response.ok) setTrackingData(data);
+      else alert("Order not found.");
+    } catch (err) { alert("Connection failed."); }
+  };
+
   return (
     <div className="app-grid-wrapper">
-      {/* --- HEADER: LOGO | SEARCH | AUTH --- */}
+      {/* --- HEADER: ORANGE BOLD SEARCH & AUTH --- */}
       <header className="main-header">
-        <div className="logo-section">
-          <h1 onClick={() => setView("grid")} style={{cursor:'pointer'}}>MeBuy</h1>
+        <div className="logo-section" onClick={() => setView("grid")} style={{cursor:'pointer'}}>
+          <h1>MeBuy</h1>
         </div>
 
         <div className="search-container-center">
@@ -60,8 +83,8 @@ function App() {
           </button>
           {!user ? (
             <div className="auth-links">
-              <button className="auth-btn" onClick={() => setView("auth")}>Login</button>
-              <button className="auth-btn register" onClick={() => setView("auth")}>Register</button>
+              <button className="auth-btn" onClick={() => {setView("auth"); setAuthMode("login")}}>Login</button>
+              <button className="auth-btn register" onClick={() => {setView("auth"); setAuthMode("register")}}>Register</button>
             </div>
           ) : (
             <span className="user-welcome">Hi, {user.phone}</span>
@@ -69,6 +92,7 @@ function App() {
         </div>
       </header>
 
+      {/* --- NAV BAR --- */}
       <nav className="main-nav">
         <ul>
           <li><button className="nav-btn-link" onClick={() => setView("grid")}>Home</button></li>
@@ -91,18 +115,66 @@ function App() {
         </aside>
 
         <main>
-          <div className="product-grid">
-            {filteredProducts.map((p) => (
-              <div key={p.id} className="product-card">
-                <div className="img-frame" onClick={() => setSelectedProduct(p)}>
-                  <img src={getImageUrl(p)} alt={p.name} className="zoom-effect" />
-                </div>
-                <h3>{p.name}</h3>
-                <p>₦{parseFloat(p.price).toLocaleString()}</p>
-                <button className="add-btn" onClick={() => setCart([...cart, p])}>Add to Cart</button>
+          {/* VIEW: TRACKING */}
+          {view === "tracking" && (
+            <div className="view-container">
+              <h1>📦 Track Your Shipment</h1>
+              <div className="track-search-box">
+                <input type="text" placeholder="Enter Order ID" className="track-input" value={trackInput} onChange={(e) => setTrackInput(e.target.value)} />
+                <button className="track-btn-action" onClick={handleTrackOrder}>Check Status</button>
               </div>
-            ))}
-          </div>
+              {trackingData && (
+                <div className="tracking-timeline">
+                  <p>Order ID: #{trackingData.id} - Status: <strong>{trackingData.status}</strong></p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* VIEW: ACCOUNT / ORDERS */}
+          {view === "account" && (
+            <div className="view-container">
+              <h1>Order History</h1>
+              <div className="order-history">
+                {userOrders.map(order => (
+                  <div key={order.id} className="history-item">
+                    <span>Order #{order.id} - ₦{parseFloat(order.total_price || 0).toLocaleString()}</span>
+                    <button onClick={() => window.open(`${BASE_URL}/api/invoices/generate?order_id=${order.id}`, "_blank")}>PDF</button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* VIEW: AUTH (LOGIN/REGISTER) */}
+          {view === "auth" && (
+            <div className="view-container auth-screen">
+              <h2>{authMode === "login" ? "Login" : "Register"}</h2>
+              <div className="auth-form">
+                <input type="text" placeholder="Phone Number" />
+                <input type="password" placeholder="Password" />
+                <button className="orange-curved-btn checkout" onClick={() => {setUser({phone: "080..."}); setView("grid")}}>
+                  {authMode === "login" ? "SIGN IN" : "CREATE ACCOUNT"}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* VIEW: PRODUCT GRID (Default) */}
+          {view === "grid" && (
+            <div className="product-grid">
+              {filteredProducts.map((p) => (
+                <div key={p.id} className="product-card">
+                  <div className="img-frame">
+                    <img src={getImageUrl(p)} alt={p.name} className="zoom-effect" />
+                  </div>
+                  <h3>{p.name}</h3>
+                  <p>₦{parseFloat(p.price).toLocaleString()}</p>
+                  <button className="add-btn" onClick={() => setCart([...cart, p])}>Add to Cart</button>
+                </div>
+              ))}
+            </div>
+          )}
         </main>
       </div>
 
