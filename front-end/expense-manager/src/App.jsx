@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import "./App.css";
 
-// --- CONFIG ---
 const BASE_URL = "https://back-end-wdk7.onrender.com"; 
 const CLOUDINARY_BASE = "https://res.cloudinary.com/dscxqsew5/";
 
@@ -17,50 +16,19 @@ function App() {
   const [category, setCategory] = useState("food");
   const [cart, setCart] = useState([]);
   const [cartOpen, setCartOpen] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
-  
-  // VIEW & AUTH STATES
+  const [user, setUser] = useState(null); // Safety: Initialize as null
   const [view, setView] = useState("grid"); 
-  const [authMode, setAuthMode] = useState("login"); // 'login' or 'register'
-  const [user, setUser] = useState(null); // Becomes { phone: "..." } after login
-  
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedProduct, setSelectedProduct] = useState(null);
-  const [isSuccess, setIsSuccess] = useState(false);
-  const [orderId, setOrderId] = useState("");
 
-  // TRACKING & ACCOUNT STATES
-  const [trackingData, setTrackingData] = useState(null);
-  const [trackInput, setTrackInput] = useState("");
-  const [userOrders, setUserOrders] = useState([]); 
-
-  // --- 1. FETCH DATA ---
   useEffect(() => {
     fetch(`${BASE_URL}/api/products/`)
       .then((res) => res.json())
       .then((data) => setProducts(data))
-      .catch((err) => console.error("Error fetching products:", err));
+      .catch((err) => console.error("Fetch error:", err));
   }, []);
 
-  // --- 2. RESTORED AUTH NAVIGATION ---
-  const renderAuthLinks = () => {
-    if (user) {
-      return <li className="nav-auth"><span>Hi, {user.phone || 'Member'}</span></li>;
-    }
-    return (
-      <>
-        <li className="nav-auth">
-          <button className="nav-btn-link" onClick={() => { setView("auth"); setAuthMode("login"); }}>Login</button>
-        </li>
-        <li className="nav-auth">
-          <button className="register-link" onClick={() => { setView("auth"); setAuthMode("register"); }}>Register</button>
-        </li>
-      </>
-    );
-  };
-
-  const subTotalValue = cart.reduce((sum, item) => sum + parseFloat(item.price || 0), 0);
-  const totalDue = subTotalValue + (cart.length > 0 ? 1500 : 0);
+  const totalDue = cart.reduce((sum, item) => sum + parseFloat(item.price || 0), 0) + (cart.length > 0 ? 1500 : 0);
 
   const filteredProducts = products.filter((p) => 
     p.category.toLowerCase() === category.toLowerCase() && 
@@ -69,12 +37,12 @@ function App() {
 
   return (
     <div className="app-grid-wrapper">
+      {/* --- HEADER: LOGO | SEARCH | AUTH --- */}
       <header className="main-header">
         <div className="logo-section">
-          <h1>MeBuy</h1>
+          <h1 onClick={() => setView("grid")} style={{cursor:'pointer'}}>MeBuy</h1>
         </div>
 
-        {/* 1. CENTER SEARCH BAR */}
         <div className="search-container-center">
           <input 
             type="text" 
@@ -86,45 +54,74 @@ function App() {
           <button className="search-btn-orange">GO</button>
         </div>
 
-        {/* 2. FAR RIGHT AUTH & CART */}
         <div className="header-right-group">
           <button className="cart-toggle" onClick={() => setCartOpen(!cartOpen)}>
             🛒 Cart ({cart.length})
           </button>
           {!user ? (
-            <>
+            <div className="auth-links">
               <button className="auth-btn" onClick={() => setView("auth")}>Login</button>
               <button className="auth-btn register" onClick={() => setView("auth")}>Register</button>
-            </>
+            </div>
           ) : (
             <span className="user-welcome">Hi, {user.phone}</span>
           )}
         </div>
       </header>
 
-      <nav className="category-nav">
-        {/* Navigation links for Home, Tracking, etc. */}
-        <button onClick={() => setView("grid")}>Home</button>
-        <button onClick={() => setView("tracking")}>Track Order</button>
-        <button onClick={() => setView("account")}>Account</button>
+      <nav className="main-nav">
+        <ul>
+          <li><button className="nav-btn-link" onClick={() => setView("grid")}>Home</button></li>
+          <li><button className="nav-btn-link" onClick={() => setView("tracking")}>Track Order</button></li>
+          <li><button className="nav-btn-link" onClick={() => setView("account")}>Account</button></li>
+        </ul>
       </nav>
 
-      {/* ... (Main Content Grid stays the same) ... */}
+      <div className="content-layout">
+        <aside className="left-sidebar">
+          <h3>Categories</h3>
+          <nav className="side-nav">
+            {["food", "electronics", "office", "style&fashion", "sex-toys","rent-house","car-sales","kitchen-items"].map((catId) => (
+              <button key={catId} className={category === catId ? "active" : ""} 
+                onClick={() => { setCategory(catId); setView("grid"); }}>
+                {catId.toUpperCase()}
+              </button>
+            ))}
+          </nav>
+        </aside>
 
+        <main>
+          <div className="product-grid">
+            {filteredProducts.map((p) => (
+              <div key={p.id} className="product-card">
+                <div className="img-frame" onClick={() => setSelectedProduct(p)}>
+                  <img src={getImageUrl(p)} alt={p.name} className="zoom-effect" />
+                </div>
+                <h3>{p.name}</h3>
+                <p>₦{parseFloat(p.price).toLocaleString()}</p>
+                <button className="add-btn" onClick={() => setCart([...cart, p])}>Add to Cart</button>
+              </div>
+            ))}
+          </div>
+        </main>
+      </div>
+
+      {/* --- CART SIDEBAR --- */}
       <aside className={`right-sidebar ${cartOpen ? "open" : ""}`}>
         <div className="cart-container">
           <h3>Your Cart</h3>
-          {/* ... Cart items list ... */}
+          <div className="cart-items-list">
+            {cart.map((item, index) => (
+              <div key={index} className="cart-item">
+                <span>{item.name}</span>
+                <span>₦{parseFloat(item.price).toLocaleString()}</span>
+              </div>
+            ))}
+          </div>
           <div className="total-section">
             <p>Total: <strong>₦{totalDue.toLocaleString()}</strong></p>
-            
-            {/* 3. ORANGE CURVED CHECKOUT BUTTONS */}
-            <button className="orange-curved-btn checkout" onClick={checkoutWithPaystack}>
-              PROCEED TO CHECKOUT
-            </button>
-            <button className="orange-curved-btn clear" onClick={() => setCart([])}>
-              CLEAR CART
-            </button>
+            <button className="orange-curved-btn checkout">PROCEED TO CHECKOUT</button>
+            <button className="orange-curved-btn clear" onClick={() => setCart([])}>CLEAR CART</button>
           </div>
         </div>
       </aside>
