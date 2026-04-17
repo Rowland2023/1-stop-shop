@@ -534,88 +534,73 @@ header {
 }
 
 
-/* Header Layout */
-.main-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem 2rem;
-  background: #fff;
-  border-bottom: 2px solid #f0f0f0;
-}
-
-/* CENTER SEARCH BAR - ORANGE & CURVED */
-.search-container-center {
-  display: flex;
-  flex: 0 1 500px; /* Takes center space */
-  margin: 0 20px;
-}
-
-.search-input-orange {
-  flex: 1;
-  padding: 12px 20px;
-  border: 2px solid #ff6600; /* Bold Orange */
-  border-right: none;
-  border-radius: 25px 0 0 25px; /* Curved left */
-  outline: none;
-  font-weight: bold;
-}
-
-.search-btn-orange {
-  padding: 0 25px;
-  background: #ff6600;
-  color: white;
-  border: 2px solid #ff6600;
-  border-radius: 0 25px 25px 0; /* Curved right */
-  cursor: pointer;
-  font-weight: bold;
-}
-
-/* RIGHT SIDE GROUP */
-.header-right-group {
-  display: flex;
-  gap: 15px;
-  align-items: center;
-}
-
-.auth-btn {
-  background: none;
-  border: none;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.auth-btn.register {
-  background: #333;
-  color: white;
-  padding: 8px 15px;
-  border-radius: 20px;
-}
-
-/* ORANGE CURVED CART BUTTONS */
-.orange-curved-btn {
+.top-ad-banner {
   width: 100%;
-  padding: 15px;
-  margin-top: 10px;
+  height: 60px;
+  overflow: hidden;
+  background: #eee;
+}
+
+.top-ad-banner img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.header-search-container {
+  flex: 2; /* Centralizes it between logo and cart */
+  display: flex;
+  justify-content: center;
+}
+
+.search-pill {
+  display: flex;
+  background: #f1f1f1;
+  border-radius: 25px; /* Curved Edges */
+  border: 2px solid #ff8c00;
+  overflow: hidden;
+  width: 80%;
+  max-width: 500px;
+}
+
+.search-pill input {
+  flex: 1;
   border: none;
-  border-radius: 30px; /* Highly curved */
-  font-weight: 800;
+  background: transparent;
+  padding: 10px 20px;
+  outline: none;
+}
+
+.search-pill-btn {
+  background: #ff8c00;
   color: white;
+  border: none;
+  padding: 0 20px;
   cursor: pointer;
-  text-transform: uppercase;
-  transition: transform 0.2s;
+  font-weight: bold;
 }
 
-.orange-curved-btn.checkout {
-  background: #ff6600; /* Primary Orange */
+.join-btn {
+  background: #ff8c00 !important;
+  color: white !important;
+  border-radius: 5px;
+  margin-left: 10px;
 }
 
-.orange-curved-btn.clear {
-  background: #ff8c00; /* Slightly lighter orange/coral */
-  font-size: 0.8rem;
+.auth-form-box {
+  padding: 40px;
+  max-width: 400px;
+  margin: 0 auto;
+  text-align: center;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
 }
 
-.orange-curved-btn:hover {
-  transform: scale(1.02);
-  filter: brightness(1.1);
+.bold-input {
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 15px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
 }
