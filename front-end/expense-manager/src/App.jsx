@@ -4,42 +4,51 @@ import "./App.css";
 const BASE_URL = "https://back-end-wdk7.onrender.com"; 
 const CLOUDINARY_BASE = "https://res.cloudinary.com/dscxqsew5/";
 
-const getImageUrl = (product) => {
-  const path = product.image_display || (product.additional_images?.[0]?.image);
-  if (!path) return "/static/placeholder.png";
-  if (path.startsWith("http")) return path;
-  return `${CLOUDINARY_BASE}${path}`;
-};
-
 function App() {
   const [products, setProducts] = useState([]);
   const [category, setCategory] = useState("food");
   const [cart, setCart] = useState([]);
   const [cartOpen, setCartOpen] = useState(false);
   const [user, setUser] = useState(null); 
-  const [view, setView] = useState("grid"); 
+  const [view, setView] = useState("grid"); // 'grid', 'tracking', 'account', 'auth'
   const [searchTerm, setSearchTerm] = useState("");
   const [trackInput, setTrackInput] = useState("");
   const [trackingData, setTrackingData] = useState(null);
   const [userOrders, setUserOrders] = useState([]);
   const [authMode, setAuthMode] = useState("login");
 
+  // Fetch Products
   useEffect(() => {
     fetch(`${BASE_URL}/api/products/`)
       .then((res) => res.json())
       .then((data) => setProducts(data))
-      .catch((err) => console.error("Fetch error:", err));
+      .catch((err) => console.error("Product fetch error:", err));
   }, []);
 
-  // Fetch orders when Account view is opened
-  useEffect(() => {
-    if (view === "account") {
-      fetch(`${BASE_URL}/api/orders/`)
-        .then((res) => res.json())
-        .then((data) => setUserOrders(Array.isArray(data) ? data : (data.results || [])))
-        .catch((err) => console.error("Order fetch error:", err));
-    }
-  }, [view]);
+  // Fetch Orders specifically for the Account View
+  const fetchOrders = () => {
+    fetch(`${BASE_URL}/api/orders/`)
+      .then((res) => res.json())
+      .then((data) => setUserOrders(Array.isArray(data) ? data : (data.results || [])))
+      .catch((err) => console.error("Order fetch error:", err));
+  };
+
+  const getImageUrl = (product) => {
+    const path = product.image_display || (product.additional_images?.[0]?.image);
+    if (!path) return "/static/placeholder.png";
+    if (path.startsWith("http")) return path;
+    return `${CLOUDINARY_BASE}${path}`;
+  };
+
+  const handleTrackOrder = async () => {
+    if (!trackInput) return alert("Enter an Order ID");
+    try {
+      const response = await fetch(`${BASE_URL}/api/orders/${trackInput}/`);
+      const data = await response.json();
+      if (response.ok) setTrackingData(data);
+      else alert("Order ID not found.");
+    } catch (err) { alert("Server connection failed."); }
+  };
 
   const totalDue = cart.reduce((sum, item) => sum + parseFloat(item.price || 0), 0) + (cart.length > 0 ? 1500 : 0);
 
@@ -48,19 +57,76 @@ function App() {
     p.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleTrackOrder = async () => {
-    if (!trackInput) return alert("Please enter an Order ID");
-    try {
-      const response = await fetch(`${BASE_URL}/api/orders/${trackInput}/`);
-      const data = await response.json();
-      if (response.ok) setTrackingData(data);
-      else alert("Order not found.");
-    } catch (err) { alert("Connection failed."); }
+  // --- RENDER LOGIC FOR MAIN VIEW ---
+  const renderMainContent = () => {
+    switch(view) {
+      case "tracking":
+        return (
+          <div className="view-container">
+            <h1>📦 Track Your Shipment</h1>
+            <div className="track-search-box">
+              <input type="text" placeholder="Enter Order ID (e.g. 37)" className="track-input" value={trackInput} onChange={(e) => setTrackInput(e.target.value)} />
+              <button className="track-btn-action" onClick={handleTrackOrder}>CHECK STATUS</button>
+            </div>
+            {trackingData && (
+              <div className="tracking-result-card">
+                <h3>Order #{trackingData.id}</h3>
+                <p>Status: <span className="status-tag">{trackingData.status || "Processing"}</span></p>
+              </div>
+            )}
+          </div>
+        );
+      case "account":
+        return (
+          <div className="view-container">
+            <h1>Your Order History</h1>
+            <div className="order-history-list">
+              {userOrders.length > 0 ? userOrders.map(order => (
+                <div key={order.id} className="history-item">
+                  <span>Order #{order.id} - ₦{parseFloat(order.total_price || 0).toLocaleString()}</span>
+                  <button className="pdf-btn" onClick={() => window.open(`${BASE_URL}/api/invoices/generate?order_id=${order.id}`, "_blank")}>INVOICE PDF</button>
+                </div>
+              )) : <p>No orders found.</p>}
+            </div>
+          </div>
+        );
+      case "auth":
+        return (
+          <div className="view-container auth-box">
+            <h2>{authMode === "login" ? "Login" : "Register"}</h2>
+            <div className="auth-form-inner">
+              <input type="text" placeholder="Phone Number" className="auth-input" />
+              <input type="password" placeholder="Password" className="auth-input" />
+              <button className="orange-curved-btn checkout" onClick={() => {setUser({phone: "080123..."}); setView("grid")}}>
+                {authMode === "login" ? "SIGN IN" : "CREATE ACCOUNT"}
+              </button>
+              <p className="toggle-auth" onClick={() => setAuthMode(authMode === "login" ? "register" : "login")}>
+                {authMode === "login" ? "Don't have an account? Register" : "Already have an account? Login"}
+              </p>
+            </div>
+          </div>
+        );
+      default: // grid
+        return (
+          <div className="product-grid">
+            {filteredProducts.map((p) => (
+              <div key={p.id} className="product-card">
+                <div className="img-frame">
+                  <img src={getImageUrl(p)} alt={p.name} className="zoom-effect" />
+                </div>
+                <h3>{p.name}</h3>
+                <p className="price-tag">₦{parseFloat(p.price).toLocaleString()}</p>
+                <button className="add-btn" onClick={() => setCart([...cart, p])}>Add to Cart</button>
+              </div>
+            ))}
+          </div>
+        );
+    }
   };
 
   return (
     <div className="app-grid-wrapper">
-      {/* --- HEADER: ORANGE BOLD SEARCH & AUTH --- */}
+      {/* HEADER WITH CENTERED ORANGE SEARCH */}
       <header className="main-header">
         <div className="logo-section" onClick={() => setView("grid")} style={{cursor:'pointer'}}>
           <h1>MeBuy</h1>
@@ -72,7 +138,7 @@ function App() {
             placeholder="SEARCH PRODUCTS..." 
             className="search-input-orange"
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => {setSearchTerm(e.target.value); setView("grid");}}
           />
           <button className="search-btn-orange">GO</button>
         </div>
@@ -92,12 +158,12 @@ function App() {
         </div>
       </header>
 
-      {/* --- NAV BAR --- */}
+      {/* NAVIGATION BAR */}
       <nav className="main-nav">
         <ul>
           <li><button className="nav-btn-link" onClick={() => setView("grid")}>Home</button></li>
-          <li><button className="nav-btn-link" onClick={() => setView("tracking")}>Track Order</button></li>
-          <li><button className="nav-btn-link" onClick={() => setView("account")}>Account</button></li>
+          <li><button className="nav-btn-link" onClick={() => {setView("tracking"); setTrackingData(null);}}>Track Order</button></li>
+          <li><button className="nav-btn-link" onClick={() => {setView("account"); fetchOrders();}}>Account</button></li>
         </ul>
       </nav>
 
@@ -115,70 +181,11 @@ function App() {
         </aside>
 
         <main>
-          {/* VIEW: TRACKING */}
-          {view === "tracking" && (
-            <div className="view-container">
-              <h1>📦 Track Your Shipment</h1>
-              <div className="track-search-box">
-                <input type="text" placeholder="Enter Order ID" className="track-input" value={trackInput} onChange={(e) => setTrackInput(e.target.value)} />
-                <button className="track-btn-action" onClick={handleTrackOrder}>Check Status</button>
-              </div>
-              {trackingData && (
-                <div className="tracking-timeline">
-                  <p>Order ID: #{trackingData.id} - Status: <strong>{trackingData.status}</strong></p>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* VIEW: ACCOUNT / ORDERS */}
-          {view === "account" && (
-            <div className="view-container">
-              <h1>Order History</h1>
-              <div className="order-history">
-                {userOrders.map(order => (
-                  <div key={order.id} className="history-item">
-                    <span>Order #{order.id} - ₦{parseFloat(order.total_price || 0).toLocaleString()}</span>
-                    <button onClick={() => window.open(`${BASE_URL}/api/invoices/generate?order_id=${order.id}`, "_blank")}>PDF</button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* VIEW: AUTH (LOGIN/REGISTER) */}
-          {view === "auth" && (
-            <div className="view-container auth-screen">
-              <h2>{authMode === "login" ? "Login" : "Register"}</h2>
-              <div className="auth-form">
-                <input type="text" placeholder="Phone Number" />
-                <input type="password" placeholder="Password" />
-                <button className="orange-curved-btn checkout" onClick={() => {setUser({phone: "080..."}); setView("grid")}}>
-                  {authMode === "login" ? "SIGN IN" : "CREATE ACCOUNT"}
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* VIEW: PRODUCT GRID (Default) */}
-          {view === "grid" && (
-            <div className="product-grid">
-              {filteredProducts.map((p) => (
-                <div key={p.id} className="product-card">
-                  <div className="img-frame">
-                    <img src={getImageUrl(p)} alt={p.name} className="zoom-effect" />
-                  </div>
-                  <h3>{p.name}</h3>
-                  <p>₦{parseFloat(p.price).toLocaleString()}</p>
-                  <button className="add-btn" onClick={() => setCart([...cart, p])}>Add to Cart</button>
-                </div>
-              ))}
-            </div>
-          )}
+          {renderMainContent()}
         </main>
       </div>
 
-      {/* --- CART SIDEBAR --- */}
+      {/* CART SIDEBAR */}
       <aside className={`right-sidebar ${cartOpen ? "open" : ""}`}>
         <div className="cart-container">
           <h3>Your Cart</h3>
