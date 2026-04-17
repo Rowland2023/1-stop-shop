@@ -620,82 +620,124 @@ header {
   filter: brightness(1.1);
 }
 
-/* Navigation Row Layout */
+/* Header & Brand */
+.brand-header {
+  background: #1a1a1a; /* Dark professional background */
+  padding: 15px 5%;
+}
+
+.header-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.logo-text {
+  color: #ff8c00;
+  font-size: 2rem;
+  margin: 0;
+}
+
+/* Nav Visibility Logic */
 .main-nav {
-  background: #f8f9fa;
-  padding: 10px 20px;
-  border-bottom: 2px solid #eee;
+  background: #ffffff;
+  border-bottom: 1px solid #e0e0e0;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  padding: 10px 0;
 }
 
 .nav-container {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
+  padding: 0 20px;
 }
 
-/* Centralized Search Bar */
-.central-search {
+.nav-group {
   display: flex;
-  flex: 0 1 500px; /* Limits width and centers */
-  background: white;
-  border: 2px solid #ddd;
-  border-radius: 25px; /* Curved Edges */
+  gap: 20px;
+  flex: 1; /* Gives equal space to left and right groups */
+}
+
+.nav-group.right {
+  justify-content: flex-end;
+}
+
+/* The Link Buttons */
+.nav-link-item {
+  background: none;
+  border: none;
+  font-weight: 600;
+  color: #333; /* High contrast dark gray */
+  cursor: pointer;
+  font-size: 0.95rem;
+  white-space: nowrap; /* Prevents text from wrapping */
+  transition: color 0.2s;
+}
+
+.nav-link-item:hover {
+  color: #ff8c00;
+}
+
+.auth-highlight {
+  color: #ff8c00;
+  border: 1px solid #ff8c00;
+  padding: 5px 15px;
+  border-radius: 15px;
+}
+
+/* Central Search Optimization */
+.central-search-wrapper {
+  flex: 2; /* Takes more space than side links but remains centered */
+  display: flex;
+  justify-content: center;
+}
+
+.search-pill {
+  display: flex;
+  width: 100%;
+  max-width: 500px;
+  background: #f2f2f2;
+  border-radius: 25px;
+  border: 1px solid #ddd;
   overflow: hidden;
 }
 
-.central-search input {
+.search-pill input {
   flex: 1;
+  background: transparent;
   border: none;
-  padding: 10px 20px;
+  padding: 12px 20px;
   outline: none;
+  font-size: 1rem;
 }
 
-.go-btn {
-  background: #ff8c00; /* Deep Orange */
+.orange-go-btn {
+  background: #ff8c00;
   color: white;
   border: none;
   padding: 0 25px;
   font-weight: bold;
   cursor: pointer;
-  transition: 0.3s;
 }
 
-.go-btn:hover {
-  background: #e67e00;
-}
-
-/* Curved Action Buttons (Cart) */
-.cart-action-stack {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-top: 20px;
-  align-items: center; /* Centralize */
-}
-
-.orange-curved-btn {
-  width: 100%;
-  background: #ff8c00;
-  color: white;
-  border: none;
-  padding: 15px;
-  border-radius: 30px; /* Curved */
-  font-weight: bold;
-  cursor: pointer;
-}
-
-.clear-cart-btn-curved {
-  width: 80%;
-  background: transparent;
-  color: #666;
-  border: 1px solid #ccc;
-  padding: 10px;
-  border-radius: 30px; /* Curved */
-  cursor: pointer;
-}
-
-.clear-cart-btn-curved:hover {
-  background: #f0f0f0;
+/* Responsive Grid Check */
+@media (max-width: 900px) {
+  .nav-container {
+    flex-direction: column;
+    gap: 15px;
+  }
+  .nav-group {
+    order: 2;
+    width: 100%;
+    justify-content: center;
+  }
+  .central-search-wrapper {
+    order: 1;
+    width: 100%;
+  }
 }

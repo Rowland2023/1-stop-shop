@@ -117,145 +117,157 @@ function App() {
 
   return (
     <div className="app-grid-wrapper">
-      {/* HEADER SECTION - Simplified */}
+      {/* HEADER SECTION - Brand and Cart Toggle */}
       <header className="brand-header">
-        <h1 onClick={() => setView("grid")} style={{cursor: 'pointer'}}>MeBuy</h1>
-        <button className="cart-toggle" onClick={() => setCartOpen(!cartOpen)}>
-          🛒 Cart ({cart.reduce((acc, item) => acc + item.quantity, 0)})
-        </button>
+        <div className="header-inner">
+          <h1 onClick={() => setView("grid")} className="logo-text">MeBuy</h1>
+          <button className="cart-toggle-btn" onClick={() => setCartOpen(!cartOpen)}>
+            <span className="cart-icon">🛒</span>
+            <span className="cart-count">{cart.reduce((acc, item) => acc + item.quantity, 0)}</span>
+          </button>
+        </div>
       </header>
 
-      {/* NAVIGATION & SEARCH SECTION - Unified & Centralized */}
+      {/* NAVIGATION SECTION - Optimized for visibility */}
       <nav className="main-nav">
         <div className="nav-container">
-          <div className="nav-links-left">
-            <button className="nav-btn-link" onClick={() => {setView("grid"); setSelectedProduct(null)}}>Home</button>
-            <button className="nav-btn-link" onClick={() => {setView("tracking"); setTrackingData(null)}}>Track Order</button>
+          {/* LEFT LINKS */}
+          <div className="nav-group left">
+            <button className="nav-link-item" onClick={() => {setView("grid"); setSelectedProduct(null)}}>Home</button>
+            <button className="nav-link-item" onClick={() => {setView("tracking"); setTrackingData(null)}}>Tracking</button>
           </div>
 
           {/* CENTRALIZED SEARCH BAR */}
-          <div className="central-search">
-            <input 
-              type="text" 
-              placeholder="Search products..." 
-              value={searchTerm} 
-              onChange={(e) => {setSearchTerm(e.target.value); setView("grid");}} 
-            />
-            <button className="go-btn" onClick={() => setView("grid")}>GO</button>
+          <div className="central-search-wrapper">
+            <div className="search-pill">
+              <input 
+                type="text" 
+                placeholder="Search products..." 
+                value={searchTerm} 
+                onChange={(e) => {setSearchTerm(e.target.value); setView("grid");}} 
+              />
+              <button className="orange-go-btn" onClick={() => setView("grid")}>GO</button>
+            </div>
           </div>
 
-          <div className="nav-links-right">
-            <button className="nav-btn-link" onClick={() => setView("account")}>Account</button>
+          {/* RIGHT LINKS */}
+          <div className="nav-group right">
+            <button className="nav-link-item" onClick={() => setView("account")}>Account</button>
             {!user ? (
-                <button className="nav-btn-link login-special" onClick={() => {setView("auth"); setAuthMode("login")}}>Login</button>
+              <>
+                <button className="nav-link-item auth-highlight" onClick={() => {setView("auth"); setAuthMode("register")}}>Join</button>
+                <button className="nav-link-item" onClick={() => {setView("auth"); setAuthMode("login")}}>Login</button>
+              </>
             ) : (
-                <span className="user-welcome">Hi, {user.phone}</span>
+              <span className="user-tag">👤 {user.phone}</span>
             )}
           </div>
         </div>
       </nav>
 
-      {/* LEFT SIDEBAR SECTION */}
-      <aside className="left-sidebar">
-        <h3>Categories</h3>
-        <nav className="side-nav">
-          {["food", "electronics", "office", "style&fashion", "sex-toys", "rent-house", "car-sales", "kitchen-items"].map((catId) => (
-            <button key={catId} className={category === catId ? "active" : ""} 
-              onClick={() => { setCategory(catId); setView("grid"); setSelectedProduct(null); }}>
-              {catId.toUpperCase()}
-            </button>
-          ))}
-        </nav>
-      </aside>
+      <div className="content-layout">
+        {/* LEFT SIDEBAR SECTION */}
+        <aside className="left-sidebar">
+          <h3>Categories</h3>
+          <nav className="side-nav">
+            {["food", "electronics", "office", "style&fashion", "sex-toys", "rent-house", "car-sales", "kitchen-items"].map((catId) => (
+              <button key={catId} className={category === catId ? "active" : ""} 
+                onClick={() => { setCategory(catId); setView("grid"); setSelectedProduct(null); }}>
+                {catId.toUpperCase()}
+              </button>
+            ))}
+          </nav>
+        </aside>
 
-      {/* MAIN CONTENT AREA */}
-      <main>
-        {view === "tracking" && (
-          <div className="view-container tracking-screen">
-            <h1>📦 Track Your Shipment</h1>
-            <div className="track-search-box">
-              <input type="text" placeholder="Enter Order ID" className="track-input" value={trackInput} onChange={(e) => setTrackInput(e.target.value)} />
-              <button className="track-btn-action" onClick={handleTrackOrder}>Check Status</button>
-            </div>
-            {trackingData && (
-              <div className="tracking-timeline">
-                <div className="step completed"><div className="bullet"></div><div className="info"><strong>Confirmed</strong></div></div>
-                <div className="step active"><div className="bullet"></div><div className="info"><strong>Status: {trackingData.status}</strong></div></div>
+        {/* MAIN CONTENT AREA */}
+        <main>
+          {view === "tracking" && (
+            <div className="view-container tracking-screen">
+              <h1>📦 Track Your Shipment</h1>
+              <div className="track-search-box">
+                <input type="text" placeholder="Enter Order ID" className="track-input" value={trackInput} onChange={(e) => setTrackInput(e.target.value)} />
+                <button className="track-btn-action" onClick={handleTrackOrder}>Check Status</button>
               </div>
-            )}
-          </div>
-        )}
+              {trackingData && (
+                <div className="tracking-timeline">
+                  <div className="step completed"><div className="bullet"></div><div className="info"><strong>Confirmed</strong></div></div>
+                  <div className="step active"><div className="bullet"></div><div className="info"><strong>Status: {trackingData.status}</strong></div></div>
+                </div>
+              )}
+            </div>
+          )}
 
-        {view === "account" && (
-          <div className="view-container account-screen">
-            <h1>Order History</h1>
-            <div className="order-history">
-              {userOrders.map((order) => (
-                <div key={order.id} className="history-item">
-                  <strong>Order #{order.id} - ₦{parseFloat(order.total_price || 0).toLocaleString()}</strong>
-                  <button className="re-download-btn" onClick={() => window.open(`${BASE_URL}/api/invoices/generate?order_id=${order.id}`, "_blank")}>PDF</button>
+          {view === "account" && (
+            <div className="view-container account-screen">
+              <h1>Order History</h1>
+              <div className="order-history">
+                {userOrders.map((order) => (
+                  <div key={order.id} className="history-item">
+                    <strong>Order #{order.id} - ₦{parseFloat(order.total_price || 0).toLocaleString()}</strong>
+                    <button className="re-download-btn" onClick={() => window.open(`${BASE_URL}/api/invoices/generate?order_id=${order.id}`, "_blank")}>PDF</button>
+                  </div>
+                ))}
+                {userOrders.length === 0 && <p>No orders found.</p>}
+              </div>
+            </div>
+          )}
+
+          {view === "auth" && (
+            <div className="view-container auth-screen">
+              <h1>{authMode === "login" ? "Login" : "Create Account"}</h1>
+              <div className="auth-form">
+                <input type="text" placeholder="Phone Number" className="auth-input" />
+                <input type="password" placeholder="Password" className="auth-input" />
+                <button className="orange-curved-btn" onClick={() => {setUser({phone: "Member"}); setView("grid")}}>
+                  {authMode === "login" ? "Sign In" : "Register Now"}
+                </button>
+                <p onClick={() => setAuthMode(authMode === "login" ? "register" : "login")} style={{cursor:'pointer', marginTop:'10px'}}>
+                  {authMode === "login" ? "Don't have an account? Register" : "Already have an account? Login"}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {view === "grid" && selectedProduct && (
+            <div className="view-container detail-screen">
+              <button className="back-link" onClick={() => setSelectedProduct(null)}>← Back to Shopping</button>
+              <div className="detail-layout">
+                <div className="detail-images">
+                  <img src={getImageUrl(activeImage || selectedProduct)} alt={selectedProduct.name} />
+                  <div className="thumb-strip">
+                     {selectedProduct.additional_images?.map((img, i) => (
+                       <img key={i} src={getImageUrl({image_path: img.image})} onClick={() => setActiveImage(img.image)} />
+                     ))}
+                  </div>
+                </div>
+                <div className="detail-info">
+                  <h1>{selectedProduct.name}</h1>
+                  <p className="detail-price">₦{parseFloat(selectedProduct.price).toLocaleString()}</p>
+                  <p>{selectedProduct.description}</p>
+                  <button className="add-btn" onClick={() => addToCart(selectedProduct)}>Add to Cart</button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {view === "grid" && !selectedProduct && (
+            <div className="product-grid">
+              {filteredProducts.map((p) => (
+                <div key={p.id} className="product-card">
+                  <div className="img-frame" onClick={() => setSelectedProduct(p)}>
+                    <img src={getImageUrl(p)} alt={p.name} className="zoom-effect" />
+                  </div>
+                  <h3>{p.name}</h3>
+                  <p>₦{parseFloat(p.price).toLocaleString()}</p>
+                  <button className="add-btn" onClick={() => addToCart(p)}>Add to Cart</button>
                 </div>
               ))}
-              {userOrders.length === 0 && <p>No orders found.</p>}
             </div>
-          </div>
-        )}
+          )}
+        </main>
+      </div>
 
-        {view === "auth" && (
-          <div className="view-container auth-screen">
-            <h1>{authMode === "login" ? "Login" : "Create Account"}</h1>
-            <div className="auth-form">
-              <input type="text" placeholder="Phone Number" className="auth-input" />
-              <input type="password" placeholder="Password" className="auth-input" />
-              <button className="orange-curved-btn" onClick={() => {setUser({phone: "Member"}); setView("grid")}}>
-                {authMode === "login" ? "Sign In" : "Register Now"}
-              </button>
-              <p onClick={() => setAuthMode(authMode === "login" ? "register" : "login")} style={{cursor:'pointer', marginTop:'10px'}}>
-                {authMode === "login" ? "Don't have an account? Register" : "Already have an account? Login"}
-              </p>
-            </div>
-          </div>
-        )}
-
-        {view === "grid" && selectedProduct && (
-          <div className="view-container detail-screen">
-            <button className="back-link" onClick={() => setSelectedProduct(null)}>← Back to Shopping</button>
-            <div className="detail-layout">
-              <div className="detail-images">
-                <img src={getImageUrl(activeImage || selectedProduct)} alt={selectedProduct.name} />
-                <div className="thumb-strip">
-                   {selectedProduct.additional_images?.map((img, i) => (
-                     <img key={i} src={getImageUrl({image_path: img.image})} onClick={() => setActiveImage(img.image)} />
-                   ))}
-                </div>
-              </div>
-              <div className="detail-info">
-                <h1>{selectedProduct.name}</h1>
-                <p className="detail-price">₦{parseFloat(selectedProduct.price).toLocaleString()}</p>
-                <p>{selectedProduct.description}</p>
-                <button className="add-btn" onClick={() => addToCart(selectedProduct)}>Add to Cart</button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {view === "grid" && !selectedProduct && (
-          <div className="product-grid">
-            {filteredProducts.map((p) => (
-              <div key={p.id} className="product-card">
-                <div className="img-frame" onClick={() => setSelectedProduct(p)}>
-                  <img src={getImageUrl(p)} alt={p.name} className="zoom-effect" />
-                </div>
-                <h3>{p.name}</h3>
-                <p>₦{parseFloat(p.price).toLocaleString()}</p>
-                <button className="add-btn" onClick={() => addToCart(p)}>Add to Cart</button>
-              </div>
-            ))}
-          </div>
-        )}
-      </main>
-
-      {/* RIGHT SIDEBAR (CART) SECTION - Centralized Curved Buttons */}
+      {/* RIGHT SIDEBAR (CART) SECTION */}
       <aside className={`right-sidebar ${cartOpen ? "open" : ""}`}>
         <div className="cart-container">
           <h3>Your Cart</h3>
