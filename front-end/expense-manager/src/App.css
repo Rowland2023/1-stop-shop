@@ -620,39 +620,33 @@ header {
   filter: brightness(1.1);
 }
 
-.top-ad-banner {
-  width: 100%;
-  height: 60px;
-  overflow: hidden;
-  background: #eee;
+/* Layout Wrapper */
+.app-grid-wrapper {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
 }
 
-.top-ad-banner img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
+/* Centralized Search Pill */
 .header-search-container {
-  flex: 2; /* Centralizes it between logo and cart */
+  flex: 2;
   display: flex;
   justify-content: center;
 }
 
 .search-pill {
   display: flex;
-  background: #f1f1f1;
-  border-radius: 25px; /* Curved Edges */
-  border: 2px solid #ff8c00;
-  overflow: hidden;
-  width: 80%;
+  background: #fff;
+  border-radius: 25px; /* Curved */
+  border: 1px solid #ff8c00;
+  width: 90%;
   max-width: 500px;
+  overflow: hidden;
 }
 
 .search-pill input {
   flex: 1;
   border: none;
-  background: transparent;
   padding: 10px 20px;
   outline: none;
 }
@@ -663,30 +657,43 @@ header {
   border: none;
   padding: 0 20px;
   cursor: pointer;
-  font-weight: bold;
 }
 
-.join-btn {
-  background: #ff8c00 !important;
-  color: white !important;
-  border-radius: 5px;
-  margin-left: 10px;
-}
-
-.auth-form-box {
-  padding: 40px;
-  max-width: 400px;
-  margin: 0 auto;
-  text-align: center;
-  background: white;
-  border-radius: 10px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-}
-
-.bold-input {
+/* Ad Space */
+.top-ad-banner {
   width: 100%;
-  padding: 12px;
-  margin-bottom: 15px;
-  border: 1px solid #ddd;
-  border-radius: 5px;
+  height: 60px;
+  background: #f0f0f0;
+  overflow: hidden;
+}
+
+.top-ad-banner img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Main Grid Layout */
+.main-layout {
+  display: grid;
+  grid-template-columns: 200px 1fr 300px; /* Rigid structure */
+  gap: 20px;
+  padding: 20px;
+  flex: 1;
+}
+
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 15px;
+}
+
+/* Auth/Tracking Form Box */
+.auth-form-box {
+  background: white;
+  padding: 30px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  max-width: 500px;
+  margin: 0 auto;
 }

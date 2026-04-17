@@ -49,9 +49,13 @@ function App() {
   const [user, setUser] = useState(null);
   const [authMode, setAuthMode] = useState("login");
   const [authData, setAuthData] = useState({ phone: "", password: "" });
-  const [userOrders, setUserOrders] = useState([]);
-  const [trackInput, setTrackInput] = useState("");
+  
+  // TRACKING & ACCOUNT STATES
   const [trackingData, setTrackingData] = useState(null);
+  const [trackInput, setTrackInput] = useState("");
+  const [userOrders, setUserOrders] = useState([]); 
+  const [currentPage, setCurrentPage] = useState(1);
+  const ordersPerPage = 10;
 
   useEffect(() => {
     localStorage.setItem("shop_cart_data", JSON.stringify(cart));
@@ -66,6 +70,18 @@ function App() {
       .catch((err) => console.error("Error fetching products:", err));
   }, []);
 
+  // Fetch history when entering account view
+  useEffect(() => {
+    if (view === "account" && user) {
+      fetch(`${BASE_URL}/api/orders/?user_id=${user.id}`)
+        .then(res => res.json())
+        .then(data => {
+            const ordersArray = Array.isArray(data) ? data : (data.results || []);
+            setUserOrders(ordersArray.sort((a, b) => b.id - a.id));
+        });
+    }
+  }, [view, user]);
+
   // --- LOGIC HANDLERS ---
   const handleAuth = async () => {
     const endpoint = authMode === "login" ? "/api/login/" : "/api/register/";
@@ -79,14 +95,12 @@ function App() {
       if (res.ok) {
         setUser(data.user);
         setView("grid");
-      } else {
-        alert(data.error || "Action failed");
-      }
+      } else { alert(data.error || "Action failed"); }
     } catch (err) { alert("Server error"); }
   };
 
-  const handleTrack = async () => {
-    if(!trackInput) return;
+  const handleTrackOrder = async () => {
+    if(!trackInput) return alert("Enter Order ID");
     try {
       const res = await fetch(`${BASE_URL}/api/orders/${trackInput}/`);
       const data = await res.json();
@@ -108,7 +122,7 @@ function App() {
   const checkoutWithPaystack = async () => {
     if (cart.length === 0) return alert("Cart is empty!");
     setIsProcessing(true);
-    // ... setup Paystack logic as per your previous working code ...
+    // Paystack logic here...
     setIsProcessing(false);
   };
 
@@ -117,9 +131,14 @@ function App() {
     p.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // Pagination for orders
+  const indexOfLastOrder = currentPage * ordersPerPage;
+  const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
+  const currentOrders = userOrders.slice(indexOfFirstOrder, indexOfLastOrder);
+  const totalPages = Math.ceil(userOrders.length / ordersPerPage);
+
   return (
     <div className="app-grid-wrapper">
-      {/* ADVERTISEMENT SPACE ABOVE HEADER */}
       <div className="top-ad-banner">
         <img src="/static/Shoping-ad.jpg" alt="Top Ad" />
       </div>
@@ -129,7 +148,6 @@ function App() {
           <h1 onClick={() => setView("grid")} style={{cursor:'pointer'}}>1-Stop Shop</h1>
         </div>
         
-        {/* CENTRALIZED SEARCH BAR IN HEADER */}
         <div className="header-search-container">
           <div className="search-pill">
             <input 
@@ -175,7 +193,6 @@ function App() {
         </aside>
 
         <main className="content-area">
-          {/* DYNAMIC CONTENT REPLACING GRID ONLY WHEN NEEDED */}
           {view === "auth" && (
             <div className="auth-form-box">
               <h2>{authMode === "login" ? "Welcome Back" : "Create Account"}</h2>
@@ -192,29 +209,46 @@ function App() {
 
           {view === "tracking" && (
             <div className="auth-form-box">
-              <h2>Track Order</h2>
-              <input type="text" placeholder="Order ID" className="bold-input" value={trackInput} onChange={(e)=>setTrackInput(e.target.value)} />
-              <button className="orange-checkout-btn" onClick={handleTrack}>Check Status</button>
-              {trackingData && <div className="track-res">Status: {trackingData.status}</div>}
+              <h2>📦 Track Shipment</h2>
+              <input type="text" placeholder="Enter Order ID" className="bold-input" value={trackInput} onChange={(e)=>setTrackInput(e.target.value)} />
+              <button className="orange-checkout-btn" onClick={handleTrackOrder}>Check Status</button>
+              {trackingData && (
+                 <div className="tracking-timeline">
+                    <p><strong>Order Status:</strong> {trackingData.status}</p>
+                    <p>Order ID: #{trackingData.id}</p>
+                 </div>
+              )}
             </div>
           )}
 
           {view === "account" && (
             <div className="auth-form-box">
-              <h2>Account History</h2>
-              {!user ? <p>Please Login to see history</p> : <p>Order history for {user.phone} loading...</p>}
+              <h2>Order History</h2>
+              {!user ? <p>Please Login to see history</p> : (
+                <div className="history-list">
+                  {currentOrders.map(o => (
+                    <div key={o.id} className="history-item">
+                       <span>#{o.id} - ₦{parseFloat(o.total_price || o.total || 0).toLocaleString()}</span>
+                       <small>{o.status}</small>
+                    </div>
+                  ))}
+                  <div className="pagination">
+                     <button disabled={currentPage === 1} onClick={()=>setCurrentPage(p=>p-1)}>Prev</button>
+                     <span>{currentPage}/{totalPages || 1}</span>
+                     <button disabled={currentPage >= totalPages} onClick={()=>setCurrentPage(p=>p+1)}>Next</button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
           {view === "grid" && (
             selectedProduct ? (
               <div className="product-review-container">
-                <button className="back-link" onClick={() => {setSelectedProduct(null); setActiveImage(null)}}>← Back to Shopping</button>
+                <button className="back-link" onClick={() => setSelectedProduct(null)}>← Back</button>
                 <div className="review-flex">
                   <div className="review-images">
-                    <div className="main-img-box">
-                      <img src={getImageUrl(activeImage || selectedProduct.image_display || selectedProduct.additional_images?.[0]?.image)} alt="main" />
-                    </div>
+                    <img src={getImageUrl(selectedProduct.image_display || selectedProduct.additional_images?.[0]?.image)} alt="main" />
                   </div>
                   <div className="review-details">
                     <h2>{selectedProduct.name}</h2>
@@ -225,7 +259,7 @@ function App() {
               </div>
             ) : (
               <div className="product-grid">
-                {allFiltered.map(p => <ProductCard key={p.id} product={p} onAddToCart={addToCart} onSelect={setSelectedProduct} />)}
+                {allFiltered.map(p => <ProductCard key={p.id} product={p} onAddToCart={addToCart} onSelect={setSelectedProduct} />) }
               </div>
             )
           )}
@@ -242,8 +276,9 @@ function App() {
                ))}
             </div>
             <div className="cart-footer">
-               <button className="clear-cart-btn-curved" onClick={() => setCart([])}>Clear Cart</button>
-               <button className="checkout-btn-curved" onClick={checkoutWithPaystack} disabled={isProcessing}>Checkout</button>
+               <p>Total: ₦{cart.reduce((s, i)=> s + (i.price * i.quantity), 0).toLocaleString()}</p>
+               <button className="clear-cart-btn-curved" onClick={() => setCart([])}>Clear</button>
+               <button className="checkout-btn-curved" onClick={checkoutWithPaystack} disabled={isProcessing}>Pay Now</button>
             </div>
         </aside>
       </div>
