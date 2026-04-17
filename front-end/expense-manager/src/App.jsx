@@ -38,11 +38,8 @@ function App() {
   const [cart, setCart] = useState([]);
   const [cartOpen, setCartOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [activeImage, setActiveImage] = useState(null); 
-  const [user, setUser] = useState(null);
   const [authMode, setAuthMode] = useState("login");
-  const [authData, setAuthData] = useState({ phone: "", password: "" });
-  const [userOrders, setUserOrders] = useState([]); 
+  
 
   // VIEW STATES
   const [view, setView] = useState("grid"); 
@@ -196,9 +193,7 @@ function App() {
     <div className="app-grid-wrapper">
       <header>
         <h1>MeBuy</h1>
-        <div className="search-bar">
-          <input type="text" placeholder="Search..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
-        </div>
+        
         <button className="cart-toggle" onClick={() => setCartOpen(!cartOpen)}>🛒 Cart ({cart.length})</button>
       </header>
 
@@ -256,6 +251,23 @@ function App() {
                   </button>
                 </div>
               ))}
+              <nav className="unified-nav">
+          <button className="nav-item" onClick={() => {setView("grid"); setSelectedProduct(null)}}>Home</button>
+          <button className="nav-item" onClick={() => setView("tracking")}>Tracking</button>
+          
+          <div className="search-container-bold">
+            <input 
+              type="text" 
+              placeholder="SEARCH PRODUCTS..." 
+              value={searchTerm} 
+              onChange={(e) => setSearchTerm(e.target.value)} 
+            />
+            <button className="search-end-orange">GO</button>
+          </div>
+
+          <button className="nav-item" onClick={() => setView("account")}>Account</button>
+          {user ? <span className="user-text">Hi, {user.phone}</span> : <button className="nav-item" onClick={() => setView("auth")}>Login</button>}
+      </nav>
               <div className="pagination-controls">
                 <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)}>Prev</button>
                 <span>{currentPage} / {totalPages}</span>
