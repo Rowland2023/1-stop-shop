@@ -117,184 +117,94 @@ function App() {
 
   return (
     <div className="app-grid-wrapper">
-      {/* HEADER SECTION - Brand and Cart Toggle */}
-      <header className="brand-header">
-        <div className="header-inner">
-          <h1 onClick={() => setView("grid")} className="logo-text">MeBuy</h1>
+      <header className="header-main">
+        <div className="logo-section">
+          <h1>1-Stop Shop</h1>
+        </div>
+        <div className="header-center-ad">
+           <img src="/static/Shoping-ad.jpg" alt="Ad" />
+        </div>
+        <div className="cart-section">
           <button className="cart-toggle-btn" onClick={() => setCartOpen(!cartOpen)}>
-            <span className="cart-icon">🛒</span>
-            <span className="cart-count">{cart.reduce((acc, item) => acc + item.quantity, 0)}</span>
+            🛒 CART ({cart.reduce((acc, item) => acc + item.quantity, 0)})
           </button>
         </div>
       </header>
 
-      {/* NAVIGATION SECTION - Optimized for visibility */}
-      <nav className="main-nav">
-        <div className="nav-container">
-          {/* LEFT LINKS */}
-          <div className="nav-group left">
-            <button className="nav-link-item" onClick={() => {setView("grid"); setSelectedProduct(null)}}>Home</button>
-            <button className="nav-link-item" onClick={() => {setView("tracking"); setTrackingData(null)}}>Tracking</button>
+      <nav className="unified-nav">
+          <button className="nav-item" onClick={() => {setView("grid"); setSelectedProduct(null)}}>Home</button>
+          <button className="nav-item" onClick={() => setView("tracking")}>Tracking</button>
+          
+          <div className="search-container-bold">
+            <input 
+              type="text" 
+              placeholder="SEARCH PRODUCTS..." 
+              value={searchTerm} 
+              onChange={(e) => setSearchTerm(e.target.value)} 
+            />
+            <button className="search-end-orange">GO</button>
           </div>
 
-          {/* CENTRALIZED SEARCH BAR */}
-          <div className="central-search-wrapper">
-            <div className="search-pill">
-              <input 
-                type="text" 
-                placeholder="Search products..." 
-                value={searchTerm} 
-                onChange={(e) => {setSearchTerm(e.target.value); setView("grid");}} 
-              />
-              <button className="orange-go-btn" onClick={() => setView("grid")}>GO</button>
-            </div>
-          </div>
-
-          {/* RIGHT LINKS */}
-          <div className="nav-group right">
-            <button className="nav-link-item" onClick={() => setView("account")}>Account</button>
-            {!user ? (
-              <>
-                <button className="nav-link-item auth-highlight" onClick={() => {setView("auth"); setAuthMode("register")}}>Join</button>
-                <button className="nav-link-item" onClick={() => {setView("auth"); setAuthMode("login")}}>Login</button>
-              </>
-            ) : (
-              <span className="user-tag">👤 {user.phone}</span>
-            )}
-          </div>
-        </div>
+          <button className="nav-item" onClick={() => setView("account")}>Account</button>
+          {user ? <span className="user-text">Hi, {user.phone}</span> : <button className="nav-item" onClick={() => setView("auth")}>Login</button>}
       </nav>
 
-      <div className="content-layout">
-        {/* LEFT SIDEBAR SECTION */}
+      <div className="main-layout">
         <aside className="left-sidebar">
           <h3>Categories</h3>
-          <nav className="side-nav">
-            {["food", "electronics", "office", "style&fashion", "sex-toys", "rent-house", "car-sales", "kitchen-items"].map((catId) => (
-              <button key={catId} className={category === catId ? "active" : ""} 
-                onClick={() => { setCategory(catId); setView("grid"); setSelectedProduct(null); }}>
-                {catId.toUpperCase()}
-              </button>
-            ))}
-          </nav>
+          {["food", "electronics", "office", "style&fashion", "sex-toys", "rent-house", "car-sales", "kitchen-items"].map(cat => (
+            <button key={cat} className={category === cat ? "cat-btn active" : "cat-btn"} onClick={() => setCategory(cat)}>{cat.toUpperCase()}</button>
+          ))}
         </aside>
 
-        {/* MAIN CONTENT AREA */}
-        <main>
-          {view === "tracking" && (
-            <div className="view-container tracking-screen">
-              <h1>📦 Track Your Shipment</h1>
-              <div className="track-search-box">
-                <input type="text" placeholder="Enter Order ID" className="track-input" value={trackInput} onChange={(e) => setTrackInput(e.target.value)} />
-                <button className="track-btn-action" onClick={handleTrackOrder}>Check Status</button>
-              </div>
-              {trackingData && (
-                <div className="tracking-timeline">
-                  <div className="step completed"><div className="bullet"></div><div className="info"><strong>Confirmed</strong></div></div>
-                  <div className="step active"><div className="bullet"></div><div className="info"><strong>Status: {trackingData.status}</strong></div></div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {view === "account" && (
-            <div className="view-container account-screen">
-              <h1>Order History</h1>
-              <div className="order-history">
-                {userOrders.map((order) => (
-                  <div key={order.id} className="history-item">
-                    <strong>Order #{order.id} - ₦{parseFloat(order.total_price || 0).toLocaleString()}</strong>
-                    <button className="re-download-btn" onClick={() => window.open(`${BASE_URL}/api/invoices/generate?order_id=${order.id}`, "_blank")}>PDF</button>
+        <main className="content-area">
+          {selectedProduct ? (
+            <div className="product-review-container">
+              <button className="back-link" onClick={() => {setSelectedProduct(null); setActiveImage(null)}}>← Back to Shopping</button>
+              <div className="review-flex">
+                <div className="review-images">
+                  <div className="main-img-box">
+                    <img src={getImageUrl(activeImage || selectedProduct.image_display || selectedProduct.additional_images?.[0]?.image)} alt="main" />
                   </div>
-                ))}
-                {userOrders.length === 0 && <p>No orders found.</p>}
-              </div>
-            </div>
-          )}
-
-          {view === "auth" && (
-            <div className="view-container auth-screen">
-              <h1>{authMode === "login" ? "Login" : "Create Account"}</h1>
-              <div className="auth-form">
-                <input type="text" placeholder="Phone Number" className="auth-input" />
-                <input type="password" placeholder="Password" className="auth-input" />
-                <button className="orange-curved-btn" onClick={() => {setUser({phone: "Member"}); setView("grid")}}>
-                  {authMode === "login" ? "Sign In" : "Register Now"}
-                </button>
-                <p onClick={() => setAuthMode(authMode === "login" ? "register" : "login")} style={{cursor:'pointer', marginTop:'10px'}}>
-                  {authMode === "login" ? "Don't have an account? Register" : "Already have an account? Login"}
-                </p>
-              </div>
-            </div>
-          )}
-
-          {view === "grid" && selectedProduct && (
-            <div className="view-container detail-screen">
-              <button className="back-link" onClick={() => setSelectedProduct(null)}>← Back to Shopping</button>
-              <div className="detail-layout">
-                <div className="detail-images">
-                  <img src={getImageUrl(activeImage || selectedProduct)} alt={selectedProduct.name} />
                   <div className="thumb-strip">
-                     {selectedProduct.additional_images?.map((img, i) => (
-                       <img key={i} src={getImageUrl({image_path: img.image})} onClick={() => setActiveImage(img.image)} />
-                     ))}
+                    {selectedProduct.additional_images?.map((img, i) => (
+                      <img key={i} src={getImageUrl(img.image)} onClick={() => setActiveImage(img.image)} className={activeImage === img.image ? "active-t" : ""} />
+                    ))}
                   </div>
                 </div>
-                <div className="detail-info">
-                  <h1>{selectedProduct.name}</h1>
-                  <p className="detail-price">₦{parseFloat(selectedProduct.price).toLocaleString()}</p>
+                <div className="review-details">
+                  <h2>{selectedProduct.name}</h2>
+                  <h3 className="orange-text">₦{parseFloat(selectedProduct.price).toLocaleString()}</h3>
                   <p>{selectedProduct.description}</p>
-                  <button className="add-btn" onClick={() => addToCart(selectedProduct)}>Add to Cart</button>
+                  <button className="orange-checkout-btn" onClick={() => addToCart(selectedProduct)}>Add to Cart</button>
                 </div>
               </div>
             </div>
-          )}
-
-          {view === "grid" && !selectedProduct && (
+          ) : (
             <div className="product-grid">
-              {filteredProducts.map((p) => (
-                <div key={p.id} className="product-card">
-                  <div className="img-frame" onClick={() => setSelectedProduct(p)}>
-                    <img src={getImageUrl(p)} alt={p.name} className="zoom-effect" />
-                  </div>
-                  <h3>{p.name}</h3>
-                  <p>₦{parseFloat(p.price).toLocaleString()}</p>
-                  <button className="add-btn" onClick={() => addToCart(p)}>Add to Cart</button>
-                </div>
-              ))}
+              {allFiltered.slice(0, visibleCount).map(p => <ProductCard key={p.id} product={p} onAddToCart={addToCart} onSelect={setSelectedProduct} />)}
             </div>
           )}
         </main>
-      </div>
 
-      {/* RIGHT SIDEBAR (CART) SECTION */}
-      <aside className={`right-sidebar ${cartOpen ? "open" : ""}`}>
-        <div className="cart-container">
-          <h3>Your Cart</h3>
-          <div className="cart-items-list">
-            {cart.map((item, index) => (
-              <div key={index} className="cart-item">
-                <span>{item.name} (x{item.quantity})</span>
-                <span>₦{(item.price * item.quantity).toLocaleString()}</span>
-              </div>
-            ))}
-          </div>
-          <div className="total-section">
-            <p>Subtotal: ₦{cart.reduce((s, i) => s + (i.price * i.quantity), 0).toLocaleString()}</p>
-            <p>Shipping: ₦{cart.length > 0 ? "1,500" : "0"}</p>
-            <p>Total: <strong>₦{(cart.reduce((s, i) => s + (i.price * i.quantity), 0) + (cart.length > 0 ? 1500 : 0)).toLocaleString()}</strong></p>
-            
-            <div className="cart-action-stack">
-              <button className="orange-curved-btn" disabled={isProcessing} onClick={checkoutWithPaystack}>
+        <aside className={`right-cart-sidebar ${cartOpen ? "open" : ""}`}>
+           <h3>Your Cart</h3>
+           <div className="cart-scroll">
+              {cart.map((item, i) => (
+                <div key={i} className="cart-row">
+                  <span>{item.name} x{item.quantity}</span>
+                  <strong>₦{(item.price * item.quantity).toLocaleString()}</strong>
+                </div>
+              ))}
+           </div>
+           <div className="cart-footer">
+              <button className="clear-cart-btn-curved" onClick={() => setCart([])}>Clear Cart</button>
+              <button className="checkout-btn-curved" onClick={checkoutWithPaystack} disabled={isProcessing}>
                 {isProcessing ? "Processing..." : "Checkout Now"}
               </button>
-              <button className="clear-cart-btn-curved" onClick={() => setCart([])}>
-                Clear Cart
-              </button>
-            </div>
-          </div>
-        </div>
-      </aside>
+           </div>
+        </aside>
+      </div>
     </div>
   );
 }
