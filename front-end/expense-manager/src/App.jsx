@@ -38,6 +38,11 @@ function App() {
   const [cart, setCart] = useState([]);
   const [cartOpen, setCartOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [activeImage, setActiveImage] = useState(null); 
+  const [user, setUser] = useState(null);
+  const [authMode, setAuthMode] = useState("login");
+  const [authData, setAuthData] = useState({ phone: "", password: "" });
+  const [userOrders, setUserOrders] = useState([]); 
 
   // VIEW STATES
   const [view, setView] = useState("grid"); 
@@ -52,15 +57,18 @@ function App() {
   const [userOrders, setUserOrders] = useState([]); 
   
   // PAGINATION STATES
-  const [currentPage, setCurrentPage] = useState(1);
-  const ordersPerPage = 10;
+  const PAGE_SIZE = 9; 
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE); 
 
   // --- 1. FETCH DATA ---
 
   useEffect(() => {
-    fetch("http://127.0.0.1:8000/api/products/")
+    fetch(`${BASE_URL}/api/products/`)
       .then((res) => res.json())
-      .then((data) => setProducts(data))
+      .then((data) => {
+          const productData = Array.isArray(data) ? data : (data.results || []);
+          setProducts(productData);
+      })
       .catch((err) => console.error("Error fetching products:", err));
   }, []);
 
