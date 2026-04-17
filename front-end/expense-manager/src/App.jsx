@@ -1,6 +1,37 @@
 import React, { useEffect, useState } from "react";
 import "./App.css";
 
+// --- CONFIG ---
+const BASE_URL = import.meta.env.VITE_API_URL || "";
+const CLOUDINARY_BASE = "https://res.cloudinary.com/dscxqsew5/";
+const PAYSTACK_PUBLIC_KEY = 'pk_live_21207f639d252b46e35e171dca6b075f79cba433';
+
+const getImageUrl = (path) => {
+  if (!path) return "/static/placeholder.png";
+  if (path.startsWith("http")) return path;
+  return `${CLOUDINARY_BASE}${path}`;
+};
+
+function ProductCard({ product, onAddToCart, onSelect }) {
+  const [tempQty, setTempQty] = useState(1);
+  const rawPath = product.image_display || (product.additional_images?.[0]?.image);
+  const displayImage = getImageUrl(rawPath);
+
+  return (
+    <div className="product-card">
+      <div className="img-frame" onClick={() => onSelect(product)}>
+        <img src={displayImage} alt={product.name} className="zoom-effect" />
+      </div>
+      <h3>{product.name}</h3>
+      <p className="price-text">₦{parseFloat(product.price).toLocaleString()}</p>
+      <div className="qty-row">
+        <input type="number" min="1" value={tempQty} onChange={(e) => setTempQty(parseInt(e.target.value) || 1)} />
+        <button className="add-btn" onClick={() => onAddToCart(product, tempQty)}>Add to Cart</button>
+      </div>
+    </div>
+  );
+}
+
 function App() {
   const [products, setProducts] = useState([]);
   const [category, setCategory] = useState("food");
