@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import "./App.css";
 
 // --- CONFIG ---
-const BASE_URL = import.meta.env.VITE_API_URL || "https://back-end-wdk7.onrender.com";
+const BASE_URL = "https://back-end-wdk7.onrender.com";
 const CLOUDINARY_BASE = "https://res.cloudinary.com/dscxqsew5/";
 const PAYSTACK_PUBLIC_KEY = 'pk_live_21207f639d252b46e35e171dca6b075f79cba433';
 
@@ -49,7 +49,7 @@ function App() {
   const [user, setUser] = useState(null);
   const [authMode, setAuthMode] = useState("login");
   const [trackInput, setTrackInput] = useState("");
-  const [userOrders, setUserOrders] = useState([]); 
+  const [trackingData, setTrackingData] = useState(null);
 
   const PAGE_SIZE = 9; 
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE); 
@@ -78,27 +78,6 @@ function App() {
     });
   };
 
-  const checkoutWithPaystack = async () => {
-    if (cart.length === 0) return alert("Cart is empty!");
-    setIsProcessing(true);
-    try {
-      const totalPrice = cart.reduce((sum, item) => sum + (parseFloat(item.price) * item.quantity), 0);
-      const handler = window.PaystackPop.setup({
-        key: PAYSTACK_PUBLIC_KEY, 
-        email: user ? `${user.phone}@lekki-market.com` : 'guest@lekki.com',
-        amount: Math.round(totalPrice * 100), 
-        currency: 'NGN',
-        callback: (res) => {
-          setIsProcessing(false);
-          setCart([]);
-          alert("Payment Successful!");
-        },
-        onClose: () => setIsProcessing(false)
-      });
-      handler.openIframe();
-    } catch (err) { setIsProcessing(false); }
-  };
-
   const allFiltered = products.filter((p) => 
     p.category.toLowerCase() === category.toLowerCase() && 
     p.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -106,8 +85,9 @@ function App() {
 
   return (
     <div className="app-grid-wrapper">
+      {/* 1. HEADER */}
       <header className="header-main">
-        <div className="logo-section" onClick={() => setView("grid")} style={{cursor:'pointer'}}>
+        <div className="logo-section" onClick={() => {setView("grid"); setSelectedProduct(null)}} style={{cursor:'pointer'}}>
           <h1>1-Stop Shop</h1>
         </div>
         <div className="header-center-ad">
@@ -120,7 +100,7 @@ function App() {
         </div>
       </header>
 
-      {/* SEARCH CENTERED NAV BAR */}
+      {/* 2. CENTERED SEARCH NAV */}
       <nav className="unified-nav">
           <button className="nav-item" onClick={() => {setView("grid"); setSelectedProduct(null)}}>Home</button>
           <button className="nav-item" onClick={() => setView("tracking")}>Tracking</button>
@@ -139,34 +119,45 @@ function App() {
           {user ? <span className="user-text">Hi, {user.phone}</span> : <button className="nav-item" onClick={() => setView("auth")}>Login</button>}
       </nav>
 
+      {/* 3. THREE-COLUMN FRAME */}
       <div className="main-layout">
+        {/* LEFT SIDE */}
         <aside className="left-sidebar">
           <h3>Categories</h3>
           {["food", "electronics", "office", "style&fashion", "sex-toys", "rent-house", "car-sales", "kitchen-items"].map(cat => (
-            <button key={cat} className={category === cat ? "cat-btn active" : "cat-btn"} onClick={() => {setCategory(cat); setView("grid"); setSelectedProduct(null);}}>{cat.toUpperCase()}</button>
+            <button key={cat} className={category === cat ? "cat-btn active" : "cat-btn"} 
+              onClick={() => {setCategory(cat); setView("grid"); setSelectedProduct(null);}}>
+              {cat.toUpperCase()}
+            </button>
           ))}
         </aside>
 
+        {/* MAIN CONTENT AREA */}
         <main className="content-area">
-          {/* LOGIC FOR SWITCHING VIEWS WITHOUT BREAKING GRID */}
           {view === "tracking" ? (
             <div className="view-container">
-              <h1>📦 Track Order</h1>
-              <input type="text" placeholder="Enter Order ID" className="track-input" value={trackInput} onChange={(e) => setTrackInput(e.target.value)} />
-              <button className="orange-checkout-btn">Track</button>
+              <h2>📦 Order Tracking</h2>
+              <div className="track-form">
+                <input type="text" placeholder="Enter Order ID" className="track-input" value={trackInput} onChange={(e) => setTrackInput(e.target.value)} />
+                <button className="orange-checkout-btn">Check Status</button>
+              </div>
             </div>
           ) : view === "account" ? (
             <div className="view-container">
-              <h1>Account Settings</h1>
-              <p>Welcome back, {user ? user.phone : "Guest"}</p>
+              <h2>User Account</h2>
+              <p>Manage your orders and profile here.</p>
             </div>
           ) : view === "auth" ? (
             <div className="view-container auth-box">
               <h2>{authMode === "login" ? "Login" : "Register"}</h2>
-              <input type="text" placeholder="Phone" className="auth-input" />
-              <input type="password" placeholder="Password" className="auth-input" />
-              <button className="orange-checkout-btn" onClick={() => {setUser({phone: "Member"}); setView("grid")}}>Submit</button>
-              <p onClick={() => setAuthMode(authMode === "login" ? "register" : "login")}>Toggle Login/Register</p>
+              <div className="auth-form-inner">
+                <input type="text" placeholder="Phone" className="auth-input" />
+                <input type="password" placeholder="Password" className="auth-input" />
+                <button className="orange-checkout-btn" onClick={() => {setUser({phone: "Member"}); setView("grid")}}>Submit</button>
+                <p className="auth-toggle" onClick={() => setAuthMode(authMode === "login" ? "register" : "login")}>
+                  {authMode === "login" ? "Need an account? Register" : "Already have an account? Login"}
+                </p>
+              </div>
             </div>
           ) : selectedProduct ? (
             <div className="product-review-container">
@@ -192,26 +183,27 @@ function App() {
             </div>
           ) : (
             <div className="product-grid">
-              {allFiltered.slice(0, visibleCount).map(p => <ProductCard key={p.id} product={p} onAddToCart={addToCart} onSelect={setSelectedProduct} />)}
+              {allFiltered.slice(0, visibleCount).map(p => (
+                <ProductCard key={p.id} product={p} onAddToCart={addToCart} onSelect={setSelectedProduct} />
+              ))}
             </div>
           )}
         </main>
 
+        {/* RIGHT SIDE (CART) */}
         <aside className={`right-cart-sidebar ${cartOpen ? "open" : ""}`}>
            <h3>Your Cart</h3>
            <div className="cart-scroll">
               {cart.map((item, i) => (
                 <div key={i} className="cart-row">
-                  <div className="cart-item-info">
-                    <span>{item.name} x{item.quantity}</span>
-                    <strong>₦{(item.price * item.quantity).toLocaleString()}</strong>
-                  </div>
+                  <span>{item.name} x{item.quantity}</span>
+                  <strong>₦{(item.price * item.quantity).toLocaleString()}</strong>
                 </div>
               ))}
            </div>
            <div className="cart-footer">
               <button className="clear-cart-btn-curved" onClick={() => setCart([])}>Clear Cart</button>
-              <button className="checkout-btn-curved" onClick={checkoutWithPaystack} disabled={isProcessing}>
+              <button className="checkout-btn-curved" disabled={isProcessing}>
                 {isProcessing ? "Processing..." : "Checkout Now"}
               </button>
            </div>
