@@ -63,12 +63,9 @@ function App() {
   // --- 1. FETCH DATA ---
 
   useEffect(() => {
-    fetch(`${BASE_URL}/api/products/`)
+    fetch("http://127.0.0.1:8000/api/products/")
       .then((res) => res.json())
-      .then((data) => {
-          const productData = Array.isArray(data) ? data : (data.results || []);
-          setProducts(productData);
-      })
+      .then((data) => setProducts(data))
       .catch((err) => console.error("Error fetching products:", err));
   }, []);
 
