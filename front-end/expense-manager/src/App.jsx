@@ -55,7 +55,6 @@ function App() {
       .catch((err) => console.error("Fetch error:", err));
   }, []);
 
-  // Fetch orders when Account view is opened
   useEffect(() => {
     if (view === "account" && user) {
       fetch(`${BASE_URL}/api/orders/`)
@@ -118,43 +117,44 @@ function App() {
 
   return (
     <div className="app-grid-wrapper">
-      {/* HEADER SECTION */}
+      {/* HEADER SECTION - Simplified */}
       <header className="brand-header">
-  <h1 onClick={() => setView("grid")} style={{cursor: 'pointer'}}>MeBuy</h1>
-  <button className="cart-toggle" onClick={() => setCartOpen(!cartOpen)}>
-    🛒 Cart ({cart.reduce((acc, item) => acc + item.quantity, 0)})
-  </button>
-</header>
+        <h1 onClick={() => setView("grid")} style={{cursor: 'pointer'}}>MeBuy</h1>
+        <button className="cart-toggle" onClick={() => setCartOpen(!cartOpen)}>
+          🛒 Cart ({cart.reduce((acc, item) => acc + item.quantity, 0)})
+        </button>
+      </header>
 
-{/* NAVIGATION & SEARCH SECTION - Now on one line and Centralized */}
-<nav className="main-nav">
-  <div className="nav-container">
-    <div className="nav-links-left">
-      <button className="nav-btn-link" onClick={() => {setView("grid"); setSelectedProduct(null)}}>Home</button>
-      <button className="nav-btn-link" onClick={() => {setView("tracking"); setTrackingData(null)}}>Track Order</button>
-    </div>
+      {/* NAVIGATION & SEARCH SECTION - Unified & Centralized */}
+      <nav className="main-nav">
+        <div className="nav-container">
+          <div className="nav-links-left">
+            <button className="nav-btn-link" onClick={() => {setView("grid"); setSelectedProduct(null)}}>Home</button>
+            <button className="nav-btn-link" onClick={() => {setView("tracking"); setTrackingData(null)}}>Track Order</button>
+          </div>
 
-    {/* CENTRALIZED SEARCH BAR */}
-    <div className="central-search">
-      <input 
-        type="text" 
-        placeholder="Search products..." 
-        value={searchTerm} 
-        onChange={(e) => {setSearchTerm(e.target.value); setView("grid");}} 
-      />
-      <button className="go-btn" onClick={() => setView("grid")}>GO</button>
-    </div>
+          {/* CENTRALIZED SEARCH BAR */}
+          <div className="central-search">
+            <input 
+              type="text" 
+              placeholder="Search products..." 
+              value={searchTerm} 
+              onChange={(e) => {setSearchTerm(e.target.value); setView("grid");}} 
+            />
+            <button className="go-btn" onClick={() => setView("grid")}>GO</button>
+          </div>
 
-    <div className="nav-links-right">
-      <button className="nav-btn-link" onClick={() => setView("account")}>Account</button>
-      {!user ? (
-          <button className="nav-btn-link login-special" onClick={() => {setView("auth"); setAuthMode("login")}}>Login</button>
-      ) : (
-          <span className="user-welcome">Hi, {user.phone}</span>
-      )}
-    </div>
-  </div>
-</nav>
+          <div className="nav-links-right">
+            <button className="nav-btn-link" onClick={() => setView("account")}>Account</button>
+            {!user ? (
+                <button className="nav-btn-link login-special" onClick={() => {setView("auth"); setAuthMode("login")}}>Login</button>
+            ) : (
+                <span className="user-welcome">Hi, {user.phone}</span>
+            )}
+          </div>
+        </div>
+      </nav>
+
       {/* LEFT SIDEBAR SECTION */}
       <aside className="left-sidebar">
         <h3>Categories</h3>
@@ -170,7 +170,6 @@ function App() {
 
       {/* MAIN CONTENT AREA */}
       <main>
-        {/* VIEW: TRACKING */}
         {view === "tracking" && (
           <div className="view-container tracking-screen">
             <h1>📦 Track Your Shipment</h1>
@@ -187,7 +186,6 @@ function App() {
           </div>
         )}
 
-        {/* VIEW: ACCOUNT */}
         {view === "account" && (
           <div className="view-container account-screen">
             <h1>Order History</h1>
@@ -203,14 +201,13 @@ function App() {
           </div>
         )}
 
-        {/* VIEW: AUTH (Registration & Login) */}
         {view === "auth" && (
           <div className="view-container auth-screen">
             <h1>{authMode === "login" ? "Login" : "Create Account"}</h1>
             <div className="auth-form">
               <input type="text" placeholder="Phone Number" className="auth-input" />
               <input type="password" placeholder="Password" className="auth-input" />
-              <button className="orange-curved-btn checkout" onClick={() => {setUser({phone: "Member"}); setView("grid")}}>
+              <button className="orange-curved-btn" onClick={() => {setUser({phone: "Member"}); setView("grid")}}>
                 {authMode === "login" ? "Sign In" : "Register Now"}
               </button>
               <p onClick={() => setAuthMode(authMode === "login" ? "register" : "login")} style={{cursor:'pointer', marginTop:'10px'}}>
@@ -220,7 +217,6 @@ function App() {
           </div>
         )}
 
-        {/* VIEW: PRODUCT DETAIL */}
         {view === "grid" && selectedProduct && (
           <div className="view-container detail-screen">
             <button className="back-link" onClick={() => setSelectedProduct(null)}>← Back to Shopping</button>
@@ -243,7 +239,6 @@ function App() {
           </div>
         )}
 
-        {/* VIEW: PRODUCT GRID */}
         {view === "grid" && !selectedProduct && (
           <div className="product-grid">
             {filteredProducts.map((p) => (
@@ -260,28 +255,34 @@ function App() {
         )}
       </main>
 
-      {/* RIGHT SIDEBAR (CART) SECTION - Updated Buttons */}
-<aside className={`right-sidebar ${cartOpen ? "open" : ""}`}>
-  <div className="cart-container">
-    <h3>Your Cart</h3>
-    <div className="cart-items-list">
-      {/* ... cart mapping ... */}
-    </div>
-    <div className="total-section">
-      <p>Total: <strong>₦{(cart.reduce((s, i) => s + (i.price * i.quantity), 0) + (cart.length > 0 ? 1500 : 0)).toLocaleString()}</strong></p>
-      
-      {/* CENTRALIZED CURVED BUTTONS */}
-      <div className="cart-action-stack">
-        <button className="orange-curved-btn" disabled={isProcessing} onClick={checkoutWithPaystack}>
-          {isProcessing ? "Processing..." : "Checkout Now"}
-        </button>
-        <button className="clear-cart-btn-curved" onClick={() => setCart([])}>
-          Clear Cart
-        </button>
-      </div>
-    </div>
-  </div>
-</aside>
+      {/* RIGHT SIDEBAR (CART) SECTION - Centralized Curved Buttons */}
+      <aside className={`right-sidebar ${cartOpen ? "open" : ""}`}>
+        <div className="cart-container">
+          <h3>Your Cart</h3>
+          <div className="cart-items-list">
+            {cart.map((item, index) => (
+              <div key={index} className="cart-item">
+                <span>{item.name} (x{item.quantity})</span>
+                <span>₦{(item.price * item.quantity).toLocaleString()}</span>
+              </div>
+            ))}
+          </div>
+          <div className="total-section">
+            <p>Subtotal: ₦{cart.reduce((s, i) => s + (i.price * i.quantity), 0).toLocaleString()}</p>
+            <p>Shipping: ₦{cart.length > 0 ? "1,500" : "0"}</p>
+            <p>Total: <strong>₦{(cart.reduce((s, i) => s + (i.price * i.quantity), 0) + (cart.length > 0 ? 1500 : 0)).toLocaleString()}</strong></p>
+            
+            <div className="cart-action-stack">
+              <button className="orange-curved-btn" disabled={isProcessing} onClick={checkoutWithPaystack}>
+                {isProcessing ? "Processing..." : "Checkout Now"}
+              </button>
+              <button className="clear-cart-btn-curved" onClick={() => setCart([])}>
+                Clear Cart
+              </button>
+            </div>
+          </div>
+        </div>
+      </aside>
     </div>
   );
 }
