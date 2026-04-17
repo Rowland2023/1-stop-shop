@@ -5,25 +5,27 @@ function App() {
   const [products, setProducts] = useState([]);
   const [category, setCategory] = useState("food");
   const [cart, setCart] = useState([]);
-  const [cartOpen, setOrderOpen] = useState(false); 
+  const [cartOpen, setCartOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
 
   // VIEW STATES
   const [view, setView] = useState("grid"); 
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [isSuccess, setIsSuccess] = useState(false);
   const [orderId, setOrderId] = useState("");
 
-  // AUTH & REGISTRATION STATES
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [isRegLoading, setIsRegLoading] = useState(false);
-  const [regData, setRegData] = useState({ username: "", email: "", password: "" });
-
   // TRACKING & ACCOUNT STATES
-  const [userOrders, setUserOrders] = useState([]); 
+  const [trackingData, setTrackingData] = useState(null);
   const [trackInput, setTrackInput] = useState("");
+  const [userOrders, setUserOrders] = useState([]); 
+  
+  // PAGINATION STATES
+  const [currentPage, setCurrentPage] = useState(1);
+  const ordersPerPage = 10;
 
   // --- 1. FETCH DATA ---
+
   useEffect(() => {
     fetch("http://127.0.0.1:8000/api/products/")
       .then((res) => res.json())
@@ -33,51 +35,51 @@ function App() {
 
   useEffect(() => {
     if (view === "account") {
+      setCurrentPage(1);
       fetch("http://127.0.0.1:8000/api/orders/")
         .then((res) => res.json())
         .then((data) => {
-          let ordersArray = Array.isArray(data) ? data : (data.results || []);
-          const filtered = ordersArray.filter(o => o.userId === regData.username);
-          setUserOrders(filtered.sort((a, b) => b.id - a.id));
+          let ordersArray = [];
+          if (Array.isArray(data)) { ordersArray = data; } 
+          else if (data.results) { ordersArray = data.results; } 
+          else if (data.orders) { ordersArray = data.orders; }
+
+          const myOrders = ordersArray.filter(order => 
+            order.userId === "001" || order.user === 1 || order.user_id === 1 || !order.user || order.id === 57
+          );
+          setUserOrders(myOrders.sort((a, b) => b.id - a.id));
         })
         .catch((err) => console.error("Error fetching order history:", err));
     }
-  }, [view, regData.username]);
+  }, [view]);
 
-  // --- 2. BACKEND HANDLERS ---
-  const handleRegister = async (e) => {
-    e.preventDefault();
-    setIsRegLoading(true);
+  // --- 2. PAYMENT & CHECKOUT LOGIC ---
+
+  const verifyPaymentOnBackend = async (reference, djangoOrderId) => {
     try {
-      const response = await fetch("http://127.0.0.1:8000/api/register/", {
+      const response = await fetch("http://localhost:8001/api/payments/verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(regData),
+        body: JSON.stringify({ reference, order_id: djangoOrderId }),
       });
+      
       if (response.ok) {
-        setIsLoggedIn(true);
-        alert(`Welcome ${regData.username}! Your 10% End of Year Bonus is now active!`);
-        setView("grid");
-      } else {
-        const error = await response.json();
-        alert(error.error || "Registration failed.");
+        setIsSuccess(true);
+        setCart([]);
+        setCartOpen(false);
+        window.open(`http://localhost:8001/api/invoices/generate?order_id=${djangoOrderId}`, "_blank");
       }
     } catch (err) {
-      alert("Cannot connect to Admin Backend.");
-    } finally {
-      setIsRegLoading(false);
+      console.error("Verification failed", err);
     }
   };
 
   const checkoutWithPaystack = async () => {
     if (cart.length === 0) return alert("Your cart is empty!");
-
-    // 10% BONUS ALERT FOR GUESTS
-    if (!isLoggedIn) {
-        alert("Hello user, register for 10% Bonuses on Total Purchase and Gift Items!");
-    }
-
+    if (!window.PaystackPop) return alert("Paystack SDK not loaded. Check index.html.");
+    
     setIsProcessing(true);
+
     try {
       const response = await fetch("http://127.0.0.1:8000/api/orders/", {
         method: "POST",
@@ -85,61 +87,98 @@ function App() {
         body: JSON.stringify({
           items: cart.map((item) => ({ id: parseInt(item.id), quantity: 1 })),
           total: totalDue.toFixed(2),
-          userId: isLoggedIn ? regData.username : "guest_001",
+          userId: "001",
         }),
       });
+
       const orderData = await response.json();
-      if (response.ok) {
-        setOrderId(orderData.id);
-        alert("Order placed successfully! Check 'Account' for history.");
-        setCart([]); 
-      }
+      if (!response.ok) throw new Error("Server failed to create order");
+
+      setOrderId(orderData.id);
+
+      const handler = window.PaystackPop.setup({
+        key: 'pk_live_21207f639d252b46e35e171dca6b075f79cba433', 
+        email: 'innovator@lekki.com',
+        amount: Math.round(totalDue * 100), 
+        currency: 'NGN',
+        // ADDED DESCRIPTION LABEL
+        label: `Lagos Tech Hub - Order #${orderData.id}`,
+        ref: 'LTH-' + orderData.id + '-' + Date.now(),
+        metadata: {
+          order_id: orderData.id
+        },
+        onClose: () => setIsProcessing(false),
+        callback: (response) => {
+          setIsProcessing(false);
+          verifyPaymentOnBackend(response.reference, orderData.id);
+        }
+      });
+      handler.openIframe();
+
     } catch (err) {
-      alert("Checkout failed.");
-    } finally {
+      alert(`Checkout failed: ${err.message}`);
       setIsProcessing(false);
     }
   };
 
-  // --- 3. UTILS & BONUS CALCULATIONS ---
-  const subTotalValue = cart.reduce((sum, item) => sum + parseFloat(item.price || 0), 0);
-  
-  // Apply 10% discount if logged in
-  const bonusDiscount = isLoggedIn ? (subTotalValue * 0.10) : 0;
-  const deliveryFee = cart.length > 0 ? 1500 : 0;
-  const totalDue = (subTotalValue - bonusDiscount) + deliveryFee;
+  // --- 3. FILTER & CART LOGIC ---
 
+  const subTotalValue = cart.reduce((sum, item) => sum + parseFloat(item.price || 0), 0);
+  const shippingFee = cart.length > 0 ? 1500 : 0;
+  const totalDue = subTotalValue + shippingFee;
+
+  const indexOfLastOrder = currentPage * ordersPerPage;
+  const indexOfFirstOrder = indexOfLastOrder - ordersPerPage;
+  const currentOrders = userOrders.slice(indexOfFirstOrder, indexOfLastOrder);
+  const totalPages = Math.ceil(userOrders.length / ordersPerPage);
+
+  // IMPROVED: Case-insensitive category filtering
   const filteredProducts = products.filter((p) => 
     p.category.toLowerCase() === category.toLowerCase() && 
     p.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const addToCart = (product) => setCart([...cart, product]);
+  
+  const clearCart = () => {
+    if (cart.length > 0 && window.confirm("Are you sure you want to empty your cart?")) {
+      setCart([]);
+    }
+  };
+
+  const handleTrackOrder = async () => {
+    if (!trackInput) return alert("Please enter an Order ID");
+    try {
+      const response = await fetch(`http://127.0.0.1:8000/api/orders/${trackInput}/`);
+      const data = await response.json();
+      if (response.ok) { setTrackingData(data); } 
+      else { alert("Order not found."); setTrackingData(null); }
+    } catch (err) { alert("Connection failed."); }
+  };
+
   return (
     <div className="app-grid-wrapper">
       <header>
-        <h1>1-Stop Shop</h1>
+        <h1>MeBuy</h1>
         <div className="search-bar">
           <input type="text" placeholder="Search..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
         </div>
-        <button className="cart-toggle" onClick={() => setOrderOpen(!cartOpen)}>🛒 Cart ({cart.length})</button>
+        <button className="cart-toggle" onClick={() => setCartOpen(!cartOpen)}>🛒 Cart ({cart.length})</button>
       </header>
 
       <nav className="main-nav">
         <ul>
-          <li><button className="nav-btn-link" onClick={() => { setView("grid"); setSelectedProduct(null); }}>Home</button></li>
-          <li><button className="nav-btn-link" onClick={() => setView("tracking")}>Track Order</button></li>
+          <li><button className="nav-btn-link" onClick={() => { setView("grid"); setSelectedProduct(null); setIsSuccess(false); }}>Home</button></li>
+          <li><button className="nav-btn-link" onClick={() => { setView("tracking"); setTrackingData(null); }}>Track Order</button></li>
           <li><button className="nav-btn-link" onClick={() => setView("account")}>Account</button></li>
-          <li className="nav-auth" style={{ marginLeft: 'auto' }}>
-            <button className="register-link" onClick={() => setView("register")}>
-              {isLoggedIn ? `Hi, ${regData.username}` : "Register"}
-            </button>
-          </li>
+          <li className="nav-auth"><button className="register-link">Register</button></li>
         </ul>
       </nav>
 
       <aside className="left-sidebar">
         <h3>Categories</h3>
         <nav className="side-nav">
+          {/* UPDATED: Clean lowercase keys with pretty labels */}
           {["food", "electronics", "office", "clothing", "sex-toys","rent-house","car-sales","kitchen-items"].map((catId) => (
             <button key={catId} className={category === catId ? "active" : ""} 
               onClick={() => { setCategory(catId); setView("grid"); setSelectedProduct(null); }}>
@@ -150,71 +189,63 @@ function App() {
       </aside>
 
       <main>
-        {view === "register" ? (
-          <div className="view-container">
-            <h1>Join Lagos Tech Hub</h1>
-            <p>Register now to claim your 10% End of Year Bonus!</p>
-            <form onSubmit={handleRegister} style={{ display: 'flex', flexDirection: 'column', gap: '15px', maxWidth: '400px' }}>
-              <input className="track-input" type="text" placeholder="Username" required onChange={e => setRegData({...regData, username: e.target.value})} />
-              <input className="track-input" type="email" placeholder="Email" required onChange={e => setRegData({...regData, email: e.target.value})} />
-              <input className="track-input" type="password" placeholder="Password" required onChange={e => setRegData({...regData, password: e.target.value})} />
-              <button type="submit" className="add-btn" disabled={isRegLoading}>Confirm & Get Bonus</button>
-              <button type="button" className="back-link" onClick={() => setView("grid")}>Cancel</button>
-            </form>
-          </div>
-        ) : 
-        
-        view === "tracking" ? (
+        {view === "tracking" ? (
           <div className="view-container tracking-screen">
             <h1>📦 Track Your Shipment</h1>
             <div className="track-search-box">
               <input type="text" placeholder="Enter Order ID" className="track-input" value={trackInput} onChange={(e) => setTrackInput(e.target.value)} />
-              <button className="track-btn-action">Check Status</button>
+              <button className="track-btn-action" onClick={handleTrackOrder}>Check Status</button>
             </div>
+            {trackingData && (
+              <div className="tracking-timeline">
+                <div className="step completed"><div className="bullet"></div><div className="info"><strong>Order Confirmed</strong><span>#{trackingData.id}</span></div></div>
+                <div className="step active"><div className="bullet"></div><div className="info"><strong>Status: {trackingData.status}</strong></div></div>
+                <div className="step"><div className="bullet"></div><div className="info"><strong>In Transit</strong></div></div>
+              </div>
+            )}
             <button className="back-btn" onClick={() => setView("grid")}>Back</button>
           </div>
-        ) : 
-
-        view === "account" ? (
-          <div className="view-container">
-            <h1>Your Order History</h1>
-            {userOrders.length > 0 ? (
-              <div className="order-history">
-                {userOrders.map((order) => (
-                  <div key={order.id} className="history-item" style={{ borderBottom: '1px solid #eee', padding: '15px 0', display: 'flex', justifyContent: 'space-between' }}>
-                    <div className="order-meta">
-                      <strong>Order #{order.id}</strong><br/>
-                      <span>Total: ₦{parseFloat(order.total).toLocaleString()}</span>
-                    </div>
-                    <button className="re-download-btn">View Invoice</button>
+        ) : view === "account" ? (
+          <div className="view-container account-screen">
+            <h1>Order History</h1>
+            <div className="order-history">
+              {currentOrders.map((order) => (
+                <div key={order.id} className="history-item">
+                  <div className="order-meta">
+                    <strong>Order #{order.id}</strong>
+                    <span>₦{parseFloat(order.total_price || order.total || 0).toLocaleString()}</span>
                   </div>
-                ))}
+                  <button className="re-download-btn" onClick={() => window.open(`http://localhost:8001/api/invoices/generate?order_id=${order.id}`, "_blank")}>
+                    Download PDF
+                  </button>
+                </div>
+              ))}
+              <div className="pagination-controls">
+                <button disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)}>Prev</button>
+                <span>{currentPage} / {totalPages}</span>
+                <button disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)}>Next</button>
               </div>
-            ) : (
-              <p>No orders found. Start shopping to see your history!</p>
-            )}
-            <button className="back-btn" style={{marginTop: '20px'}} onClick={() => setView("grid")}>Back to Shop</button>
+            </div>
           </div>
-        ) :
-
-        selectedProduct ? (
+        ) : isSuccess ? (
+          <div className="view-container success-screen">
+            <h2>✅ Payment Confirmed!</h2>
+            <p>Order ID: #{orderId}</p>
+            <button className="back-btn" onClick={() => setIsSuccess(false)}>Continue Shopping</button>
+          </div>
+        ) : selectedProduct ? (
           <div className="view-container detail-screen">
-            <button className="back-link" onClick={() => setSelectedProduct(null)}>← Back to Products</button>
+            <button className="back-link" onClick={() => setSelectedProduct(null)}>← Back</button>
             <div className="detail-layout">
               <img src={`http://127.0.0.1:8000/static/${selectedProduct.image_path}`} alt={selectedProduct.name} />
               <div className="detail-info">
                 <h1>{selectedProduct.name}</h1>
                 <p className="detail-price">₦{parseFloat(selectedProduct.price).toLocaleString()}</p>
-                <div className="bonanza-box" style={{ background: '#fff5f5', borderLeft: '4px solid #e74c3c', padding: '10px', margin: '15px 0' }}>
-                   <p style={{ color: '#e74c3c', margin: 0, fontWeight: 'bold' }}>🎄 10% End of Year Bonus Available!</p>
-                </div>
-                <button className="add-btn" onClick={() => setCart([...cart, selectedProduct])}>Add to Cart</button>
+                <button className="add-btn" onClick={() => addToCart(selectedProduct)}>Add to Cart</button>
               </div>
             </div>
           </div>
-        ) : 
-
-        (
+        ) : (
           <div className="product-grid">
             {filteredProducts.map((p) => (
               <div key={p.id} className="product-card">
@@ -223,7 +254,7 @@ function App() {
                 </div>
                 <h3>{p.name}</h3>
                 <p>₦{parseFloat(p.price).toLocaleString()}</p>
-                <button className="add-btn" onClick={() => setCart([...cart, p])}>Add to Cart</button>
+                <button className="add-btn" onClick={() => addToCart(p)}>Add to Cart</button>
               </div>
             ))}
           </div>
@@ -233,57 +264,24 @@ function App() {
       <aside className={`right-sidebar ${cartOpen ? "open" : ""}`}>
         <div className="cart-container">
           <h3>Your Cart</h3>
-          {cart.map((item, index) => (
-            <div key={index} className="cart-item" style={{display: 'flex', justifyContent: 'space-between', marginBottom: '5px'}}>
-              <span>{item.name}</span>
-              <span>₦{parseFloat(item.price).toLocaleString()}</span>
-            </div>
-          ))}
-          
-          <div className="total-section">
-            {/* BONUS FEEDBACK AREA */}
-            {isLoggedIn && cart.length > 0 && (
-                <p style={{ color: '#27ae60', fontSize: '0.9rem', marginBottom: '10px' }}>
-                    ✨ 10% Year-End Discount: -₦{bonusDiscount.toLocaleString()}
-                </p>
-            )}
-
-            {!isLoggedIn && cart.length > 0 && (
-              <div className="bonanza-alert" style={{ border: '1px dashed #f39c12', padding: '10px', marginBottom: '10px' }}>
-                <small><strong>🎁 Bonus Hint:</strong> Register to save 10% on this order!</small>
-                <button onClick={() => { setView("register"); setOrderOpen(false); }} className="nav-btn-link" style={{fontSize: '0.8rem', padding: 0}}>Claim Now</button>
+          <div className="cart-items-list">
+            {cart.map((item, index) => (
+              <div key={index} className="cart-item">
+                <span>{item.name}</span>
+                <span>₦{parseFloat(item.price).toLocaleString()}</span>
               </div>
-            )}
-            
+            ))}
+          </div>
+          <div className="total-section">
             <p>Total: <strong>₦{totalDue.toLocaleString()}</strong></p>
-            
-            {/* PAY BUTTON */}
-            <button className="add-btn" style={{ backgroundColor: '#09a5db' }} onClick={checkoutWithPaystack}>
-              {isProcessing ? "Processing..." : "Pay with Paystack"}
-            </button>
-
-            {/* CLEAR CART BUTTON */}
-            {cart.length > 0 && (
-              <button 
-                className="clear-cart-action" 
-                style={{ 
-                    width: '100%', 
-                    marginTop: '15px', 
-                    color: '#95a5a6', 
-                    fontSize: '0.8rem', 
-                    textAlign: 'center',
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    textDecoration: 'underline'
-                }} 
-                onClick={() => {
-                    if(window.confirm("Clear all items from your cart?")) setCart([]);
-                }}
-              >
-                🗑️ Clear Cart & Start Over
+            <div className="payment-vendors">
+              <button className="vendor-btn paystack" disabled={isProcessing} onClick={checkoutWithPaystack}>
+                {isProcessing ? "Connecting..." : "Pay with Paystack"}
               </button>
-            )}
+              <button className="clear-cart-btn" onClick={clearCart} disabled={isProcessing || cart.length === 0}>
+                Clear Cart
+              </button>
+            </div>
           </div>
         </div>
       </aside>
@@ -292,3 +290,4 @@ function App() {
 }
 
 export default App;
+
