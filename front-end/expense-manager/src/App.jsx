@@ -58,6 +58,26 @@ function App() {
   const [trackingData, setTrackingData] = useState(null);
   const [userOrders, setUserOrders] = useState([]);
 
+  // --- API: AUTHENTICATION ---
+  const handleAuth = async (e) => {
+    e.preventDefault();
+    const endpoint = authMode === "login" ? "/api/login/" : "/api/register/";
+    try {
+      const res = await fetch(`${BASE_URL}${endpoint}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(authData),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setUser(data.user);
+        setView("grid");
+      } else {
+        alert(data.message || "Auth failed");
+      }
+    } catch (err) { alert("Backend unreachable"); }
+  };
+
   // --- 1. PERSISTENCE & DATA FETCHING ---
   useEffect(() => {
     localStorage.setItem("shop_cart_data", JSON.stringify(cart));
