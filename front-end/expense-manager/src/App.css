@@ -630,11 +630,11 @@ header {
   display: flex;
   width: 100%;
   max-width: 500px;
-  background: #000000; /* Set background to black */
+  background: #ffffff;
+  color: #000000;
   border-radius: 25px;
-  border: 1px solid #333;
+  border: 1px solid #ddd;
   overflow: hidden;
-  color: #ffffff; /* Text color inside pill */
 }
 
 .search-pill input {
@@ -644,21 +644,15 @@ header {
   padding: 12px 20px;
   outline: none;
   font-size: 1rem;
-  color: white; /* Make input text visible on black */
 }
 
 .orange-go-btn {
-  background: #ff8c00; /* Orange background */
+  background: #ff8c00;
   color: white;
   border: none;
   padding: 0 25px;
   font-weight: bold;
   cursor: pointer;
-  transition: background 0.2s;
-}
-
-.orange-go-btn:hover {
-  background: #e07b00; /* Darker orange on hover */
 }
 
 /* Responsive Grid Check */
