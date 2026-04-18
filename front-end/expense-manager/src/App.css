@@ -664,19 +664,3 @@ header {
 
 /*Newly added8.11.2024*/
 
-.view-container {
-  min-height: 60vh; /* Keeps the footer/layout in place even when empty */
-  display: flex;
-  flex-direction: column;
-}
-
-.product-card {
-  height: 350px; /* Force consistent height for grid items */
-  display: flex;
-  flex-direction: column;
-}
-
-.img-frame {
-  height: 200px; /* Fixed height for image area prevents resizing */
-  overflow: hidden;
-}
