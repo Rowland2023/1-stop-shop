@@ -662,3 +662,23 @@ header {
   }
 }
 
+/* Ensure your wrapper allows the grid to work */
+.app-grid-wrapper {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.content-layout {
+  display: flex; /* Or grid */
+  flex: 1;
+}
+
+.left-sidebar {
+  width: 250px;
+  /* Ensure this does NOT have position: absolute or fixed */
+}
+
+main {
+  flex: 1; /* This tells the main area to take up all remaining space */
+}
