@@ -1,17 +1,11 @@
-body, #root {
-  background-color: #ffffff !important;
-  color: #333333;
-  margin: 0;
-  font-family: sans-serif;
-}
+/* --- Global & Reset --- */
+body, #root { background-color: #ffffff !important; color: #333333; margin: 0; }
 
-/* =========================================
-   1. MASTER GRID & LAYOUT
-   ========================================= */
+/* --- Master Grid --- */
 .app-grid-wrapper {
   display: grid;
-  grid-template-columns: 250px 1fr 200px; /* left, main, right */
-  grid-template-rows: auto auto 1fr auto; /* header, nav, content, footer */
+  grid-template-columns: 250px 1fr 200px;
+  grid-template-rows: auto auto 1fr auto; 
   grid-template-areas: 
     "header header header"
     "nav-row nav-row nav-row"
@@ -20,122 +14,45 @@ body, #root {
   min-height: 100vh;
 }
 
-.left-sidebar { 
-  grid-area: left-sb; 
-  background: #f4f7f6; 
-  border-right: 1px solid #dfe6e9; 
-  padding: 20px; 
-  overflow-y: auto;
-}
-
-.right-sidebar { 
-  grid-area: right-sb; 
-  background: #fff; 
-  border-left: 1px solid #dfe6e9; 
-  padding: 20px; 
-  overflow-y: auto;
-}
-
-main { 
-  grid-area: main; 
-  background: #fff; 
-  padding: 30px; 
-  min-height: 60vh; 
-}
-
-footer { 
-  grid-area: footer; 
-  background: #2c3e50; 
-  color: #fff; 
-  text-align: center; 
-  padding: 15px; 
-}
-
-/* =========================================
-   2. HEADER & NAV
-   ========================================= */
 header { 
   grid-area: header; 
+  background: #1a1a1a; 
+  padding: 15px 5%;
   display: flex; 
-  align-items: center; 
   justify-content: space-between; 
-  padding: 20px; 
-  background: #fff; 
-  border-bottom: 1px solid #ddd; 
-}
-
-nav { 
-  grid-area: nav-row; 
-  background: #34495e; 
-  padding: 12px 20px; 
-}
-
-nav ul { 
-  display: flex; 
-  gap: 20px; 
-  list-style: none; 
-  margin: 0; 
-  padding: 0; 
   align-items: center; 
 }
 
-.nav-btn-link {
-  background: none;
-  border: none;
-  color: #ecf0f1;
-  cursor: pointer;
-  font-weight: 500;
-  font-size: 0.95rem;
-  transition: color 0.2s;
-}
-.nav-btn-link:hover { color: #3498db; }
+.logo-text { color: #ff8c00; font-size: 2rem; margin: 0; cursor: pointer; }
 
-/* =========================================
-   3. PRODUCT GRID
-   ========================================= */
-.product-grid { 
-  display: grid; 
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); 
-  gap: 25px; 
-}
+/* --- Navigation & Search --- */
+.main-nav { grid-area: nav-row; background: #ffffff; border-bottom: 1px solid #e0e0e0; padding: 10px 0; }
+.nav-container { display: flex; align-items: center; justify-content: space-between; max-width: 1400px; margin: 0 auto; padding: 0 20px; }
+.nav-group { display: flex; gap: 20px; flex: 1; }
+.nav-group.right { justify-content: flex-end; }
+.nav-link-item { background: none; border: none; font-weight: 600; color: #333; cursor: pointer; }
+.nav-link-item:hover { color: #ff8c00; }
 
-.product-card { 
-  border: 1px solid #eee; 
-  padding: 15px; 
-  text-align: center; 
-  border-radius: 8px; 
-  transition: box-shadow 0.3s; 
+.search-pill {
+  display: flex; flex: 2; max-width: 500px; background: #000; border-radius: 25px; overflow: hidden;
 }
-.product-card:hover { box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+.search-pill input { flex: 1; background: transparent; border: none; padding: 10px 20px; color: white; outline: none; }
+.orange-go-btn { background: #ff8c00; color: white; border: none; padding: 0 20px; cursor: pointer; }
 
-.img-frame { 
-  width: 100%; 
-  height: 180px; 
-  overflow: hidden; 
-  border-radius: 5px; 
-  position: relative; 
-  cursor: pointer; 
-  background: #f9f9f9; 
-}
-.zoom-effect { 
-  width: 100%; 
-  height: 100%; 
-  object-fit: contain; 
-  transition: transform 0.4s ease; 
-}
-.img-frame:hover .zoom-effect { transform: scale(1.15); }
+/* --- Main Content --- */
+.left-sidebar { grid-area: left-sb; background: #f4f7f6; padding: 20px; overflow-y: auto; }
+.right-sidebar { grid-area: right-sb; border-left: 1px solid #eee; padding: 20px; background: #fff; overflow-y: auto; }
+main { grid-area: main; background: #fff; padding: 30px; }
+footer { grid-area: footer; background: #2c3e50; color: #fff; text-align: center; padding: 15px; }
 
-/* =========================================
-   4. RESPONSIVE
-   ========================================= */
+/* --- Components --- */
+.product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 25px; }
+.product-card { border: 1px solid #eee; padding: 15px; border-radius: 8px; text-align: center; }
+.add-btn { background-color: #2e7d32; color: white; border: none; padding: 10px; width: 100%; border-radius: 4px; cursor: pointer; }
+.orange-curved-btn { background: #ff6600; color: white; border: none; padding: 12px; border-radius: 25px; width: 100%; cursor: pointer; }
+
+/* --- Responsive --- */
 @media (max-width: 768px) {
-  .app-grid-wrapper { 
-    grid-template-columns: 1fr; 
-    grid-template-areas: 
-      "header" 
-      "nav-row" 
-      "main" 
-      "footer"; 
-  }
+  .app-grid-wrapper { grid-template-columns: 1fr; grid-template-areas: "header" "nav-row" "main" "footer"; }
   .left-sidebar, .right-sidebar { display: none; }
 }
