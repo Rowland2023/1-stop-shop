@@ -8,14 +8,24 @@ body, #root {
    ========================================= */
 .app-grid-wrapper {
   display: grid;
+  /* header = fixed height
+     nav-row = fixed height
+     content = 1fr (fills available height)
+     footer = auto (stays at bottom) 
+  */
   grid-template-columns: 250px 1fr 200px;
-  grid-template-rows: auto auto 1fr auto;
+  grid-template-rows: auto auto 1fr auto; 
   grid-template-areas: 
     "header header header"
     "nav-row nav-row nav-row"
     "left-sb main right-sb"
     "footer footer footer";
   min-height: 100vh;
+}
+
+/* Ensure these do not grow beyond the grid cell */
+.left-sidebar, .right-sidebar {
+  overflow-y: auto; /* Adds scroll to sidebars if content is long */
 }
 
 header { 
@@ -609,42 +619,61 @@ header {
   border-radius: 15px;
 }
 
-/* 1. Ensure the Nav Container prevents wrapping */
-.nav-container {
-  display: flex;
-  align-items: center;
-  justify-content: space-between; /* Keeps everything spread out */
-  width: 100%;
-  padding: 0 20px;
-  flex-wrap: nowrap; /* CRITICAL: This prevents items from dropping to a new line */
-}
-
-/* 2. Fix the Navigation Groups */
-.nav-group {
-  flex: 1; /* Both sides get equal space */
-  display: flex;
-  align-items: center;
-}
-
-.nav-group.right {
-  justify-content: flex-end; /* Keeps user account/login on the right */
-}
-
-/* 3. Constrain the Search Wrapper */
+/* Central Search Optimization */
 .central-search-wrapper {
-  flex: 2; /* Still takes more space */
+  flex: 2; /* Takes more space than side links but remains centered */
   display: flex;
   justify-content: center;
-  min-width: 200px; /* Prevents the search bar from shrinking too much */
 }
 
-/* 4. Ensure the Search Pill behaves */
 .search-pill {
   display: flex;
   width: 100%;
-  max-width: 400px; /* Slightly reduced to give breathing room */
-  background: #ffffff;
+  max-width: 500px;
+  background: #000000; /* Set background to black */
   border-radius: 25px;
-  border: 1px solid #ddd;
+  border: 1px solid #333;
   overflow: hidden;
+  color: #ffffff; /* Text color inside pill */
+}
+
+.search-pill input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  padding: 12px 20px;
+  outline: none;
+  font-size: 1rem;
+  color: white; /* Make input text visible on black */
+}
+
+.orange-go-btn {
+  background: #ff8c00; /* Orange background */
+  color: white;
+  border: none;
+  padding: 0 25px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.orange-go-btn:hover {
+  background: #e07b00; /* Darker orange on hover */
+}
+
+/* Responsive Grid Check */
+@media (max-width: 900px) {
+  .nav-container {
+    flex-direction: column;
+    gap: 15px;
+  }
+  .nav-group {
+    order: 2;
+    width: 100%;
+    justify-content: center;
+  }
+  .central-search-wrapper {
+    order: 1;
+    width: 100%;
+  }
 }
