@@ -2,41 +2,16 @@ import React, { useEffect, useState } from "react";
 import "./App.css";
 
 // --- CONFIG ---
-const BASE_URL = import.meta.env.VITE_API_URL || "";
+const BASE_URL = "https://back-end-wdk7.onrender.com"; 
 const CLOUDINARY_BASE = "https://res.cloudinary.com/dscxqsew5/";
 const PAYSTACK_PUBLIC_KEY = 'pk_live_21207f639d252b46e35e171dca6b075f79cba433';
 
-const getImageUrl = (input) => {
-  let path = typeof input === 'string' ? input : (input?.image_path || input?.image_display || input?.image || "");
+const getImageUrl = (product) => {
+  const path = product.image_display || (product.additional_images?.[0]?.image) || product.image_path;
   if (!path) return "/static/placeholder.png";
-  if (path.startsWith("http") || path.includes("cloudinary")) return path;
-
-  // IMPORTANT: Ensure your backend domain is defined in your .env file
-  // If BASE_URL is empty, images will try to load from the React server (localhost:5173/static/...)
-  const domain = BASE_URL || "http://127.0.0.1:8000"; 
-  
-  // Clean the path and construct the full URL
-  const cleanPath = path.replace(/^media\//, "");
-  return `${domain}/media/${cleanPath}`; 
+  if (path.startsWith("http")) return path;
+  return `${CLOUDINARY_BASE}${path}`;
 };
-function ProductCard({ product, onAddToCart, onSelect }) {
-  const [tempQty, setTempQty] = useState(1);
-  const displayImage = getImageUrl(product);
-
-  return (
-    <div className="product-card">
-      <div className="img-frame" onClick={() => onSelect(product)}>
-        <img src={displayImage} alt={product.name} className="zoom-effect" />
-      </div>
-      <h3>{product.name}</h3>
-      <p className="price-text">₦{parseFloat(product.price).toLocaleString()}</p>
-      <div className="qty-row">
-        <input type="number" min="1" value={tempQty} onChange={(e) => setTempQty(parseInt(e.target.value) || 1)} />
-        <button className="add-btn" onClick={() => onAddToCart(product, tempQty)}>Add to Cart</button>
-      </div>
-    </div>
-  );
-}
 
 function App() {
   // --- CORE STATES ---
@@ -64,26 +39,6 @@ function App() {
   const [trackInput, setTrackInput] = useState("");
   const [trackingData, setTrackingData] = useState(null);
   const [userOrders, setUserOrders] = useState([]);
-
-  // --- API: AUTHENTICATION ---
-  const handleAuth = async (e) => {
-    e.preventDefault();
-    const endpoint = authMode === "login" ? "/api/login/" : "/api/register/";
-    try {
-      const res = await fetch(`${BASE_URL}${endpoint}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(authData),
-      });
-      const data = await res.json();
-      if (res.ok) {
-        setUser(data.user);
-        setView("grid");
-      } else {
-        alert(data.message || "Auth failed");
-      }
-    } catch (err) { alert("Backend unreachable. Please check CORS settings."); }
-  };
 
   // --- 1. PERSISTENCE & DATA FETCHING ---
   useEffect(() => {
@@ -274,39 +229,25 @@ function App() {
           )}
 
           {view === "grid" && selectedProduct && (
-    <div className="view-container detail-screen">
-      <button className="back-link" onClick={() => setSelectedProduct(null)}>← Back</button>
-      <div className="detail-layout" style={{ display: 'flex', gap: '20px' }}>
-        <div className="detail-images">
-          {/* PRODUCT IMAGE DISPLAYED HERE IN MAIN */}
-          <img 
-            src={getImageUrl(activeImage || selectedProduct)} 
-            alt={selectedProduct.name} 
-            style={{ maxWidth: '400px', borderRadius: '12px' }} 
-          />
-        </div>
-        <div className="detail-info">
-          <h1>{selectedProduct.name}</h1>
-          <p>₦{parseFloat(selectedProduct.price).toLocaleString()}</p>
-          <button className="add-btn" onClick={() => addToCart(selectedProduct)}>Add to Cart</button>
-        </div>
-      </div>
-    </div>
-  )}
-
-  {/* --- 2. Grid View --- */}
-  {view === "grid" && !selectedProduct && (
-    <div className="product-grid">
-      {filteredProducts.map((p) => (
-        <div key={p.id} className="product-card">
-          <div className="img-frame" onClick={() => setSelectedProduct(p)}>
-            <img src={getImageUrl(p)} alt={p.name} className="zoom-effect" />
-          </div>
-          <h3>{p.name}</h3>
-          <button className="add-btn" onClick={() => addToCart(p)}>Add to Cart</button>
-        </div>
-      ))}
-    </div>
+            <div className="view-container detail-screen">
+              <button className="back-link" onClick={() => setSelectedProduct(null)}>← Back to Shopping</button>
+              <div className="detail-layout">
+                <div className="detail-images">
+                  <img src={getImageUrl(activeImage || selectedProduct)} alt={selectedProduct.name} />
+                  <div className="thumb-strip">
+                     {selectedProduct.additional_images?.map((img, i) => (
+                       <img key={i} src={getImageUrl({image_path: img.image})} onClick={() => setActiveImage(img.image)} />
+                     ))}
+                  </div>
+                </div>
+                <div className="detail-info">
+                  <h1>{selectedProduct.name}</h1>
+                  <p className="detail-price">₦{parseFloat(selectedProduct.price).toLocaleString()}</p>
+                  <p>{selectedProduct.description}</p>
+                  <button className="add-btn" onClick={() => addToCart(selectedProduct)}>Add to Cart</button>
+                </div>
+              </div>
+            </div>
           )}
 
           {view === "grid" && !selectedProduct && (
