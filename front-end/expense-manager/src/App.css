@@ -211,11 +211,28 @@ footer { grid-area: footer; background: #2c3e50; color: #fff; text-align: center
 /* =========================================
    5. RESPONSIVE
    ========================================= */
-@media (max-width: 768px) {
-  .app-grid-wrapper { grid-template-columns: 1fr; grid-template-areas: "header" "nav-row" "main" "footer"; }
-  .left-sidebar, .right-sidebar { display: none; }
-}
+@media (max-width: 900px) {
+  .app-grid-wrapper {
+    /* Change from 3 columns to 1 column */
+    grid-template-columns: 1fr;
+    /* Redefine areas to stack vertically */
+    grid-template-areas: 
+      "header"
+      "nav-row"
+      "main"
+      "footer";
+  }
 
+  /* Hide sidebars on mobile so they don't break the layout */
+  .left-sidebar, .right-sidebar {
+    display: none;
+  }
+  
+  /* Ensure the main content uses full width */
+  main {
+    padding: 15px;
+  }
+}
 /* Sidebar Footer Styling */
 .cart-checkout-footer {
   padding: 15px;
