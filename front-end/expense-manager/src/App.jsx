@@ -318,21 +318,6 @@ function App() {
       ))}
     </div>
           )}
-
-          {view === "grid" && !selectedProduct && (
-            <div className="product-grid">
-              {filteredProducts.map((p) => (
-                <div key={p.id} className="product-card">
-                  <div className="img-frame" onClick={() => setSelectedProduct(p)}>
-                    <img src={getImageUrl(p)} alt={p.name} className="zoom-effect" />
-                  </div>
-                  <h3>{p.name}</h3>
-                  <p>₦{parseFloat(p.price).toLocaleString()}</p>
-                  <button className="add-btn" onClick={() => addToCart(p)}>Add to Cart</button>
-                </div>
-              ))}
-            </div>
-          )}
         </main>
       </div>
 
