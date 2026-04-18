@@ -21,42 +21,13 @@ body, #root {
 }
 
 header { grid-area: header; background: #1a1a1a; color: #fff; padding: 20px; display: flex; align-items: center; justify-content: space-between; }
-
-/* --- YOUR LEFT BAR DESIGN --- */
-.left-sidebar { 
-  grid-area: left-sb; 
-  background: #f4f7f6; 
-  border-right: 1px solid #dfe6e9; 
-  padding: 20px; 
-}
-
-.side-nav {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.side-nav button {
-  background: transparent;
-  border: 1px solid transparent;
-  padding: 10px;
-  text-align: left;
-  cursor: pointer;
-  border-radius: 4px;
-}
-
-.side-nav button:hover, .side-nav button.active {
-  background: #ffffff;
-  border-color: #ddd;
-}
-/* --------------------------- */
-
+.left-sidebar { grid-area: left-sb; background: #f4f7f6; border-right: 1px solid #dfe6e9; padding: 20px; }
 .right-sidebar { grid-area: right-sb; border-left: 1px solid #dfe6e9; padding: 20px; background: #fff; }
 main { grid-area: main; background: #fff; padding: 30px; min-height: 60vh; }
 footer { grid-area: footer; background: #2c3e50; color: #fff; text-align: center; padding: 15px; }
 
 /* =========================================
-   2. NAVIGATION & SEARCH
+   2. NAVIGATION & SEARCH (FIXED LAYOUT)
    ========================================= */
 .main-nav {
   grid-area: nav-row;
@@ -76,10 +47,23 @@ footer { grid-area: footer; background: #2c3e50; color: #fff; text-align: center
   margin: 0 auto;
   padding: 0 20px;
   width: 100%;
+  box-sizing: border-box;
 }
 
-.nav-group { display: flex; gap: 20px; flex: 1; }
+.nav-group {
+  display: flex;
+  gap: 20px;
+  flex: 1;
+}
+
 .nav-group.right { justify-content: flex-end; }
+
+/* Search Bar Transparency Fix */
+.central-search-wrapper {
+  flex: 2;
+  display: flex;
+  justify-content: center;
+}
 
 .search-pill {
   display: flex;
@@ -88,6 +72,7 @@ footer { grid-area: footer; background: #2c3e50; color: #fff; text-align: center
   background: #ffffff;
   border-radius: 25px;
   border: 1px solid #ddd;
+  overflow: hidden;
 }
 
 .search-pill input {
@@ -96,6 +81,8 @@ footer { grid-area: footer; background: #2c3e50; color: #fff; text-align: center
   border: none;
   padding: 12px 20px;
   outline: none;
+  font-size: 1rem;
+  color: #000;
 }
 
 .orange-go-btn {
@@ -103,15 +90,39 @@ footer { grid-area: footer; background: #2c3e50; color: #fff; text-align: center
   color: white;
   border: none;
   padding: 0 25px;
-  border-radius: 0 25px 25px 0;
+  font-weight: bold;
   cursor: pointer;
 }
 
 /* =========================================
-   3. RESPONSIVE
+   3. AUTH & PRODUCT CARDS
+   ========================================= */
+.auth-card {
+  max-width: 400px;
+  margin: 40px auto;
+  padding: 40px;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+  text-align: center;
+}
+
+.product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 25px; }
+
+.product-card { 
+  border: 1px solid #eee; 
+  padding: 15px; 
+  text-align: center; 
+  border-radius: 8px; 
+  transition: box-shadow 0.3s; 
+}
+
+/* =========================================
+   4. RESPONSIVE
    ========================================= */
 @media (max-width: 900px) {
   .nav-container { flex-direction: column; gap: 15px; }
+  .nav-group { order: 2; width: 100%; justify-content: center; }
   .central-search-wrapper { order: 1; width: 100%; }
 }
 
