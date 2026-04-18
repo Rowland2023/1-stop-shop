@@ -91,14 +91,24 @@ function App() {
   }, [cart]);
 
   useEffect(() => {
-    fetch(`${BASE_URL}/api/products/`)
-      .then((res) => res.json())
-      .then((data) => {
-        const productData = Array.isArray(data) ? data : (data.results || []);
-        setProducts(productData);
-      })
-      .catch((err) => console.error("Fetch error:", err));
-  }, []);
+  fetch(`${BASE_URL}/api/products/`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    // Required to send cookies (session/CSRF) to the backend
+    credentials: "include" 
+  })
+    .then((res) => {
+      if (!res.ok) throw new Error("Network response was not ok");
+      return res.json();
+    })
+    .then((data) => {
+      const productData = Array.isArray(data) ? data : (data.results || []);
+      setProducts(productData);
+    })
+    .catch((err) => console.error("Fetch error:", err));
+}, []);
 
   useEffect(() => {
     if (view === "account" && user) {

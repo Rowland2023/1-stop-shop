@@ -68,11 +68,22 @@ TEMPLATES = [
 WSGI_APPLICATION = 'store.wsgi.application'
 
 # --- CORS & SECURITY ---
+CORS_ALLOW_CREDENTIALS = True
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://localhost:5173",
     "https://frontend-rdmj.onrender.com",
+    
+]
+
+CORS_ALLOW_HEADERS = [
+    "accept",
+    "authorization",
+    "content-type",
+    "user-agent",
+    "x-csrftoken",
+    "x-requested-with",
 ]
 
 CSRF_TRUSTED_ORIGINS = [
