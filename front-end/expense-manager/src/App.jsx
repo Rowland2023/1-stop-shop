@@ -6,15 +6,17 @@ const BASE_URL = import.meta.env.VITE_API_URL || "";
 const CLOUDINARY_BASE = "https://res.cloudinary.com/dscxqsew5/";
 const PAYSTACK_PUBLIC_KEY = 'pk_live_21207f639d252b46e35e171dca6b075f79cba433';
 
-const getImageUrl = (path) => {
+const getImageUrl = (product) => {
+  const path = product.image_path || product.image_display || product.image || "";
   if (!path) return "/static/placeholder.png";
-  if (path.startsWith("http")) return path;
-  return `${CLOUDINARY_BASE}${path}`;
+  if (path.startsWith("http") || path.includes("res.cloudinary.com")) return path;
+  
+  // Resolves backend local media paths
+  return `${BASE_URL}/static/${path.replace(/^media\//, "")}`;
 };
 function ProductCard({ product, onAddToCart, onSelect }) {
   const [tempQty, setTempQty] = useState(1);
-  const rawPath = product.image_display || (product.additional_images?.[0]?.image);
-  const displayImage = getImageUrl(rawPath);
+  const displayImage = getImageUrl(product);
 
   return (
     <div className="product-card">
@@ -75,7 +77,7 @@ function App() {
       } else {
         alert(data.message || "Auth failed");
       }
-    } catch (err) { alert("Backend unreachable"); }
+    } catch (err) { alert("Backend unreachable. Please check CORS settings."); }
   };
 
   // --- 1. PERSISTENCE & DATA FETCHING ---
