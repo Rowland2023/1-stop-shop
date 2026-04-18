@@ -7,14 +7,17 @@ const CLOUDINARY_BASE = "https://res.cloudinary.com/dscxqsew5/";
 const PAYSTACK_PUBLIC_KEY = 'pk_live_21207f639d252b46e35e171dca6b075f79cba433';
 
 const getImageUrl = (input) => {
- // If the input is the product object, extract the path first
   let path = typeof input === 'string' ? input : (input?.image_path || input?.image_display || input?.image || "");
   if (!path) return "/static/placeholder.png";
-  if (path.startsWith("http") || path.includes("res.cloudinary.com")) return path;
+  if (path.startsWith("http") || path.includes("cloudinary")) return path;
+
+  // IMPORTANT: Ensure your backend domain is defined in your .env file
+  // If BASE_URL is empty, images will try to load from the React server (localhost:5173/static/...)
+  const domain = BASE_URL || "http://127.0.0.1:8000"; 
   
-  // Clean up path: remove 'media/' prefix if present and prepend backend URL
+  // Clean the path and construct the full URL
   const cleanPath = path.replace(/^media\//, "");
-  return `${BASE_URL}/static/${cleanPath}`;
+  return `${domain}/media/${cleanPath}`; 
 };
 function ProductCard({ product, onAddToCart, onSelect }) {
   const [tempQty, setTempQty] = useState(1);
