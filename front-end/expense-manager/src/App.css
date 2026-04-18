@@ -1,5 +1,3 @@
-
-body, #root { background-color: #ffffff; color: #333333; margin: 0; font-family: sans-serif; }
 /* =========================================
    1. MASTER GRID & LAYOUT
    ========================================= */
@@ -15,92 +13,100 @@ body, #root { background-color: #ffffff; color: #333333; margin: 0; font-family:
   min-height: 100vh;
 }
 
+header { 
+  grid-area: header; 
+  background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), 
+              url('https://images.unsplash.com/photo-1472851294608-062f824d29cc?auto=format&fit=crop&w=1350&q=80'); 
+  background-size: cover;
+  background-position: center;
+  color: #fff; 
+  padding: 40px 20px; 
+  display: flex; 
+  justify-content: space-between; 
+  align-items: center; 
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
 
-header { grid-area: header; background: #1a1a1a; color: #fff; padding: 20px; display: flex; align-items: center; justify-content: space-between; }
+header h1 {
+  font-size: 2.5rem;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+  margin: 0;
+}
+
 nav { grid-area: nav-row; background: #34495e; padding: 12px 20px; }
-.left-sidebar { grid-area: left-sb; background: #f4f7f6; padding: 20px; }
-main { grid-area: main; background: #fff; padding: 30px; min-height: 60vh; }
-.right-sidebar { grid-area: right-sb; padding: 20px; background: #fff; }
-footer { grid-area: footer; background: #2c3e50; color: #fff; text-align: center; padding: 15px; }
+nav ul { display: flex; gap: 20px; list-style: none; margin: 0; padding: 0; align-items: center; }
 
-/* =========================================
-   2. NAVIGATION & SEARCH (FIXED LAYOUT)
-   ========================================= */
-.main-nav {
-  grid-area: nav-row;
-  background: #ffffff;
-  border-bottom: 1px solid #e0e0e0;
-  position: sticky;
-  top: 0;
-  z-index: 1000;
-  padding: 10px 0;
-}
-
-.nav-container {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 0 20px;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.nav-group {
-  display: flex;
-  gap: 20px;
-  flex: 1;
-}
-
-.nav-group.right { justify-content: flex-end; }
-
-/* Search Bar Transparency Fix */
-.central-search-wrapper {
-  flex: 2;
-  display: flex;
-  justify-content: center;
-}
-
-.search-pill {
-  display: flex;
-  width: 100%;
-  max-width: 500px;
-  background: #ffffff;
-  border-radius: 25px;
-  border: 1px solid #ddd;
-  overflow: hidden;
-}
-
-.search-pill input {
-  flex: 1;
-  background: transparent !important;
+/* Fixed nav buttons to look like links */
+.nav-btn-link {
+  background: none;
   border: none;
-  padding: 12px 20px;
-  outline: none;
-  font-size: 1rem;
-  color: #000;
-}
-
-.orange-go-btn {
-  background: #ff8c00;
-  color: white;
-  border: none;
-  padding: 0 25px;
-  font-weight: bold;
+  color: #ecf0f1;
   cursor: pointer;
+  font-weight: 500;
+  font-size: 0.95rem;
+  transition: color 0.2s;
 }
-/* =========================================
-   3. SIDEBARS & CATEGORIES
-   ========================================= */ 
-/*.left-sidebar { grid-area: left-sb; background: #f4f7f6; border-right: 1px solid #dfe6e9; padding: 20px; }
+.nav-btn-link:hover { color: #3498db; }
+
+.left-sidebar { grid-area: left-sb; background: #f4f7f6; border-right: 1px solid #dfe6e9; padding: 20px; }
 .right-sidebar { grid-area: right-sb; border-left: 1px solid #dfe6e9; padding: 20px; background: #fff; }
 main { grid-area: main; background: #fff; padding: 30px; min-height: 60vh; }
 footer { grid-area: footer; background: #2c3e50; color: #fff; text-align: center; padding: 15px; }
 
 /* =========================================
-   3. AUTH & PRODUCT CARDS
+   2. PRODUCT DETAIL & GRID
    ========================================= */
+.product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 25px; }
+
+.product-card { 
+  border: 1px solid #eee; 
+  padding: 15px; 
+  text-align: center; 
+  border-radius: 8px; 
+  transition: box-shadow 0.3s; 
+}
+.product-card:hover { box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+
+.img-frame { 
+  width: 100%; 
+  height: 180px; 
+  overflow: hidden; 
+  border-radius: 5px; 
+  position: relative; 
+  cursor: pointer; 
+  background: #f9f9f9; 
+}
+
+.zoom-effect { width: 100%; height: 100%; object-fit: contain; transition: transform 0.4s ease; }
+.img-frame:hover .zoom-effect { transform: scale(1.15); }
+
+/* =========================================
+   3. BOLD USER GREETING & AUTH (NEW)
+   ========================================= */
+.nav-auth { margin-left: auto; } /* Pushes greeting to the right */
+
+.user-badge {
+  background: #e8f5e9;
+  padding: 6px 16px;
+  border-radius: 20px;
+  border: 1px solid #4caf50;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.user-welcome {
+  color: #2e7d32;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.user-welcome strong {
+  font-weight: 800;
+  text-decoration: underline;
+}
+
+/* Auth Card Styles */
 .auth-card {
   max-width: 400px;
   margin: 40px auto;
@@ -111,16 +117,73 @@ footer { grid-area: footer; background: #2c3e50; color: #fff; text-align: center
   text-align: center;
 }
 
-.product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 25px; }
-
-.product-card { 
-  border: 1px solid #eee; 
-  padding: 15px; 
-  text-align: center; 
-  border-radius: 8px; 
-  transition: box-shadow 0.3s; 
+.auth-subtitle {
+  color: #7f8c8d;
+  font-size: 0.9rem;
+  margin-bottom: 25px;
 }
 
+.form-group {
+  text-align: left;
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 8px;
+  font-size: 14px;
+  color: #2c3e50;
+}
+
+.auth-form input {
+  width: 100%;
+  padding: 14px;
+  border: 2px solid #edeff2;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: border-color 0.3s;
+  box-sizing: border-box;
+}
+
+.auth-form input:focus {
+  border-color: #3498db;
+  outline: none;
+}
+
+.auth-submit-btn {
+  width: 100%;
+  padding: 14px;
+  background: #27ae60;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  font-size: 1rem;
+  cursor: pointer;
+  margin-top: 10px;
+  transition: background 0.3s;
+}
+
+.auth-submit-btn:hover { background: #219150; }
+
+.auth-toggle-text {
+  cursor: pointer;
+  margin-top: 20px;
+  color: #3498db;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.back-btn-secondary {
+  background: none;
+  border: 1px solid #bdc3c7;
+  padding: 10px 20px;
+  border-radius: 8px;
+  margin-top: 25px;
+  cursor: pointer;
+  color: #7f8c8d;
+}
 
 /* =========================================
    4. SIDEBARS & CATEGORIES
@@ -147,7 +210,7 @@ footer { grid-area: footer; background: #2c3e50; color: #fff; text-align: center
 /* =========================================
    5. RESPONSIVE
    ========================================= */
-@media (max-width: 900px) {
+@media (max-width: 768px) {
   .app-grid-wrapper { grid-template-columns: 1fr; grid-template-areas: "header" "nav-row" "main" "footer"; }
   .left-sidebar, .right-sidebar { display: none; }
 }
@@ -157,6 +220,41 @@ footer { grid-area: footer; background: #2c3e50; color: #fff; text-align: center
   padding: 15px;
   background: #fff;
   border-top: 1px solid #eee;
+}
+
+/* The Gift/Registration Promo Box */
+.registration-promo {
+  background: linear-gradient(135deg, #fff5f5 0%, #fff0f0 100%);
+  border: 1px dashed #e44d26;
+  border-radius: 12px;
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  margin-bottom: 20px;
+  transition: transform 0.2s;
+}
+
+.registration-promo:hover {
+  transform: translateY(-2px);
+  background: #fff0f0;
+}
+
+.promo-icon {
+  font-size: 2rem;
+  animation: bounce 2s infinite;
+}
+
+.promo-text strong {
+  display: block;
+  color: #e44d26;
+  font-size: 0.95rem;
+}
+
+.promo-text span {
+  font-size: 0.8rem;
+  color: #666;
 }
 
 /* Input Styling */
@@ -214,7 +312,22 @@ footer { grid-area: footer; background: #2c3e50; color: #fff; text-align: center
 }
 
 /* Modern Buttons */
+.paystack-primary {
+  width: 100%;
+  background: #09a5db; /* Paystack Blue */
+  color: white;
+  border: none;
+  padding: 15px;
+  border-radius: 8px;
+  font-weight: bold;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
 
+.paystack-primary:hover {
+  opacity: 0.9;
+}
 
 .clear-cart-text-btn {
   width: 100%;
@@ -232,9 +345,52 @@ footer { grid-area: footer; background: #2c3e50; color: #fff; text-align: center
   40% {transform: translateY(-5px);}
   60% {transform: translateY(-3px);}
 }
+.gift-promo-card {
+  background: linear-gradient(135deg, #fff5f5 0%, #fff0f0 100%);
+  border: 1px dashed #e44d26;
+  border-radius: 12px;
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  margin: 15px 0;
+  transition: 0.3s;
+}
+
+.gift-promo-card:hover { transform: scale(1.02); }
+
+.gift-icon { font-size: 24px; animation: gift-bounce 2s infinite; }
+
+.gift-text strong { display: block; color: #e44d26; font-size: 14px; }
+.gift-text span { font-size: 11px; color: #666; }
+
+@keyframes gift-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+.pay-btn {
+  width: 100%;
+  padding: 15px;
+  background: #09a5db;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+}
 
 
-/* Header Ad Frame */
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 20px;
+  background: #fff;
+  border-bottom: 1px solid #ddd;
+  gap: 15px; /* Spacing between logo, ad, and search */
+}
 
 .header-adv-frame {
   flex: 1; /* Takes up the available middle space */
@@ -282,12 +438,25 @@ footer { grid-area: footer; background: #2c3e50; color: #fff; text-align: center
   text-align: center;
 }
 
-
-
-
+.add-btn {
+  flex-grow: 1;
+  background-color: #2e7d32;
+  color: white;
+  border: none;
+  padding: 10px;
+  border-radius: 4px;
+  cursor: pointer;
+}
 
 /* Header Layout */
-
+.header-main {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 4%;
+    background: #fff;
+    border-bottom: 1px solid #eee;
+}
 
 .header-center-ad img { height: 60px; border-radius: 8px; }
 
@@ -302,6 +471,33 @@ footer { grid-area: footer; background: #2c3e50; color: #fff; text-align: center
     color: white;
 }
 
+.nav-item { background: none; border: none; color: white; font-weight: bold; cursor: pointer; font-size: 1rem; }
+
+.search-container-bold {
+    display: flex;
+    align-items: center;
+    background: white;
+    border-radius: 30px; /* Curved edges */
+    overflow: hidden;
+    border: 3px solid #ff6600; /* Bold Border */
+}
+
+.search-container-bold input {
+    border: none;
+    padding: 10px 20px;
+    width: 300px;
+    font-weight: 800; /* Very Bold */
+    outline: none;
+}
+
+.search-end-orange {
+    background: #ff6600;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    font-weight: bold;
+    cursor: pointer;
+}
 
 /* Product Review Page - Fixed Size */
 .product-review-container { max-width: 900px; margin: 0 auto; padding: 20px; }
@@ -408,5 +604,54 @@ footer { grid-area: footer; background: #2c3e50; color: #fff; text-align: center
   border-radius: 15px;
 }
 
+/* Central Search Optimization */
+.central-search-wrapper {
+  flex: 2; /* Takes more space than side links but remains centered */
+  display: flex;
+  justify-content: center;
+}
 
+.search-pill {
+  display: flex;
+  width: 100%;
+  max-width: 500px;
+  background: #f2f2f2;
+  border-radius: 25px;
+  border: 1px solid #ddd;
+  overflow: hidden;
+}
 
+.search-pill input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  padding: 12px 20px;
+  outline: none;
+  font-size: 1rem;
+}
+
+.orange-go-btn {
+  background: #ff8c00;
+  color: white;
+  border: none;
+  padding: 0 25px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+/* Responsive Grid Check */
+@media (max-width: 900px) {
+  .nav-container {
+    flex-direction: column;
+    gap: 15px;
+  }
+  .nav-group {
+    order: 2;
+    width: 100%;
+    justify-content: center;
+  }
+  .central-search-wrapper {
+    order: 1;
+    width: 100%;
+  }
+}
