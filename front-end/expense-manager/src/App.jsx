@@ -2,32 +2,25 @@ import React, { useEffect, useState } from "react";
 import "./App.css";
 
 // --- CONFIG ---
-// This reads the variable we just set in the .env
 const BASE_URL = import.meta.env.VITE_API_URL || "https://back-end-wdk7.onrender.com";
 const CLOUDINARY_BASE = "https://res.cloudinary.com/dscxqsew5/";
 const PAYSTACK_PUBLIC_KEY = 'pk_live_21207f639d252b46e35e171dca6b075f79cba433';
 
 // Helper function updated for safety
 const getImageUrl = (input) => {
-  // Handle empty/null input safely
-  if (!input) return "/static/placeholder.png";
+  // 1. If input is a string, use it
+  // 2. If it's an object, check for the 'image' property (from additional_images)
+  // 3. Otherwise default to empty
+  let path = typeof input === 'string' ? input : (input?.image || input?.image_display || "");
   
-  // Extract path from object or string
-  let path = typeof input === 'object' ? input.image : input;
   if (!path) return "/static/placeholder.png";
-  
-  // If it's already a full URL, return it
   if (path.startsWith("http")) return path;
 
-  // CLOUDINARY LOGIC
-  // If your string ALREADY has "image/upload/", don't add it again
-  if (path.startsWith("image/upload/")) {
-    return `https://res.cloudinary.com/dscxqsew5/${path}`;
-  }
-  
-  // Otherwise, assume it needs the standard prefix
-  return `https://res.cloudinary.com/dscxqsew5/image/upload/${path}`;
+  // Since your data paths are already "image/upload/..."
+  // just prepend the base.
+  return `${CLOUDINARY_BASE}${path}`;
 };
+
 function ProductCard({ product, onAddToCart, onSelect }) {
   const [tempQty, setTempQty] = useState(1);
   
