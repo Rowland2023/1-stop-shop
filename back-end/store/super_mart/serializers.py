@@ -41,23 +41,23 @@ class ProductImageSerializer(serializers.ModelSerializer):
 
 # serializers.py
 class ProductSerializer(serializers.ModelSerializer):
-    # This creates a combined list of all images: [Main, Extra1, Extra2...]
+    # This field is what your React code needs to see
     all_images = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
+        # Ensure 'all_images' is included in the fields list!
         fields = ['id', 'name', 'price', 'category', 'all_images']
 
     def get_all_images(self, obj):
         images = []
-        # Add the main image if it exists
         if obj.main_image:
-            images.append(obj.main_image.url)
+            images.append(secure_url(obj.main_image)) # Use the helper
         
-        # Add all gallery images from ProductImage
+        # Add gallery images
         for img in obj.images.all():
             if img.image:
-                images.append(img.image.url)
+                images.append(secure_url(img.image))
         
         return images
 class OrderItemSerializer(serializers.ModelSerializer):

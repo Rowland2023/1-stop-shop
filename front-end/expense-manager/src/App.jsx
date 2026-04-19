@@ -25,8 +25,10 @@ function ProductCard({ product, onAddToCart, onSelect }) {
   const [tempQty, setTempQty] = useState(1);
   
   // Logic: Use first image in array, or the single image property, or placeholder
-  const initialImage = product.images?.[0] || product.image || "";
-  const [activeImg, setActiveImg] = useState(getImageUrl(initialImage));
+  //const initialImage = product.images?.[0] || product.image || "";
+  const images = product.all_images || [];
+  //const [activeImg, setActiveImg] = useState(getImageUrl(initialImage));
+  const activeImg = images.length > 0 ? images[0] : "/static/placeholder.png";
 
   return (
     <div className="product-card">
