@@ -22,48 +22,30 @@ const getImageUrl = (input) => {
 };
 
 function ProductCard({ product, onAddToCart, onSelect }) {
-  // 1. Point to the correct array: product.additional_images
-  const gallery = product.additional_images || [];
-  
-  // 2. Get the path of the first image in the array
-  // We use optional chaining (?.) to prevent crashes if the array is empty
-  const firstImagePath = gallery[0]?.image || "";
-  
-  // 3. Set your active image state
-  const [activeImg, setActiveImg] = useState(getImageUrl(firstImagePath));
-
-  // If the product object changes, update the image
-  useEffect(() => {
-    setActiveImg(getImageUrl(gallery[0]?.image || ""));
-  }, [product]);
+  // Now accessing the clean list from your Serializer
+  const images = product.all_images || [];
+  const [activeImg, setActiveImg] = useState(images[0] || "/static/placeholder.png");
 
   return (
     <div className="product-card">
       <div className="img-frame" onClick={() => onSelect(product)}>
-        <img 
-          src={activeImg} 
-          alt={product.name} 
-          className="zoom-effect" 
-          // If the URL is still wrong, the onError will trigger your placeholder
-          onError={(e) => { e.target.src = "/static/placeholder.png"; }} 
-        />
+        <img src={activeImg} alt={product.name} />
       </div>
 
-      {/* Thumbnail strip using the same logic */}
-      {gallery.length > 1 && (
-        <div className="thumb-strip" style={{ display: 'flex', gap: '5px', marginTop: '10px' }}>
-          {gallery.map((item, idx) => (
+      {/* Thumbnails */}
+      {images.length > 1 && (
+        <div className="thumb-strip">
+          {images.map((url, idx) => (
             <img 
               key={idx} 
-              src={getImageUrl(item.image)} 
-              onClick={() => setActiveImg(getImageUrl(item.image))}
+              src={url} 
+              onClick={() => setActiveImg(url)}
               style={{ width: '40px', height: '40px', cursor: 'pointer' }}
             />
           ))}
         </div>
       )}
-      
-      {/* ... rest of your code ... */}
+      {/* ... */}
     </div>
   );
 }
