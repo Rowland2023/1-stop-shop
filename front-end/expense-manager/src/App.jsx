@@ -8,18 +8,16 @@ const PAYSTACK_PUBLIC_KEY = 'pk_live_21207f639d252b46e35e171dca6b075f79cba433';
 
 // Helper function updated for safety
 const getImageUrl = (input) => {
-  let path = typeof input === 'string' ? input : (input?.image_path || input?.image_display || input?.image || "");
+  // Extract the string based on the new serializer structure
+  let path = typeof input === 'string' ? input : (input?.image_display || input?.image || "");
   
-  if (!path || path === "null") return "/static/placeholder.png";
+  if (!path || path === "null" || path === "undefined") return "/static/placeholder.png";
+
+  // If the path is already a full URL from your Django Serializer, just return it!
   if (path.startsWith("http")) return path;
 
-  // Ensure the path is clean
-  const cleanPath = path.replace(/^\/+/, "");
-  
-  // If the path already includes the 'v123456789/' version, just append it.
-  // If your DB only stores 'susuns8ed2gnmrq1zu79.png', 
-  // you might need to prepend 'v1776358399/' manually here.
-  return `${CLOUDINARY_BASE}${cleanPath}`;
+  // Otherwise, fallback for legacy strings if necessary
+  return `${CLOUDINARY_BASE}${path.replace(/^\/+/, "")}`;
 };
 
 function ProductCard({ product, onAddToCart, onSelect }) {
