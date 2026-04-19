@@ -172,15 +172,48 @@ function App() {
 
   return (
     <div className="app-grid-wrapper">
-      {/* HEADER & NAV - Unchanged */}
-      <header className="brand-header">...</header>
-      <nav className="main-nav">...</nav>
+      {/* HEADER */}
+      <header className="brand-header">
+        <div className="header-inner">
+          <h1 onClick={() => setView("grid")} className="logo-text">MeBuy</h1>
+          <button className="cart-toggle-btn" onClick={() => setCartOpen(!cartOpen)}>
+            🛒 {cart.reduce((acc, item) => acc + item.quantity, 0)}
+          </button>
+        </div>
+      </header>
 
+      {/* NAVIGATION */}
+      <nav className="main-nav">
+        <div className="nav-container">
+          <div className="nav-group left">
+            <button className="nav-link-item" onClick={() => {setView("grid"); setSelectedProduct(null)}}>Home</button>
+            <button className="nav-link-item" onClick={() => setView("tracking")}>Tracking</button>
+          </div>
+          <div className="central-search-wrapper">
+            <div className="search-pill">
+              <input type="text" placeholder="Search..." value={searchTerm} onChange={(e) => {setSearchTerm(e.target.value); setView("grid");}} />
+              <button className="orange-go-btn" onClick={() => setView("grid")}>GO</button>
+            </div>
+          </div>
+          <div className="nav-group right">
+            <button className="nav-link-item" onClick={() => setView("account")}>Account</button>
+            {!user ? (
+              <>
+                <button className="nav-link-item auth-highlight" onClick={() => {setView("auth"); setAuthMode("register")}}>Join</button>
+                <button className="nav-link-item" onClick={() => {setView("auth"); setAuthMode("login")}}>Login</button>
+              </>
+            ) : <span className="user-tag">👤 {user.phone}</span>}
+          </div>
+        </div>
+      </nav>
+
+      {/* SIDEBARS & MAIN - Ensure these are direct children of app-grid-wrapper */}
       <aside className="left-sidebar">
         <h3>Categories</h3>
         <nav className="side-nav">
           {["food", "electronics", "office", "style&fashion", "sex-toys", "rent-house", "car-sales", "kitchen-items"].map((catId) => (
-            <button key={catId} className={category === catId ? "active" : ""} onClick={() => { setCategory(catId); setView("grid"); }}>
+            <button key={catId} className={category === catId ? "active" : ""} 
+              onClick={() => { setCategory(catId); setView("grid"); setSelectedProduct(null); }}>
               {catId.toUpperCase()}
             </button>
           ))}
@@ -188,10 +221,8 @@ function App() {
       </aside>
 
       <main>
-        {/* VIEW LOGIC: Each block is now contained safely in main */}
-        
         {view === "tracking" && (
-          <div className="view-container">
+          <div className="view-container tracking-screen">
             <h1>📦 Track Your Shipment</h1>
             <input type="text" placeholder="Order ID" value={trackInput} onChange={(e) => setTrackInput(e.target.value)} />
             <button className="track-btn-action" onClick={handleTrackOrder}>Check Status</button>
@@ -199,20 +230,37 @@ function App() {
           </div>
         )}
 
+        {view === "account" && (
+          <div className="view-container account-screen">
+            <h1>Order History</h1>
+            {userOrders.map(o => <div key={o.id}>{o.id} - ₦{o.total_price}</div>)}
+          </div>
+        )}
+
         {view === "auth" && (
-          <div className="view-container">
+          <div className="view-container auth-screen">
             <h1>{authMode === "login" ? "Login" : "Register"}</h1>
-            {/* ... your original auth inputs and toggle logic ... */}
+            <input placeholder="Phone" />
+            <input type="password" placeholder="Password" />
+            <button className="orange-curved-btn" onClick={() => {setUser({phone: "Member"}); setView("grid")}}>Submit</button>
           </div>
         )}
 
         {view === "grid" && (
           selectedProduct ? (
-             <div className="detail-screen">...</div>
+            <div className="detail-screen">
+              <button onClick={() => setSelectedProduct(null)}>← Back</button>
+              <h1>{selectedProduct.name}</h1>
+              <button className="add-btn" onClick={() => addToCart(selectedProduct)}>Add to Cart</button>
+            </div>
           ) : (
             <div className="product-grid">
-              {products.filter(p => p.category === category).map(p => (
-                <div key={p.id} className="product-card">...</div>
+              {filteredProducts.map((p) => (
+                <div key={p.id} className="product-card">
+                  <img src={getImageUrl(p)} alt={p.name} onClick={() => setSelectedProduct(p)} />
+                  <h3>{p.name}</h3>
+                  <button className="add-btn" onClick={() => addToCart(p)}>Add to Cart</button>
+                </div>
               ))}
             </div>
           )
@@ -220,9 +268,10 @@ function App() {
       </main>
 
       <aside className={`right-sidebar ${cartOpen ? "open" : ""}`}>
-        {/* Your original Cart rendering and Checkout Button */}
+        <h3>Your Cart</h3>
         <button className="orange-curved-btn" onClick={checkoutWithPaystack}>Checkout Now</button>
       </aside>
     </div>
   );
 }
+export default App;
