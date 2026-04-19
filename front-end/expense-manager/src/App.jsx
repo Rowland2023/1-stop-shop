@@ -6,41 +6,41 @@ const BASE_URL = import.meta.env.VITE_API_URL || "";
 const CLOUDINARY_BASE = "https://res.cloudinary.com/dscxqsew5/";
 const PAYSTACK_PUBLIC_KEY = 'pk_live_21207f639d252b46e35e171dca6b075f79cba433';
 
+// Helper function updated for safety
 const getImageUrl = (input) => {
   let path = typeof input === 'string' ? input : (input?.image_path || input?.image_display || input?.image || "");
-  if (!path) return "/static/placeholder.png";
-  
-  // If it's already a full URL, return it
+  if (!path || path === "null") return "/static/placeholder.png";
   if (path.startsWith("http")) return path;
-
-  // If path starts with '/', remove it for concatenation
-  const cleanPath = path.startsWith("/") ? path.substring(1) : path;
-  
-  // Construct the full Cloudinary URL
-  return `${CLOUDINARY_BASE}${cleanPath}`;
+  return `${CLOUDINARY_BASE}${path.replace(/^\/+/, "")}`;
 };
 
 function ProductCard({ product, onAddToCart, onSelect }) {
   const [tempQty, setTempQty] = useState(1);
-  // Assuming product.images is an array of strings, fallback to product.image
-  const [activeImg, setActiveImg] = useState(getImageUrl(product.image || product.images?.[0]));
+  
+  // Logic: Use first image in array, or the single image property, or placeholder
+  const initialImage = product.images?.[0] || product.image || "";
+  const [activeImg, setActiveImg] = useState(getImageUrl(initialImage));
 
   return (
     <div className="product-card">
-      {/* Main Image Display */}
       <div className="img-frame" onClick={() => onSelect(product)}>
-        <img src={activeImg} alt={product.name} className="zoom-effect" />
+        <img 
+          src={activeImg} 
+          alt={product.name} 
+          className="zoom-effect" 
+          onError={(e) => { e.target.src = "/static/placeholder.png"; }} 
+        />
       </div>
 
-      {/* Thumbnail Strip for multiple images */}
-      {product.images && product.images.length > 1 && (
-        <div className="thumb-strip">
+      {/* Only show thumbnails if images exist and array has length > 1 */}
+      {Array.isArray(product.images) && product.images.length > 1 && (
+        <div className="thumb-strip" style={{ display: 'flex', gap: '5px', marginTop: '10px' }}>
           {product.images.map((img, idx) => (
             <img 
               key={idx} 
               src={getImageUrl(img)} 
               onClick={() => setActiveImg(getImageUrl(img))}
-              className={activeImg === getImageUrl(img) ? "active-t" : ""}
+              style={{ width: '40px', height: '40px', cursor: 'pointer', border: activeImg === getImageUrl(img) ? '2px solid #ff8c00' : 'none' }}
             />
           ))}
         </div>
@@ -49,23 +49,15 @@ function ProductCard({ product, onAddToCart, onSelect }) {
       <h3>{product.name}</h3>
       <p className="price-text">₦{parseFloat(product.price).toLocaleString()}</p>
       
-      {/* Quantity Selector */}
-      <div className="qty-row" style={{ display: 'flex', gap: '10px', justifyContent: 'center', margin: '10px 0' }}>
-        <input 
-          type="number" 
-          min="1" 
-          value={tempQty} 
-          onChange={(e) => setTempQty(parseInt(e.target.value) || 1)}
-          style={{ width: '60px', padding: '5px' }}
-        />
-        <button className="add-btn" onClick={() => onAddToCart(product, tempQty)}>
-          Add to Cart
-        </button>
+      <div className="qty-row">
+        <input type="number" min="1" value={tempQty} onChange={(e) => setTempQty(parseInt(e.target.value) || 1)} />
+        <button className="add-btn" onClick={() => onAddToCart(product, tempQty)}>Add to Cart</button>
       </div>
     </div>
   );
 }
 
+// ... rest of your App component remains the same
 function App() {
   // --- CORE STATES ---
   const [products, setProducts] = useState([]);
