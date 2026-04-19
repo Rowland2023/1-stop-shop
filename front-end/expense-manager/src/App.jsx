@@ -9,30 +9,58 @@ const PAYSTACK_PUBLIC_KEY = 'pk_live_21207f639d252b46e35e171dca6b075f79cba433';
 const getImageUrl = (input) => {
   let path = typeof input === 'string' ? input : (input?.image_path || input?.image_display || input?.image || "");
   if (!path) return "/static/placeholder.png";
-  if (path.startsWith("http") || path.includes("cloudinary")) return path;
-
-  // IMPORTANT: Ensure your backend domain is defined in your .env file
-  // If BASE_URL is empty, images will try to load from the React server (localhost:5173/static/...)
-  const domain = BASE_URL || "http://127.0.0.1:8000"; 
   
-  // Clean the path and construct the full URL
-  const cleanPath = path.replace(/^media\//, "");
-  return `${domain}/media/${cleanPath}`; 
+  // If it's already a full URL, return it
+  if (path.startsWith("http")) return path;
+
+  // If path starts with '/', remove it for concatenation
+  const cleanPath = path.startsWith("/") ? path.substring(1) : path;
+  
+  // Construct the full Cloudinary URL
+  return `${CLOUDINARY_BASE}${cleanPath}`;
 };
+
 function ProductCard({ product, onAddToCart, onSelect }) {
   const [tempQty, setTempQty] = useState(1);
-  const displayImage = getImageUrl(product);
+  // Assuming product.images is an array of strings, fallback to product.image
+  const [activeImg, setActiveImg] = useState(getImageUrl(product.image || product.images?.[0]));
 
   return (
     <div className="product-card">
+      {/* Main Image Display */}
       <div className="img-frame" onClick={() => onSelect(product)}>
-        <img src={displayImage} alt={product.name} className="zoom-effect" />
+        <img src={activeImg} alt={product.name} className="zoom-effect" />
       </div>
+
+      {/* Thumbnail Strip for multiple images */}
+      {product.images && product.images.length > 1 && (
+        <div className="thumb-strip">
+          {product.images.map((img, idx) => (
+            <img 
+              key={idx} 
+              src={getImageUrl(img)} 
+              onClick={() => setActiveImg(getImageUrl(img))}
+              className={activeImg === getImageUrl(img) ? "active-t" : ""}
+            />
+          ))}
+        </div>
+      )}
+
       <h3>{product.name}</h3>
       <p className="price-text">₦{parseFloat(product.price).toLocaleString()}</p>
-      <div className="qty-row">
-        <input type="number" min="1" value={tempQty} onChange={(e) => setTempQty(parseInt(e.target.value) || 1)} />
-        <button className="add-btn" onClick={() => onAddToCart(product, tempQty)}>Add to Cart</button>
+      
+      {/* Quantity Selector */}
+      <div className="qty-row" style={{ display: 'flex', gap: '10px', justifyContent: 'center', margin: '10px 0' }}>
+        <input 
+          type="number" 
+          min="1" 
+          value={tempQty} 
+          onChange={(e) => setTempQty(parseInt(e.target.value) || 1)}
+          style={{ width: '60px', padding: '5px' }}
+        />
+        <button className="add-btn" onClick={() => onAddToCart(product, tempQty)}>
+          Add to Cart
+        </button>
       </div>
     </div>
   );
@@ -177,9 +205,10 @@ function App() {
         <div className="header-inner" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
           <h1 onClick={() => setView("grid")} className="logo-text" style={{ cursor: 'pointer' }}>MeBuy</h1>
           
-          {/* Moving this button to the far right by relying on the space-between parent */}
+          // Inside App.js, the cart button in header:
           <button className="cart-toggle-btn" onClick={() => setCartOpen(!cartOpen)}>
-            🛒 {cart.reduce((acc, item) => acc + item.quantity, 0)}
+           🛒 {cart.reduce((acc, item) => acc + item.quantity, 0)}
+            <span> ₦{cart.reduce((sum, item) => sum + (item.price * item.quantity), 0).toLocaleString()}</span>
           </button>
         </div>
       </header>
