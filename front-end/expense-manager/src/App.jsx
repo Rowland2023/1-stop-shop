@@ -3,22 +3,23 @@ import "./App.css";
 
 // --- CONFIG ---
 const BASE_URL = import.meta.env.VITE_API_URL || "";
-const CLOUDINARY_BASE = "https://res.cloudinary.com/dscxqsew5/image/upload/";
+const CLOUDINARY_BASE = "https://res.cloudinary.com/dscxqsew5/";
 const PAYSTACK_PUBLIC_KEY = 'pk_live_21207f639d252b46e35e171dca6b075f79cba433';
 
 // Helper function updated for safety
 const getImageUrl = (input) => {
-  // Extract the raw path string
-  let path = typeof input === 'string' ? input : (input?.image_path || input?.image_display || input?.image || "");
+  // Extract the raw string from your JSON structure
+  let path = typeof input === 'string' ? input : (input?.image || input?.image_path || "");
   
-  if (!path || path === "null" || path === "") return "/static/placeholder.png";
+  if (!path) return "/static/placeholder.png";
   if (path.startsWith("http")) return path;
 
-  // REMOVE the "image/upload/" prefix if it already exists in the path
-  const cleanedPath = path.replace(/^image\/upload\//, "");
+  // Ensure we don't double the "image/upload" part
+  // If the path already starts with "image/upload", just append to the base
+  // If not, we assume standard Cloudinary construction
+  const cleanPath = path.startsWith("image/upload") ? path : `image/upload/${path.replace(/^\/+/, "")}`;
   
-  // Now prepend the base
-  return `${CLOUDINARY_BASE}${cleanedPath}`;
+  return `${CLOUDINARY_BASE}${cleanPath}`;
 };
 
 function ProductCard({ product, onAddToCart, onSelect }) {
