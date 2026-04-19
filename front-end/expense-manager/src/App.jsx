@@ -22,28 +22,19 @@ const getImageUrl = (input) => {
 };
 
 function ProductCard({ product, onAddToCart, onSelect }) {
-  // 1. Defensively handle the image logic
-  // Look for image_display, then fallback to the first additional image, then a placeholder
-  const getSafeImage = () => {
-    if (product.image_display) return product.image_display;
-    
-    // Check if additional_images exists and has items
-    if (product.additional_images && product.additional_images.length > 0) {
-      return getImageUrl(product.additional_images[0].image);
-    }
-    
-    return "/static/placeholder.png";
-  };
+  const [tempQty, setTempQty] = useState(1);
+  
+  // Logic: Use first image in array, or the single image property, or placeholder
+  const initialImage = product.images?.[0] || product.image || "";
+  const [activeImg, setActiveImg] = useState(getImageUrl(initialImage));
 
-  const [activeImg, setActiveImg] = useState(getSafeImage());
   return (
     <div className="product-card">
       <div className="img-frame" onClick={() => onSelect(product)}>
         <img 
           src={activeImg} 
-          alt={product.name || "Product"}
-          className="zoom-effect"
-          // This prevents a broken image icon from showing
+          alt={product.name} 
+          className="zoom-effect" 
           onError={(e) => { e.target.src = "/static/placeholder.png"; }} 
         />
       </div>
