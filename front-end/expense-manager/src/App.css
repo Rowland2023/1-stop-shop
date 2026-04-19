@@ -698,3 +698,37 @@ header {
 
 .zoom-effect { width: 100%; height: 100%; object-fit: contain; transition: transform 0.4s ease; }
 .img-frame:hover .zoom-effect { transform: scale(1.15); }
+
+
+
+/* Prevent stretching (keep natural aspect ratio) */
+.zoom-effect {
+  width: 100%;
+  height: auto; /* let height adjust naturally */
+  object-fit: contain;
+  transition: transform .4s;
+}
+.img-frame {
+  height: auto; /* remove fixed height */
+  aspect-ratio: 4 / 3; /* optional: keep consistent proportions */
+}
+/* Fill the frame completely (allow cropping) */
+.zoom-effect {
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* fills frame, crops excess */
+  transition: transform .4s;
+}
+/* Instead of hardcoding height: 180px, use aspect ratio: */
+
+.img-frame {
+  aspect-ratio: 1 / 1; /* square cards */
+  width: 100%;
+  overflow: hidden;
+  border-radius: 5px;
+  background: #f9f9f9;
+}
+/*If you want the image to enlarge slightly when hovered:*/
+.img-frame:hover .zoom-effect {
+  transform: scale(1.1);
+}
