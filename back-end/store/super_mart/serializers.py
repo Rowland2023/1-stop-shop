@@ -39,30 +39,27 @@ class ProductImageSerializer(serializers.ModelSerializer):
     def get_image(self, obj):
         return secure_url(obj.image)
 
+# serializers.py
 class ProductSerializer(serializers.ModelSerializer):
-    additional_images = ProductImageSerializer(many=True, read_only=True, source='images')
-    image_display = serializers.SerializerMethodField()
+    # This creates a combined list of all images: [Main, Extra1, Extra2...]
+    all_images = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
-        fields = ['id', 'name', 'price', 'category', 'image_display', 'additional_images']
+        fields = ['id', 'name', 'price', 'category', 'all_images']
 
-    def get_image_display(self, obj):
-        # Primary: main_image
+    def get_all_images(self, obj):
+        images = []
+        # Add the main image if it exists
         if obj.main_image:
-            return secure_url(obj.main_image)
-
-        # Fallback: first gallery image
-        first_gallery_item = obj.images.first()
-        if first_gallery_item and first_gallery_item.image:
-            return secure_url(first_gallery_item.image)
-
-        # Legacy fallback: local ImageField
-        if obj.image:
-            return secure_url(obj.image)
-
-        return None
-
+            images.append(obj.main_image.url)
+        
+        # Add all gallery images from ProductImage
+        for img in obj.images.all():
+            if img.image:
+                images.append(img.image.url)
+        
+        return images
 class OrderItemSerializer(serializers.ModelSerializer):
     product_name = serializers.ReadOnlyField(source='product.name')
     product_image = serializers.SerializerMethodField()

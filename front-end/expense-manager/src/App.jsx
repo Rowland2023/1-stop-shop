@@ -22,44 +22,36 @@ const getImageUrl = (input) => {
 };
 
 function ProductCard({ product, onAddToCart, onSelect }) {
-  const [tempQty, setTempQty] = useState(1);
-
-  // CHANGE: Look at 'additional_images' instead of 'images'
-  const gallery = product.additional_images || [];
-  const initialImage = gallery[0]?.image || ""; 
-  
-  const [activeImg, setActiveImg] = useState(getImageUrl(initialImage));
-
-  useEffect(() => {
-    setActiveImg(getImageUrl(gallery[0]?.image || ""));
-  }, [product]);
+  // Use the new unified all_images array
+  const images = product.all_images || [];
+  const [activeImg, setActiveImg] = useState(images[0] || "/static/placeholder.png");
 
   return (
     <div className="product-card">
+      {/* 1. Main Display - Click to view detail */}
       <div className="img-frame" onClick={() => onSelect(product)}>
         <img 
           src={activeImg} 
           alt={product.name} 
-          onError={(e) => { e.target.src = "/static/placeholder.png"; }} 
+          className="zoom-effect" 
         />
       </div>
 
-      {/* CHANGE: Loop through 'gallery' */}
-      {gallery.length > 0 && (
-        <div className="thumb-strip" style={{ display: 'flex', gap: '5px', marginTop: '10px' }}>
-          {gallery.map((item, idx) => (
+      {/* 2. Thumbnails for immediate preview */}
+      {images.length > 1 && (
+        <div className="thumb-strip" style={{ display: 'flex', gap: '5px' }}>
+          {images.map((url, idx) => (
             <img 
               key={idx} 
-              src={getImageUrl(item.image)} 
-              onClick={() => setActiveImg(getImageUrl(item.image))}
+              src={url} 
+              onClick={() => setActiveImg(url)}
               style={{ width: '40px', height: '40px', cursor: 'pointer' }}
             />
           ))}
         </div>
       )}
       
-      <h3>{product.name}</h3>
-      {/* ... rest of your code */}
+      {/* ... rest of card ... */}
     </div>
   );
 }
