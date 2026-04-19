@@ -267,9 +267,34 @@ function App() {
         )}
       </main>
 
+      {/* RIGHT SIDEBAR - Updated with Orange Curved Buttons */}
       <aside className={`right-sidebar ${cartOpen ? "open" : ""}`}>
-        <h3>Your Cart</h3>
-        <button className="orange-curved-btn" onClick={checkoutWithPaystack}>Checkout Now</button>
+        <div className="cart-container" style={{ padding: '20px' }}>
+          <h3>Your Cart</h3>
+          <div className="cart-items-list" style={{ marginBottom: '20px' }}>
+            {cart.map((item, index) => (
+              <div key={index} className="cart-item" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
+                <span>{item.name} (x{item.quantity})</span>
+                <span>₦{(item.price * item.quantity).toLocaleString()}</span>
+              </div>
+            ))}
+          </div>
+          
+          <div className="total-section" style={{ borderTop: '1px solid #eee', paddingTop: '15px' }}>
+            <p>Subtotal: ₦{cart.reduce((s, i) => s + (i.price * i.quantity), 0).toLocaleString()}</p>
+            <p><strong>Total: ₦{(cart.reduce((s, i) => s + (i.price * i.quantity), 0) + (cart.length > 0 ? 1500 : 0)).toLocaleString()}</strong></p>
+            
+            {/* The Buttons requested */}
+            <div className="cart-action-stack" style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '20px' }}>
+              <button className="checkout-btn-curved" disabled={isProcessing} onClick={checkoutWithPaystack}>
+                {isProcessing ? "Processing..." : "Checkout Now"}
+              </button>
+              <button className="clear-cart-btn-curved" onClick={() => setCart([])}>
+                Clear Cart
+              </button>
+            </div>
+          </div>
+        </div>
       </aside>
     </div>
   );
