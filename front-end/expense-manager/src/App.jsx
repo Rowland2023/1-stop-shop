@@ -174,8 +174,10 @@ function App() {
     <div className="app-grid-wrapper">
       {/* HEADER */}
       <header className="brand-header">
-        <div className="header-inner">
-          <h1 onClick={() => setView("grid")} className="logo-text">MeBuy</h1>
+        <div className="header-inner" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+          <h1 onClick={() => setView("grid")} className="logo-text" style={{ cursor: 'pointer' }}>MeBuy</h1>
+          
+          {/* Moving this button to the far right by relying on the space-between parent */}
           <button className="cart-toggle-btn" onClick={() => setCartOpen(!cartOpen)}>
             🛒 {cart.reduce((acc, item) => acc + item.quantity, 0)}
           </button>
