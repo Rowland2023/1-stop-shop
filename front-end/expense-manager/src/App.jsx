@@ -266,21 +266,37 @@ function App() {
           </div>
         )}
 
-        {view === "auth" && (
-          <div className="view-container auth-screen">
-            <h1>{authMode === "login" ? "Login" : "Register"}</h1>
-            <input placeholder="Phone" />
-            <input type="password" placeholder="Password" />
-            <button className="orange-curved-btn" onClick={() => {setUser({phone: "Member"}); setView("grid")}}>Submit</button>
-          </div>
-        )}
-
         {view === "grid" && (
   selectedProduct ? (
     <div className="detail-screen">
-      <button onClick={() => setSelectedProduct(null)}>← Back</button>
+      <button onClick={() => setSelectedProduct(null)}>← Back to Products</button>
       <h1>{selectedProduct.name}</h1>
-      {/* You can add extra detail logic here */}
+      
+      {/* Detail Gallery View */}
+      <div className="product-detail-layout" style={{ display: 'flex', gap: '20px' }}>
+        <div className="large-preview">
+           {/* Show the main image or first gallery image */}
+           <img 
+             src={getImageUrl(selectedProduct.additional_images?.[0]?.image || "")} 
+             alt={selectedProduct.name} 
+             style={{ maxWidth: '400px' }} 
+           />
+        </div>
+        
+        <div className="product-info">
+           <p>Price: ₦{parseFloat(selectedProduct.price).toLocaleString()}</p>
+           {/* Add your Quantity selection and Add to Cart logic here */}
+           <button onClick={() => addToCart(selectedProduct)}>Add to Cart</button>
+        </div>
+      </div>
+
+      {/* Grid of all additional images */}
+      <h3>More Images</h3>
+      <div className="gallery-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px' }}>
+        {selectedProduct.additional_images?.map((img, idx) => (
+          <img key={idx} src={getImageUrl(img.image)} style={{ width: '100px' }} />
+        ))}
+      </div>
     </div>
   ) : (
     <div className="product-grid">
