@@ -21,22 +21,16 @@ class OrderItemInline(admin.TabularInline):
     readonly_fields = ('product', 'quantity')
 
 # --- 3. Model Admins ---
-# admin.py
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
-    list_display = ('thumbnail', 'name', 'category', 'price')
+    list_display = ('thumbnail', 'name', 'category', 'price', 'get_image_source')
     inlines = [ProductImageInline]
 
     def thumbnail(self, obj):
-        # Always use the first available image regardless of source
-        url = None
         if obj.main_image:
-            url = obj.main_image.url
-        elif obj.images.exists():
-            url = obj.images.first().image.url
-            
-        if url:
-            return format_html('<img src="{}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 4px;" />', url)
+            return format_html('<img src="{}" style="width: 50px; height: 50px; border-radius: 4px;" />', obj.main_image.url)
+        if obj.image_path:
+            return format_html('<img src="/static/{}" style="width: 50px; height: 50px;" />', obj.image_path)
         return "No Image"
 
     def get_image_source(self, obj):

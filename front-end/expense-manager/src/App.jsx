@@ -22,39 +22,48 @@ const getImageUrl = (input) => {
 };
 
 function ProductCard({ product, onAddToCart, onSelect }) {
-  // Use the new unified all_images array
-  const images = product.all_images || [];
-  const [activeImg, setActiveImg] = useState(images[0] || "/static/placeholder.png");
+  const [tempQty, setTempQty] = useState(1);
+  
+  // Logic: Use first image in array, or the single image property, or placeholder
+  const initialImage = product.images?.[0] || product.image || "";
+  const [activeImg, setActiveImg] = useState(getImageUrl(initialImage));
 
   return (
     <div className="product-card">
-      {/* 1. Main Display - Click to view detail */}
       <div className="img-frame" onClick={() => onSelect(product)}>
         <img 
           src={activeImg} 
           alt={product.name} 
           className="zoom-effect" 
+          onError={(e) => { e.target.src = "/static/placeholder.png"; }} 
         />
       </div>
 
-      {/* 2. Thumbnails for immediate preview */}
-      {images.length > 1 && (
-        <div className="thumb-strip" style={{ display: 'flex', gap: '5px' }}>
-          {images.map((url, idx) => (
+      {/* Only show thumbnails if images exist and array has length > 1 */}
+      {Array.isArray(product.images) && product.images.length > 1 && (
+        <div className="thumb-strip" style={{ display: 'flex', gap: '5px', marginTop: '10px' }}>
+          {product.images.map((img, idx) => (
             <img 
               key={idx} 
-              src={url} 
-              onClick={() => setActiveImg(url)}
-              style={{ width: '40px', height: '40px', cursor: 'pointer' }}
+              src={getImageUrl(img)} 
+              onClick={() => setActiveImg(getImageUrl(img))}
+              style={{ width: '40px', height: '40px', cursor: 'pointer', border: activeImg === getImageUrl(img) ? '2px solid #ff8c00' : 'none' }}
             />
           ))}
         </div>
       )}
+
+      <h3>{product.name}</h3>
+      <p className="price-text">₦{parseFloat(product.price).toLocaleString()}</p>
       
-      {/* ... rest of card ... */}
+      <div className="qty-row">
+        <input type="number" min="1" value={tempQty} onChange={(e) => setTempQty(parseInt(e.target.value) || 1)} />
+        <button className="add-btn" onClick={() => onAddToCart(product, tempQty)}>Add to Cart</button>
+      </div>
     </div>
   );
 }
+
 // ... rest of your App component remains the same
 function App() {
   // --- CORE STATES ---
