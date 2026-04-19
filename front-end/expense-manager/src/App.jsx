@@ -3,30 +3,23 @@ import "./App.css";
 
 // --- CONFIG ---
 const BASE_URL = import.meta.env.VITE_API_URL || "";
-const CLOUDINARY_BASE = "https://res.cloudinary.com/dscxqsew5/";
+const CLOUDINARY_BASE = "https://res.cloudinary.com/dscxqsew5/image/upload/";
 const PAYSTACK_PUBLIC_KEY = 'pk_live_21207f639d252b46e35e171dca6b075f79cba433';
 
 // Helper function updated for safety
 const getImageUrl = (input) => {
-  // DIAGNOSTIC LOG: Uncomment the line below to see what data is actually arriving
-  // console.log("Processing image input:", input);
-  
   let path = typeof input === 'string' ? input : (input?.image_path || input?.image_display || input?.image || "");
   
-  // Handle empty or invalid
-  if (!path || path === "null" || path === "undefined") return "/static/placeholder.png";
-  
-  // If absolute
+  if (!path || path === "null") return "/static/placeholder.png";
   if (path.startsWith("http")) return path;
 
-  // Clean path: ensure no leading slashes before concatenation
-  const cleanPath = path.toString().replace(/^\/+/, "");
-  const finalUrl = `${CLOUDINARY_BASE}${cleanPath}`;
+  // Ensure the path is clean
+  const cleanPath = path.replace(/^\/+/, "");
   
-  // DIAGNOSTIC LOG: Uncomment the line below to see the final generated URL
-  // console.log("Final URL generated:", finalUrl);
-  
-  return finalUrl;
+  // If the path already includes the 'v123456789/' version, just append it.
+  // If your DB only stores 'susuns8ed2gnmrq1zu79.png', 
+  // you might need to prepend 'v1776358399/' manually here.
+  return `${CLOUDINARY_BASE}${cleanPath}`;
 };
 
 function ProductCard({ product, onAddToCart, onSelect }) {
