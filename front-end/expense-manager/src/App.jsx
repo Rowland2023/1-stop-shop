@@ -8,18 +8,36 @@ const PAYSTACK_PUBLIC_KEY = 'pk_live_21207f639d252b46e35e171dca6b075f79cba433';
 
 // Helper function updated for safety
 const getImageUrl = (input) => {
+  // DIAGNOSTIC LOG: Uncomment the line below to see what data is actually arriving
+  // console.log("Processing image input:", input);
+  
   let path = typeof input === 'string' ? input : (input?.image_path || input?.image_display || input?.image || "");
-  if (!path || path === "null") return "/static/placeholder.png";
+  
+  // Handle empty or invalid
+  if (!path || path === "null" || path === "undefined") return "/static/placeholder.png";
+  
+  // If absolute
   if (path.startsWith("http")) return path;
-  return `${CLOUDINARY_BASE}${path.replace(/^\/+/, "")}`;
+
+  // Clean path: ensure no leading slashes before concatenation
+  const cleanPath = path.toString().replace(/^\/+/, "");
+  const finalUrl = `${CLOUDINARY_BASE}${cleanPath}`;
+  
+  // DIAGNOSTIC LOG: Uncomment the line below to see the final generated URL
+  // console.log("Final URL generated:", finalUrl);
+  
+  return finalUrl;
 };
 
 function ProductCard({ product, onAddToCart, onSelect }) {
   const [tempQty, setTempQty] = useState(1);
-  
-  // Logic: Use first image in array, or the single image property, or placeholder
   const initialImage = product.images?.[0] || product.image || "";
   const [activeImg, setActiveImg] = useState(getImageUrl(initialImage));
+
+  // ADD THIS: This ensures if the product changes, the image resets
+  useEffect(() => {
+    setActiveImg(getImageUrl(product.images?.[0] || product.image));
+  }, [product]);
 
   return (
     <div className="product-card">
@@ -28,35 +46,17 @@ function ProductCard({ product, onAddToCart, onSelect }) {
           src={activeImg} 
           alt={product.name} 
           className="zoom-effect" 
-          onError={(e) => { e.target.src = "/static/placeholder.png"; }} 
+          // If this triggers, your URL is 100% incorrect
+          onError={(e) => { 
+            console.error("Image failed to load:", activeImg);
+            e.target.src = "/static/placeholder.png"; 
+          }} 
         />
       </div>
-
-      {/* Only show thumbnails if images exist and array has length > 1 */}
-      {Array.isArray(product.images) && product.images.length > 1 && (
-        <div className="thumb-strip" style={{ display: 'flex', gap: '5px', marginTop: '10px' }}>
-          {product.images.map((img, idx) => (
-            <img 
-              key={idx} 
-              src={getImageUrl(img)} 
-              onClick={() => setActiveImg(getImageUrl(img))}
-              style={{ width: '40px', height: '40px', cursor: 'pointer', border: activeImg === getImageUrl(img) ? '2px solid #ff8c00' : 'none' }}
-            />
-          ))}
-        </div>
-      )}
-
-      <h3>{product.name}</h3>
-      <p className="price-text">₦{parseFloat(product.price).toLocaleString()}</p>
-      
-      <div className="qty-row">
-        <input type="number" min="1" value={tempQty} onChange={(e) => setTempQty(parseInt(e.target.value) || 1)} />
-        <button className="add-btn" onClick={() => onAddToCart(product, tempQty)}>Add to Cart</button>
-      </div>
+      {/* ... rest of your code */}
     </div>
   );
 }
-
 // ... rest of your App component remains the same
 function App() {
   // --- CORE STATES ---
