@@ -22,20 +22,11 @@ const getImageUrl = (input) => {
 };
 
 function ProductCard({ product, onAddToCart, onSelect }) {
-  // 1. Point to the correct array: product.additional_images
-  const gallery = product.additional_images || [];
+  const [tempQty, setTempQty] = useState(1);
   
-  // 2. Get the path of the first image in the array
-  // We use optional chaining (?.) to prevent crashes if the array is empty
-  const firstImagePath = gallery[0]?.image || "";
-  
-  // 3. Set your active image state
-  const [activeImg, setActiveImg] = useState(getImageUrl(firstImagePath));
-
-  // If the product object changes, update the image
-  useEffect(() => {
-    setActiveImg(getImageUrl(gallery[0]?.image || ""));
-  }, [product]);
+  // Logic: Use first image in array, or the single image property, or placeholder
+  const initialImage = product.images?.[0] || product.image || "";
+  const [activeImg, setActiveImg] = useState(getImageUrl(initialImage));
 
   return (
     <div className="product-card">
@@ -44,26 +35,31 @@ function ProductCard({ product, onAddToCart, onSelect }) {
           src={activeImg} 
           alt={product.name} 
           className="zoom-effect" 
-          // If the URL is still wrong, the onError will trigger your placeholder
           onError={(e) => { e.target.src = "/static/placeholder.png"; }} 
         />
       </div>
 
-      {/* Thumbnail strip using the same logic */}
-      {gallery.length > 1 && (
+      {/* Only show thumbnails if images exist and array has length > 1 */}
+      {Array.isArray(product.images) && product.images.length > 1 && (
         <div className="thumb-strip" style={{ display: 'flex', gap: '5px', marginTop: '10px' }}>
-          {gallery.map((item, idx) => (
+          {product.images.map((img, idx) => (
             <img 
               key={idx} 
-              src={getImageUrl(item.image)} 
-              onClick={() => setActiveImg(getImageUrl(item.image))}
-              style={{ width: '40px', height: '40px', cursor: 'pointer' }}
+              src={getImageUrl(img)} 
+              onClick={() => setActiveImg(getImageUrl(img))}
+              style={{ width: '40px', height: '40px', cursor: 'pointer', border: activeImg === getImageUrl(img) ? '2px solid #ff8c00' : 'none' }}
             />
           ))}
         </div>
       )}
+
+      <h3>{product.name}</h3>
+      <p className="price-text">₦{parseFloat(product.price).toLocaleString()}</p>
       
-      {/* ... rest of your code ... */}
+      <div className="qty-row">
+        <input type="number" min="1" value={tempQty} onChange={(e) => setTempQty(parseInt(e.target.value) || 1)} />
+        <button className="add-btn" onClick={() => onAddToCart(product, tempQty)}>Add to Cart</button>
+      </div>
     </div>
   );
 }
