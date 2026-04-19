@@ -205,7 +205,6 @@ function App() {
         <div className="header-inner" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
           <h1 onClick={() => setView("grid")} className="logo-text" style={{ cursor: 'pointer' }}>MeBuy</h1>
           
-          // Inside App.js, the cart button in header:
           <button className="cart-toggle-btn" onClick={() => setCartOpen(!cartOpen)}>
            🛒 {cart.reduce((acc, item) => acc + item.quantity, 0)}
             <span> ₦{cart.reduce((sum, item) => sum + (item.price * item.quantity), 0).toLocaleString()}</span>
@@ -278,24 +277,25 @@ function App() {
         )}
 
         {view === "grid" && (
-          selectedProduct ? (
-            <div className="detail-screen">
-              <button onClick={() => setSelectedProduct(null)}>← Back</button>
-              <h1>{selectedProduct.name}</h1>
-              <button className="add-btn" onClick={() => addToCart(selectedProduct)}>Add to Cart</button>
-            </div>
-          ) : (
-            <div className="product-grid">
-              {filteredProducts.map((p) => (
-                <div key={p.id} className="product-card">
-                  <img src={getImageUrl(p)} alt={p.name} onClick={() => setSelectedProduct(p)} />
-                  <h3>{p.name}</h3>
-                  <button className="add-btn" onClick={() => addToCart(p)}>Add to Cart</button>
-                </div>
-              ))}
-            </div>
-          )
-        )}
+  selectedProduct ? (
+    <div className="detail-screen">
+      <button onClick={() => setSelectedProduct(null)}>← Back</button>
+      <h1>{selectedProduct.name}</h1>
+      {/* You can add extra detail logic here */}
+    </div>
+  ) : (
+    <div className="product-grid">
+      {filteredProducts.map((p) => (
+        <ProductCard 
+          key={p.id} 
+          product={p} 
+          onAddToCart={addToCart} 
+          onSelect={setSelectedProduct} 
+        />
+      ))}
+    </div>
+  )
+)}
       </main>
 
       {/* RIGHT SIDEBAR - Updated with Orange Curved Buttons */}
