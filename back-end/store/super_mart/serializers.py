@@ -41,25 +41,22 @@ class ProductImageSerializer(serializers.ModelSerializer):
 
 # serializers.py
 class ProductSerializer(serializers.ModelSerializer):
-    # This field is what your React code needs to see
-    all_images = serializers.SerializerMethodField()
+    # Change the field name to 'main_image_url' for clarity
+    main_image_url = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
-        # Ensure 'all_images' is included in the fields list!
-        fields = ['id', 'name', 'price', 'category', 'all_images']
+        fields = ['id', 'name', 'price', 'category', 'main_image_url', 'additional_images']
 
-    def get_all_images(self, obj):
-        images = []
+    def get_main_image_url(self, obj):
+        # 1. Try the main_image field
         if obj.main_image:
-            images.append(secure_url(obj.main_image)) # Use the helper
-        
-        # Add gallery images
-        for img in obj.images.all():
-            if img.image:
-                images.append(secure_url(img.image))
-        
-        return images
+            return secure_url(obj.main_image)
+        # 2. Fallback: use the first image from the gallery
+        first_img = obj.images.first()
+        if first_img:
+            return secure_url(first_img.image)
+        return "/static/placeholder.png"
 class OrderItemSerializer(serializers.ModelSerializer):
     product_name = serializers.ReadOnlyField(source='product.name')
     product_image = serializers.SerializerMethodField()

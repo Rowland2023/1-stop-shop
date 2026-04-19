@@ -22,21 +22,18 @@ const getImageUrl = (input) => {
 };
 
 function ProductCard({ product, onAddToCart, onSelect }) {
-  const [tempQty, setTempQty] = useState(1);
-  
-  // Logic: Use first image in array, or the single image property, or placeholder
-  const initialImage = product.images?.[0] || product.image || "";
-  const images = product.all_images || [];
-  const [activeImg, setActiveImg] = useState(getImageUrl(product));
-  const activeImg = images.length > 0 ? images[0] : "/static/placeholder.png";
+  // Use the new field coming from the API
+  const [activeImg, setActiveImg] = useState(product.main_image_url || "/static/placeholder.png");
 
+  useEffect(() => {
+    setActiveImg(product.main_image_url || "/static/placeholder.png");
+  }, [product]);
   return (
     <div className="product-card">
       <div className="img-frame" onClick={() => onSelect(product)}>
         <img 
           src={activeImg} 
           alt={product.name} 
-          className="zoom-effect" 
           onError={(e) => { e.target.src = "/static/placeholder.png"; }} 
         />
       </div>
