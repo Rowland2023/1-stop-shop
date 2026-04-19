@@ -8,19 +8,18 @@ const PAYSTACK_PUBLIC_KEY = 'pk_live_21207f639d252b46e35e171dca6b075f79cba433';
 
 // Helper function updated for safety
 const getImageUrl = (input) => {
-  // 1. Handle potential object structures
-  let path = typeof input === 'string' ? input : (input?.image_display || input?.image || "");
+  let path = typeof input === 'string' ? input : (input?.image_path || input?.image_display || input?.image || "");
   
-  if (!path || path === "null" || path === "undefined") return "/static/placeholder.png";
-
-  // 2. If it's already a full URL, return as is
+  if (!path || path === "null") return "/static/placeholder.png";
   if (path.startsWith("http")) return path;
 
-  // 3. If it starts with 'image/upload', it's a partial Cloudinary path
-  if (path.startsWith("image/upload")) return `https://res.cloudinary.com/dscxqsew5/${path}`;
-
-  // 4. Otherwise, assume it's a relative path from your backend media folder
-  return `${BASE_URL}/media/${path.replace(/^\/+/, "")}`;
+  // Ensure the path is clean
+  const cleanPath = path.replace(/^\/+/, "");
+  
+  // If the path already includes the 'v123456789/' version, just append it.
+  // If your DB only stores 'susuns8ed2gnmrq1zu79.png', 
+  // you might need to prepend 'v1776358399/' manually here.
+  return `${CLOUDINARY_BASE}${cleanPath}`;
 };
 
 function ProductCard({ product, onAddToCart, onSelect }) {
