@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import "./App.css";
 
 // --- CONFIG ---
-const BASE_URL = import.meta.env.VITE_API_URL || "https://back-end-wdk7.onrender.com";
+const BASE_URL = import.meta.env.VITE_API_URL || "";
 const CLOUDINARY_BASE = "https://res.cloudinary.com/dscxqsew5/";
 const PAYSTACK_PUBLIC_KEY = 'pk_live_21207f639d252b46e35e171dca6b075f79cba433';
 
