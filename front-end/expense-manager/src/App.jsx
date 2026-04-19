@@ -8,24 +8,28 @@ const PAYSTACK_PUBLIC_KEY = 'pk_live_21207f639d252b46e35e171dca6b075f79cba433';
 
 // Helper function updated for safety
 const getImageUrl = (input) => {
-  // Extract the string based on the new serializer structure
+  // 1. Handle potential object structures
   let path = typeof input === 'string' ? input : (input?.image_display || input?.image || "");
   
   if (!path || path === "null" || path === "undefined") return "/static/placeholder.png";
 
-  // If the path is already a full URL from your Django Serializer, just return it!
+  // 2. If it's already a full URL, return as is
   if (path.startsWith("http")) return path;
 
-  // Otherwise, fallback for legacy strings if necessary
-  return `${CLOUDINARY_BASE}${path.replace(/^\/+/, "")}`;
+  // 3. If it starts with 'image/upload', it's a partial Cloudinary path
+  if (path.startsWith("image/upload")) return `https://res.cloudinary.com/dscxqsew5/${path}`;
+
+  // 4. Otherwise, assume it's a relative path from your backend media folder
+  return `${BASE_URL}/media/${path.replace(/^\/+/, "")}`;
 };
 
 function ProductCard({ product, onAddToCart, onSelect }) {
-  const [tempQty, setTempQty] = useState(1);
-  
-  // Logic: Use first image in array, or the single image property, or placeholder
-  const initialImage = product.images?.[0] || product.image || "";
-  const [activeImg, setActiveImg] = useState(getImageUrl(initialImage));
+  const [activeImg, setActiveImg] = useState(getImageUrl(product.image));
+
+  // Sync state when the product changes
+  useEffect(() => {
+    setActiveImg(getImageUrl(product.image));
+  }, [product]);
 
   return (
     <div className="product-card">
@@ -33,36 +37,18 @@ function ProductCard({ product, onAddToCart, onSelect }) {
         <img 
           src={activeImg} 
           alt={product.name} 
-          className="zoom-effect" 
-          onError={(e) => { e.target.src = "/static/placeholder.png"; }} 
+          className="zoom-effect"
+          // Crucial: Check console for 404s
+          onError={(e) => { 
+            console.error("Image failed to load:", activeImg);
+            e.target.src = "/static/placeholder.png"; 
+          }} 
         />
       </div>
-
-      {/* Only show thumbnails if images exist and array has length > 1 */}
-      {Array.isArray(product.images) && product.images.length > 1 && (
-        <div className="thumb-strip" style={{ display: 'flex', gap: '5px', marginTop: '10px' }}>
-          {product.images.map((img, idx) => (
-            <img 
-              key={idx} 
-              src={getImageUrl(img)} 
-              onClick={() => setActiveImg(getImageUrl(img))}
-              style={{ width: '40px', height: '40px', cursor: 'pointer', border: activeImg === getImageUrl(img) ? '2px solid #ff8c00' : 'none' }}
-            />
-          ))}
-        </div>
-      )}
-
-      <h3>{product.name}</h3>
-      <p className="price-text">₦{parseFloat(product.price).toLocaleString()}</p>
-      
-      <div className="qty-row">
-        <input type="number" min="1" value={tempQty} onChange={(e) => setTempQty(parseInt(e.target.value) || 1)} />
-        <button className="add-btn" onClick={() => onAddToCart(product, tempQty)}>Add to Cart</button>
-      </div>
+      {/* ... rest of your code */}
     </div>
   );
 }
-
 // ... rest of your App component remains the same
 function App() {
   // --- CORE STATES ---
