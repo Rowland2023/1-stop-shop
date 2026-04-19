@@ -24,12 +24,11 @@ const getImageUrl = (input) => {
 };
 
 function ProductCard({ product, onAddToCart, onSelect }) {
-  const [activeImg, setActiveImg] = useState(getImageUrl(product.image));
-
-  // Sync state when the product changes
-  useEffect(() => {
-    setActiveImg(getImageUrl(product.image));
-  }, [product]);
+  const [tempQty, setTempQty] = useState(1);
+  
+  // Logic: Use first image in array, or the single image property, or placeholder
+  const initialImage = product.images?.[0] || product.image || "";
+  const [activeImg, setActiveImg] = useState(getImageUrl(initialImage));
 
   return (
     <div className="product-card">
@@ -37,18 +36,36 @@ function ProductCard({ product, onAddToCart, onSelect }) {
         <img 
           src={activeImg} 
           alt={product.name} 
-          className="zoom-effect"
-          // Crucial: Check console for 404s
-          onError={(e) => { 
-            console.error("Image failed to load:", activeImg);
-            e.target.src = "/static/placeholder.png"; 
-          }} 
+          className="zoom-effect" 
+          onError={(e) => { e.target.src = "/static/placeholder.png"; }} 
         />
       </div>
-      {/* ... rest of your code */}
+
+      {/* Only show thumbnails if images exist and array has length > 1 */}
+      {Array.isArray(product.images) && product.images.length > 1 && (
+        <div className="thumb-strip" style={{ display: 'flex', gap: '5px', marginTop: '10px' }}>
+          {product.images.map((img, idx) => (
+            <img 
+              key={idx} 
+              src={getImageUrl(img)} 
+              onClick={() => setActiveImg(getImageUrl(img))}
+              style={{ width: '40px', height: '40px', cursor: 'pointer', border: activeImg === getImageUrl(img) ? '2px solid #ff8c00' : 'none' }}
+            />
+          ))}
+        </div>
+      )}
+
+      <h3>{product.name}</h3>
+      <p className="price-text">₦{parseFloat(product.price).toLocaleString()}</p>
+      
+      <div className="qty-row">
+        <input type="number" min="1" value={tempQty} onChange={(e) => setTempQty(parseInt(e.target.value) || 1)} />
+        <button className="add-btn" onClick={() => onAddToCart(product, tempQty)}>Add to Cart</button>
+      </div>
     </div>
   );
 }
+
 // ... rest of your App component remains the same
 function App() {
   // --- CORE STATES ---
