@@ -1,8 +1,6 @@
 from django.db import models
 from cloudinary.models import CloudinaryField
 
-# --- 1. MARKETPLACE & INVENTORY ---
-
 class Product(models.Model):
     CATEGORY_CHOICES = [
         ('food', 'Food & Drinks'),
@@ -25,12 +23,29 @@ class Product(models.Model):
     description = models.TextField(blank=True, null=True)
     price = models.DecimalField(max_digits=12, decimal_places=2)
     category = models.CharField(max_length=50, choices=CATEGORY_CHOICES)
-    main_image = CloudinaryField('image', null=True, blank=True)
+
+    # General Product image (thumbnail)
     image_display = models.ImageField(upload_to='products/main/', blank=True, null=True)
+
+    # Product review / detail images
+    main_image = CloudinaryField('image', null=True, blank=True)
+
     created_at = models.DateTimeField(auto_now_add=True)
+
+    def save(self, *args, **kwargs):
+        """
+        Auto-populate image_display if empty.
+        """
+        if not self.image_display:
+            if self.main_image:
+                self.image_display = self.main_image
+            elif self.images.exists():
+                self.image_display = self.images.first().image
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.name
+
 
 class ProductImage(models.Model):
     product = models.ForeignKey(Product, related_name='images', on_delete=models.CASCADE)
@@ -39,6 +54,7 @@ class ProductImage(models.Model):
 
     def __str__(self):
         return f"Image for {self.product.name}"
+
 class Order(models.Model):
     STATUS_CHOICES = [
         ('Pending', 'Pending'),
