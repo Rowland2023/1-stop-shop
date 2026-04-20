@@ -41,20 +41,19 @@ class ProductImageSerializer(serializers.ModelSerializer):
 
 # serializers.py
 class ProductSerializer(serializers.ModelSerializer):
-    # These fields are computed or custom
-    main_image_url = serializers.SerializerMethodField()
+    # Rename the method to match the key you want in your JSON
+    image_display = serializers.SerializerMethodField()
     additional_images = ProductImageSerializer(many=True, read_only=True, source='images')
 
     class Meta:
         model = Product
-        # Ensure 'description' is explicitly listed here
         fields = [
             'id', 'name', 'price', 'category', 
-            'description', 'main_image_url', 'additional_images'
+            'description', 'image_display', 'additional_images'
         ]
 
-    def get_main_image_url(self, obj):
-        # Your existing logic is good
+    def get_image_display(self, obj):
+        # Your logic remains the same, just returning it under the name 'image_display'
         if obj.main_image:
             return secure_url(obj.main_image)
         first_img = obj.images.first()
