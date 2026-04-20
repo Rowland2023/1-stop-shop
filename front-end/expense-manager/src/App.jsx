@@ -17,7 +17,11 @@ const getImageUrl = (input) => {
 
 function ProductCard({ product, onAddToCart, onSelect }) {
   const [tempQty, setTempQty] = useState(1);
-  const displayImage = getImageUrl(product.main_image_url);
+  
+  // Safe Image Logic: Check main_image_url OR grab the first from gallery
+  const gallery = product.additional_images || [];
+  const primaryImg = product.main_image_url || (gallery.length > 0 ? gallery[0].image : null);
+  const displayImage = getImageUrl(primaryImg);
 
   return (
     <div className="product-card">
@@ -30,7 +34,7 @@ function ProductCard({ product, onAddToCart, onSelect }) {
         />
       </div>
       <h3>{product.name}</h3>
-      <p className="price-text">₦{parseFloat(product.price).toLocaleString()}</p>
+      <p className="price-text">₦{parseFloat(product.price || 0).toLocaleString()}</p>
       <div className="qty-row">
         <input type="number" min="1" value={tempQty} onChange={(e) => setTempQty(parseInt(e.target.value) || 1)} />
         <button className="add-btn" onClick={() => onAddToCart(product, tempQty)}>Add to Cart</button>
