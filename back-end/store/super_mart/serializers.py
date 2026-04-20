@@ -52,19 +52,18 @@ class ProductSerializer(serializers.ModelSerializer):
             'description', 'image_display', 'additional_images'
         ]
 
-    def get_image_display(self, obj):
-        # 1. Check the new field first!
-        if obj.image_display:
-            return secure_url(obj.image_display)
-            
-        # 2. Fallback to main_image (Cloudinary)
-        if obj.main_image:
-            return secure_url(obj.main_image)
-            
+    def get_product_image(self, obj):
+        # 1. Check the new primary field
+        if obj.product.image_display:
+            return secure_url(obj.product.image_display)
+        # 2. Check the Cloudinary field
+        if obj.product.main_image:
+            return secure_url(obj.product.main_image)
         # 3. Fallback to additional images
-        first_img = obj.images.first()
+        first_img = obj.product.images.first()
         if first_img:
             return secure_url(first_img.image)
+        return None
             
         return "/static/placeholder.png"
 class OrderItemSerializer(serializers.ModelSerializer):
