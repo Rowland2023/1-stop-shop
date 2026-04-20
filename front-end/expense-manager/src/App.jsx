@@ -59,7 +59,7 @@ function App() {
   const [view, setView] = useState("grid"); // 'grid', 'tracking', 'account', 'auth'
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedProduct, setSelectedProduct] = useState(null);
-  const [activeImage, setActiveImage] = useState(null);
+  const [activeMainImage, setActiveMainImage] = useState(null);
   
   // --- AUTH & USER STATES ---
   const [user, setUser] = useState(null);
@@ -92,6 +92,13 @@ function App() {
   };
 
   // --- 1. PERSISTENCE & DATA FETCHING ---
+  // Update activeMainImage whenever selectedProduct changes
+  useEffect(() => {
+    if (selectedProduct) {
+      setActiveMainImage(selectedProduct.main_image_url || selectedProduct.additional_images?.[0]?.image);
+    }
+  }, [selectedProduct]);
+  
   useEffect(() => {
     localStorage.setItem("shop_cart_data", JSON.stringify(cart));
   }, [cart]);
@@ -254,40 +261,44 @@ function App() {
           </div>
         )}
 
-        {view === "grid" && (
-  selectedProduct ? (
-    <div className="detail-screen" style={{ padding: '20px' }}>
-      <button onClick={() => setSelectedProduct(null)}>← Back to Products</button>
-      <h1>{selectedProduct.name}</h1>
-      
-      <div className="product-gallery">
-        {/* Use the same safe logic here */}
-        <img 
-          src={getImageUrl(selectedProduct.main_image_url || selectedProduct.additional_images?.[0]?.image)} 
-          style={{ width: '100%', maxWidth: '400px' }} 
-        />
-        
-        <div className="thumb-strip" style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
-          {/* Optional chaining prevents the crash */}
-          {selectedProduct.additional_images?.map((imgObj, idx) => (
-            <img 
-              key={idx} 
-              src={getImageUrl(imgObj.image)} // Fixed: passed the string path
-              style={{ width: '80px', height: '80px', cursor: 'pointer', objectFit: 'cover' }}
-            />
-          ))}
-        </div>
-      </div>
-      {/* ... description ... */}
-    </div>
-  ) : (
-    <div className="product-grid">
-      {filteredProducts.map((p) => (
-        <ProductCard key={p.id} product={p} onAddToCart={addToCart} onSelect={setSelectedProduct} />
-      ))}
-    </div>
-  )
-)}
+        {view === "grid" && selectedProduct ? (
+          <div className="detail-screen" style={{ padding: '20px' }}>
+            <button onClick={() => setSelectedProduct(null)}>← Back to Products</button>
+            
+            <h1>{selectedProduct.name}</h1>
+            
+            <div className="product-gallery">
+              {/* Main Image in Detail View - controlled by activeMainImage state */}
+              <img 
+                src={getImageUrl(activeMainImage)} 
+                style={{ width: '100%', maxWidth: '400px', objectFit: 'contain' }} 
+              />
+              
+              {/* Thumbnail Strip - clickable to update activeMainImage */}
+              <div className="thumb-strip" style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+                {selectedProduct.additional_images?.map((imgObj, idx) => (
+                  <img 
+                    key={idx} 
+                    src={getImageUrl(imgObj.image)} 
+                    onClick={() => setActiveMainImage(imgObj.image)}
+                    style={{ width: '80px', height: '80px', cursor: 'pointer', objectFit: 'cover', border: activeMainImage === imgObj.image ? '2px solid orange' : 'none' }}
+                  />
+                ))}
+              </div>
+            </div>
+
+            <div className="product-description">
+              <h3>Product Details</h3>
+              <p>{selectedProduct.description || "No description provided by the merchant."}</p>
+            </div>
+          </div>
+        ) : (
+          <div className="product-grid">
+            {filteredProducts.map((p) => (
+              <ProductCard key={p.id} product={p} onAddToCart={addToCart} onSelect={setSelectedProduct} />
+            ))}
+          </div>
+        )}
       </main>
 
       {/* RIGHT SIDEBAR - Updated with Orange Curved Buttons */}
