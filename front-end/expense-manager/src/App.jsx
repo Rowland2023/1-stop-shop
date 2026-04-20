@@ -254,30 +254,27 @@ function App() {
   selectedProduct ? (
     <div className="detail-screen" style={{ padding: '20px' }}>
       <button onClick={() => setSelectedProduct(null)}>← Back to Products</button>
-      
       <h1>{selectedProduct.name}</h1>
       
-      {/* Gallery Section */}
       <div className="product-gallery">
-        {/* Main large image */}
-        <img src={getImageUrl(selectedProduct.main_image_url)} style={{ width: '100%', maxWidth: '400px' }} />
+        {/* Use the same safe logic here */}
+        <img 
+          src={getImageUrl(selectedProduct.main_image_url || selectedProduct.additional_images?.[0]?.image)} 
+          style={{ width: '100%', maxWidth: '400px' }} 
+        />
         
-        {/* Additional Images Thumbnail Strip */}
         <div className="thumb-strip" style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
-          {selectedProduct.additional_images.map((imgObj, idx) => (
+          {/* Optional chaining prevents the crash */}
+          {selectedProduct.additional_images?.map((imgObj, idx) => (
             <img 
               key={idx} 
-              src={getImageUrl(imgObj)} 
+              src={getImageUrl(imgObj.image)} // Fixed: passed the string path
               style={{ width: '80px', height: '80px', cursor: 'pointer', objectFit: 'cover' }}
             />
           ))}
         </div>
       </div>
-
-      <div className="product-description">
-        <h3>Product Details</h3>
-        <p>{selectedProduct.description || "No description available."}</p>
-      </div>
+      {/* ... description ... */}
     </div>
   ) : (
     <div className="product-grid">
