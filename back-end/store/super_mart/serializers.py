@@ -41,7 +41,6 @@ class ProductImageSerializer(serializers.ModelSerializer):
 
 # serializers.py
 class ProductSerializer(serializers.ModelSerializer):
-    # Rename the method to match the key you want in your JSON
     image_display = serializers.SerializerMethodField()
     additional_images = ProductImageSerializer(many=True, read_only=True, source='images')
 
@@ -52,8 +51,32 @@ class ProductSerializer(serializers.ModelSerializer):
             'description', 'image_display', 'additional_images'
         ]
 
+    def get_image_display(self, obj):
+        # 1. Highest Priority: The 'General Image' field (image_display)
+        if obj.image_display:
+            return secure_url(obj.image_display)
+            
+        # 2. Second Priority: The Cloudinary 'main_image'
+        if obj.main_image:
+            return secure_url(obj.main_image)
+            
+        # 3. Last Resort: First image from the 'additional_images' collection
+        first_img = obj.images.first()
+        if first_img:
+            return secure_url(first_img.image)
+            
+        return "/static/placeholder.png"
+    
+class OrderItemSerializer(serializers.ModelSerializer):
+    product_name = serializers.ReadOnlyField(source='product.name')
+    product_image = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = OrderItem
+        fields = ['id', 'product', 'product_name', 'product_image', 'quantity', 'price_at_purchase']
+
     def get_product_image(self, obj):
-        # 1. Check the new primary field
+        # 1. Check the general image field
         if obj.product.image_display:
             return secure_url(obj.product.image_display)
         # 2. Check the Cloudinary field
@@ -64,35 +87,7 @@ class ProductSerializer(serializers.ModelSerializer):
         if first_img:
             return secure_url(first_img.image)
         return None
-            
-        return "/static/placeholder.png"
-class OrderItemSerializer(serializers.ModelSerializer):
-    product_name = serializers.ReadOnlyField(source='product.name')
-    product_image = serializers.SerializerMethodField()
     
-    class Meta:
-        model = OrderItem
-        fields = ['id', 'product', 'product_name', 'product_image', 'quantity', 'price_at_purchase']
-
-    def get_product_image(self, obj):
-        if obj.product.main_image:
-            return secure_url(obj.product.main_image)
-        first_img = obj.product.images.first()
-        if first_img:
-            return secure_url(first_img.image)
-        if obj.product.image:
-            return secure_url(obj.product.image)
-        return None
-
-class OrderSerializer(serializers.ModelSerializer):
-    items = OrderItemSerializer(many=True, read_only=True)
-    status_display = serializers.CharField(source='get_status_display', read_only=True)
-
-    class Meta:
-        model = Order
-        fields = ['id', 'user_id', 'created_at', 'total_price', 'status', 'status_display', 'items']
-
-
 # --- 2. HRM & EMPLOYEE SERIALIZERS ---
 
 class AttendanceSerializer(serializers.ModelSerializer):
