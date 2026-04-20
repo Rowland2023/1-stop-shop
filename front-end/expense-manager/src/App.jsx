@@ -8,22 +8,15 @@ const PAYSTACK_PUBLIC_KEY = 'pk_live_21207f639d252b46e35e171dca6b075f79cba433';
 
 // Helper function updated for safety
 const getImageUrl = (input) => {
-  // If the input is an object (e.g., from additional_images), extract the 'image' property
   let path = (typeof input === 'object' && input !== null) ? input.image : input;
-  
-  if (!path || path === "null") return "/static/placeholder.png";
+  if (!path || path === "null" || path === undefined) return "/static/placeholder.png";
   if (path.startsWith("http")) return path;
-
-  // Ensure path doesn't have a leading slash to avoid //
   const cleanPath = path.startsWith("/") ? path.substring(1) : path;
-  
   return `${CLOUDINARY_BASE}${cleanPath}`;
 };
 
 function ProductCard({ product, onAddToCart, onSelect }) {
   const [tempQty, setTempQty] = useState(1);
-  
-  // Use the single main image provided by your serializer
   const displayImage = getImageUrl(product.main_image_url);
 
   return (
@@ -36,10 +29,8 @@ function ProductCard({ product, onAddToCart, onSelect }) {
           onError={(e) => { e.target.src = "/static/placeholder.png"; }} 
         />
       </div>
-
       <h3>{product.name}</h3>
       <p className="price-text">₦{parseFloat(product.price).toLocaleString()}</p>
-      
       <div className="qty-row">
         <input type="number" min="1" value={tempQty} onChange={(e) => setTempQty(parseInt(e.target.value) || 1)} />
         <button className="add-btn" onClick={() => onAddToCart(product, tempQty)}>Add to Cart</button>
@@ -258,44 +249,28 @@ function App() {
             <button className="orange-curved-btn" onClick={() => {setUser({phone: "Member"}); setView("grid")}}>Submit</button>
           </div>
         )}
-
-        {view === "grid" && (
-  selectedProduct ? (
-    <div className="detail-screen" style={{ padding: '20px' }}>
-      <button onClick={() => setSelectedProduct(null)}>← Back to Products</button>
-      
-      <h1>{selectedProduct.name}</h1>
-      
-      {/* Gallery Section */}
-      <div className="product-gallery">
-        {/* Main large image */}
-        <img src={getImageUrl(selectedProduct.main_image_url)} style={{ width: '100%', maxWidth: '400px' }} />
-        
-        {/* Additional Images Thumbnail Strip */}
-        <div className="thumb-strip" style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
-          {selectedProduct.additional_images.map((imgObj, idx) => (
-            <img 
-              key={idx} 
-              src={getImageUrl(imgObj)} 
-              style={{ width: '80px', height: '80px', cursor: 'pointer', objectFit: 'cover' }}
-            />
-          ))}
-        </div>
-      </div>
-
-      <div className="product-description">
-        <h3>Product Details</h3>
-        <p>{selectedProduct.description || "No description available."}</p>
-      </div>
-    </div>
-  ) : (
-    <div className="product-grid">
-      {filteredProducts.map((p) => (
-        <ProductCard key={p.id} product={p} onAddToCart={addToCart} onSelect={setSelectedProduct} />
-      ))}
-    </div>
-  )
-)}
+      {view === "grid" && selectedProduct ? (
+          <div className="detail-screen" style={{ padding: '20px' }}>
+            <button onClick={() => { setSelectedProduct(null); setActiveImage(null); }}>← Back</button>
+            <h1>{selectedProduct.name}</h1>
+            
+            <div className="product-gallery">
+              <img src={getImageUrl(activeImage || selectedProduct.main_image_url)} style={{ width: '400px' }} />
+              <div className="thumb-strip" style={{ display: 'flex', gap: '10px' }}>
+                {selectedProduct.additional_images?.map((imgObj, idx) => (
+                  <img key={idx} src={getImageUrl(imgObj)} onClick={() => setActiveImage(imgObj)} style={{ width: '80px', cursor: 'pointer' }} />
+                ))}
+              </div>
+            </div>
+            <p>{selectedProduct.description || "No description available."}</p>
+          </div>
+        ) : (
+          <div className="product-grid">
+            {filteredProducts.map((p) => (
+              <ProductCard key={p.id} product={p} onAddToCart={addToCart} onSelect={setSelectedProduct} />
+            ))}
+          </div>
+        )}
       </main>
 
       {/* RIGHT SIDEBAR - Updated with Orange Curved Buttons */}
