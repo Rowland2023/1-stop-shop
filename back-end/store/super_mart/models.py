@@ -22,24 +22,22 @@ class Product(models.Model):
         ('kitchen-items','Kitchen-Items'),
     ]
     name = models.CharField(max_length=255)
-    price = models.DecimalField(max_digits=10, decimal_places=2)
-    category = models.CharField(max_length=100, choices=CATEGORY_CHOICES)
-    description = models.TextField(blank=True, null=True) # Ensure this exists
-    
-    # Primary Storage: Cloudinary
+    description = models.TextField(blank=True, null=True)
+    price = models.DecimalField(max_digits=12, decimal_places=2)
+    category = models.CharField(max_length=50, choices=CATEGORY_CHOICES)
     main_image = CloudinaryField('image', null=True, blank=True)
-    
-    # Fallback Storage: Local Server (Standard Django ImageField)
-    image = models.ImageField(upload_to='products/', null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.name
-    
+
 class ProductImage(models.Model):
     product = models.ForeignKey(Product, related_name='images', on_delete=models.CASCADE)
-    image = CloudinaryField('image')
-    alt_text = models.CharField(max_length=255, blank=True)
+    image = CloudinaryField('image', null=True, blank=True) 
+    alt_text = models.CharField(max_length=100, blank=True)
 
+    def __str__(self):
+        return f"Image for {self.product.name}"
 class Order(models.Model):
     STATUS_CHOICES = [
         ('Pending', 'Pending'),
