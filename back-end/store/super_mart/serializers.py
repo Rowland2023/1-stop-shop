@@ -53,14 +53,20 @@ class ProductSerializer(serializers.ModelSerializer):
         ]
 
     def get_image_display(self, obj):
-        # Your logic remains the same, just returning it under the name 'image_display'
+        # 1. Check the new field first!
+        if obj.image_display:
+            return secure_url(obj.image_display)
+            
+        # 2. Fallback to main_image (Cloudinary)
         if obj.main_image:
             return secure_url(obj.main_image)
+            
+        # 3. Fallback to additional images
         first_img = obj.images.first()
         if first_img:
             return secure_url(first_img.image)
+            
         return "/static/placeholder.png"
-    
 class OrderItemSerializer(serializers.ModelSerializer):
     product_name = serializers.ReadOnlyField(source='product.name')
     product_image = serializers.SerializerMethodField()
