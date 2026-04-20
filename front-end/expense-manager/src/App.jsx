@@ -7,10 +7,16 @@ const CLOUDINARY_BASE = "https://res.cloudinary.com/dscxqsew5/";
 const PAYSTACK_PUBLIC_KEY = 'pk_live_21207f639d252b46e35e171dca6b075f79cba433';
 
 // Helper function updated for safety
+// Improved helper to handle both Cloudinary strings and full URLs
 const getImageUrl = (input) => {
-  let path = (typeof input === 'object' && input !== null) ? input.image : input;
-  if (!path || path === "null" || path === undefined) return "/static/placeholder.png";
+  if (!input) return "/static/placeholder.png";
+  
+  // If it's the object structure from your serializer
+  const path = (typeof input === 'object' && input !== null) ? input.image : input;
+  
+  if (typeof path !== 'string') return "/static/placeholder.png";
   if (path.startsWith("http")) return path;
+  
   const cleanPath = path.startsWith("/") ? path.substring(1) : path;
   return `${CLOUDINARY_BASE}${cleanPath}`;
 };
