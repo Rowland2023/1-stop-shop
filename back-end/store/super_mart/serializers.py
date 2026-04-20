@@ -53,6 +53,9 @@ class ProductSerializer(serializers.ModelSerializer):
 
     def get_image_display(self, obj):
         # 1. Highest Priority: The 'General Image' field (image_display)
+        # DEBUG: See what is actually inside the model
+        print(f"DEBUG: main_image={obj.main_image}, image_display={obj.image_display}")
+        
         if obj.image_display:
             return secure_url(obj.image_display)
             
