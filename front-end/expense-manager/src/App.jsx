@@ -98,7 +98,7 @@ function App() {
       setActiveMainImage(selectedProduct.main_image_url || selectedProduct.additional_images?.[0]?.image);
     }
   }, [selectedProduct]);
-  
+
   useEffect(() => {
     localStorage.setItem("shop_cart_data", JSON.stringify(cart));
   }, [cart]);

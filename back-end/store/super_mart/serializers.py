@@ -41,22 +41,27 @@ class ProductImageSerializer(serializers.ModelSerializer):
 
 # serializers.py
 class ProductSerializer(serializers.ModelSerializer):
+    # These fields are computed or custom
     main_image_url = serializers.SerializerMethodField()
-    # Ensure you are using the correct related_name if you want to include gallery images
     additional_images = ProductImageSerializer(many=True, read_only=True, source='images')
 
     class Meta:
         model = Product
-        # ADD 'description' HERE
-        fields = ['id', 'name', 'price', 'category', 'description', 'main_image_url', 'additional_images']
+        # Ensure 'description' is explicitly listed here
+        fields = [
+            'id', 'name', 'price', 'category', 
+            'description', 'main_image_url', 'additional_images'
+        ]
 
     def get_main_image_url(self, obj):
+        # Your existing logic is good
         if obj.main_image:
             return secure_url(obj.main_image)
         first_img = obj.images.first()
         if first_img:
             return secure_url(first_img.image)
         return "/static/placeholder.png"
+    
 class OrderItemSerializer(serializers.ModelSerializer):
     product_name = serializers.ReadOnlyField(source='product.name')
     product_image = serializers.SerializerMethodField()
