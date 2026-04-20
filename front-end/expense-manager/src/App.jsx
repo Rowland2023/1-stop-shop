@@ -22,28 +22,27 @@ const getImageUrl = (input) => {
 };
 
 function ProductCard({ product, onAddToCart, onSelect }) {
-  // 1. Safely extract the first image path from the nested array
-  // Use optional chaining (?.) to prevent crashes if the array is empty
-  const gallery = product.additional_images || [];
-  const firstImagePath = gallery[0]?.image || "";
+  // Use optional chaining to safely navigate the nested JSON
+  const gallery = product?.additional_images || [];
+  const firstImage = gallery[0]?.image || null;
 
-  // 2. Set the active image state safely
-  const [activeImg, setActiveImg] = useState(getImageUrl(firstImagePath));
+  const [activeImg, setActiveImg] = useState(() => getImageUrl(firstImage));
 
-  // 3. Update if the product changes
-  useEffect(() => {
-    setActiveImg(getImageUrl(gallery[0]?.image || ""));
-  }, [product]);
+  // Safeguard: Ensure product exists before rendering
+  if (!product) return null;
+
   return (
     <div className="product-card">
-      <div className="img-frame" onClick={() => onSelect(product)}>
+      <div className="img-frame" onClick={() => onSelect?.(product)}>
         <img 
-          src={activeImg} 
-          alt={product.name}
-          // The onError is critical: if getImageUrl fails, this sets a fallback
+          src={activeImg || "/static/placeholder.png"} 
+          alt={product.name || "Product"}
+          className="zoom-effect"
           onError={(e) => { e.target.src = "/static/placeholder.png"; }} 
         />
       </div>
+      <h3>{product.name || "Unnamed Product"}</h3>
+      <p>₦{product.price ? parseFloat(product.price).toLocaleString() : "0"}</p>
 
       {/* Only show thumbnails if images exist and array has length > 1 */}
       {Array.isArray(product.images) && product.images.length > 1 && (
