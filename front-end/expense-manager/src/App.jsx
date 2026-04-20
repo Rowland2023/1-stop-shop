@@ -22,19 +22,25 @@ const getImageUrl = (input) => {
 };
 
 function ProductCard({ product, onAddToCart, onSelect }) {
-  const [tempQty, setTempQty] = useState(1);
-  
-  // Logic: Use first image in array, or the single image property, or placeholder
-  const initialImage = product.images?.[0] || product.image || "";
-  const [activeImg, setActiveImg] = useState(getImageUrl(initialImage));
+  // 1. Safely extract the first image path from the nested array
+  // Use optional chaining (?.) to prevent crashes if the array is empty
+  const gallery = product.additional_images || [];
+  const firstImagePath = gallery[0]?.image || "";
 
+  // 2. Set the active image state safely
+  const [activeImg, setActiveImg] = useState(getImageUrl(firstImagePath));
+
+  // 3. Update if the product changes
+  useEffect(() => {
+    setActiveImg(getImageUrl(gallery[0]?.image || ""));
+  }, [product]);
   return (
     <div className="product-card">
       <div className="img-frame" onClick={() => onSelect(product)}>
         <img 
           src={activeImg} 
-          alt={product.name} 
-          className="zoom-effect" 
+          alt={product.name}
+          // The onError is critical: if getImageUrl fails, this sets a fallback
           onError={(e) => { e.target.src = "/static/placeholder.png"; }} 
         />
       </div>
