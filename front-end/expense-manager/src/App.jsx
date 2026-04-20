@@ -8,51 +8,60 @@ const PAYSTACK_PUBLIC_KEY = 'pk_live_21207f639d252b46e35e171dca6b075f79cba433';
 
 // Helper function updated for safety
 const getImageUrl = (input) => {
-  // 1. If input is a string, use it
-  // 2. If it's an object, check for the 'image' property (from additional_images)
-  // 3. Otherwise default to empty
-  let path = typeof input === 'string' ? input : (input?.image || input?.image_display || "");
+  // If the input is an object (e.g., from additional_images), extract the 'image' property
+  let path = (typeof input === 'object' && input !== null) ? input.image : input;
   
-  if (!path) return "/static/placeholder.png";
+  if (!path || path === "null") return "/static/placeholder.png";
   if (path.startsWith("http")) return path;
 
-  // Since your data paths are already "image/upload/..."
-  // just prepend the base.
-  return `${CLOUDINARY_BASE}${path}`;
+  // Ensure path doesn't have a leading slash to avoid //
+  const cleanPath = path.startsWith("/") ? path.substring(1) : path;
+  
+  return `${CLOUDINARY_BASE}${cleanPath}`;
 };
 
 function ProductCard({ product, onAddToCart, onSelect }) {
-  // Use optional chaining to safely navigate the nested JSON
-  const gallery = product?.additional_images || [];
-  const firstImage = gallery[0]?.image || null;
+  const [tempQty, setTempQty] = useState(1);
+  
+  // Use 'additional_images' from your data structure
+  const imageList = product.additional_images || [];
+  const initialImage = imageList.length > 0 ? imageList[0] : "";
+  
+  const [activeImg, setActiveImg] = useState(getImageUrl(initialImage));
 
-  const [activeImg, setActiveImg] = useState(() => getImageUrl(firstImage));
-
-  // Safeguard: Ensure product exists before rendering
-  if (!product) return null;
+  // Reset image when product prop changes
+  useEffect(() => {
+    setActiveImg(getImageUrl(initialImage));
+  }, [product]);
 
   return (
     <div className="product-card">
-      <div className="img-frame" onClick={() => onSelect?.(product)}>
+      <div className="img-frame" onClick={() => onSelect(product)}>
         <img 
-          src={activeImg || "/static/placeholder.png"} 
-          alt={product.name || "Product"}
-          className="zoom-effect"
+          src={activeImg} 
+          alt={product.name} 
+          className="zoom-effect" 
           onError={(e) => { e.target.src = "/static/placeholder.png"; }} 
         />
       </div>
-      <h3>{product.name || "Unnamed Product"}</h3>
-      <p>₦{product.price ? parseFloat(product.price).toLocaleString() : "0"}</p>
 
-      {/* Only show thumbnails if images exist and array has length > 1 */}
-      {Array.isArray(product.images) && product.images.length > 1 && (
+      {/* Corrected: Map through the imageList array */}
+      {imageList.length > 1 && (
         <div className="thumb-strip" style={{ display: 'flex', gap: '5px', marginTop: '10px' }}>
-          {product.images.map((img, idx) => (
+          {imageList.map((imgObj, idx) => (
             <img 
               key={idx} 
-              src={getImageUrl(img)} 
-              onClick={() => setActiveImg(getImageUrl(img))}
-              style={{ width: '40px', height: '40px', cursor: 'pointer', border: activeImg === getImageUrl(img) ? '2px solid #ff8c00' : 'none' }}
+              src={getImageUrl(imgObj)} 
+              onClick={(e) => {
+                e.stopPropagation(); // Prevents opening detail view
+                setActiveImg(getImageUrl(imgObj));
+              }}
+              style={{ 
+                width: '40px', 
+                height: '40px', 
+                cursor: 'pointer', 
+                border: activeImg === getImageUrl(imgObj) ? '2px solid #ff8c00' : 'none' 
+              }}
             />
           ))}
         </div>
