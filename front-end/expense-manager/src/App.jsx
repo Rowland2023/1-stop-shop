@@ -23,49 +23,19 @@ const getImageUrl = (input) => {
 function ProductCard({ product, onAddToCart, onSelect }) {
   const [tempQty, setTempQty] = useState(1);
   
-  // Use 'additional_images' from your data structure
-  const imageList = product.additional_images || [];
-  const initialImage = imageList.length > 0 ? imageList[0] : "";
-  
-  const [activeImg, setActiveImg] = useState(getImageUrl(initialImage));
-
-  // Reset image when product prop changes
-  useEffect(() => {
-    setActiveImg(getImageUrl(initialImage));
-  }, [product]);
+  // Use the single main image provided by your serializer
+  const displayImage = getImageUrl(product.main_image_url);
 
   return (
     <div className="product-card">
-      <div className="img-frame" onClick={() => onSelect(product)}>
+      <div className="img-frame" onClick={() => onSelect(product)} style={{ cursor: 'pointer' }}>
         <img 
-          src={activeImg} 
+          src={displayImage} 
           alt={product.name} 
           className="zoom-effect" 
           onError={(e) => { e.target.src = "/static/placeholder.png"; }} 
         />
       </div>
-
-      {/* Corrected: Map through the imageList array */}
-      {imageList.length > 1 && (
-        <div className="thumb-strip" style={{ display: 'flex', gap: '5px', marginTop: '10px' }}>
-          {imageList.map((imgObj, idx) => (
-            <img 
-              key={idx} 
-              src={getImageUrl(imgObj)} 
-              onClick={(e) => {
-                e.stopPropagation(); // Prevents opening detail view
-                setActiveImg(getImageUrl(imgObj));
-              }}
-              style={{ 
-                width: '40px', 
-                height: '40px', 
-                cursor: 'pointer', 
-                border: activeImg === getImageUrl(imgObj) ? '2px solid #ff8c00' : 'none' 
-              }}
-            />
-          ))}
-        </div>
-      )}
 
       <h3>{product.name}</h3>
       <p className="price-text">₦{parseFloat(product.price).toLocaleString()}</p>
@@ -291,20 +261,37 @@ function App() {
 
         {view === "grid" && (
   selectedProduct ? (
-    <div className="detail-screen">
-      <button onClick={() => setSelectedProduct(null)}>← Back</button>
+    <div className="detail-screen" style={{ padding: '20px' }}>
+      <button onClick={() => setSelectedProduct(null)}>← Back to Products</button>
+      
       <h1>{selectedProduct.name}</h1>
-      {/* You can add extra detail logic here */}
+      
+      {/* Gallery Section */}
+      <div className="product-gallery">
+        {/* Main large image */}
+        <img src={getImageUrl(selectedProduct.main_image_url)} style={{ width: '100%', maxWidth: '400px' }} />
+        
+        {/* Additional Images Thumbnail Strip */}
+        <div className="thumb-strip" style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+          {selectedProduct.additional_images.map((imgObj, idx) => (
+            <img 
+              key={idx} 
+              src={getImageUrl(imgObj)} 
+              style={{ width: '80px', height: '80px', cursor: 'pointer', objectFit: 'cover' }}
+            />
+          ))}
+        </div>
+      </div>
+
+      <div className="product-description">
+        <h3>Product Details</h3>
+        <p>{selectedProduct.description || "No description available."}</p>
+      </div>
     </div>
   ) : (
     <div className="product-grid">
       {filteredProducts.map((p) => (
-        <ProductCard 
-          key={p.id} 
-          product={p} 
-          onAddToCart={addToCart} 
-          onSelect={setSelectedProduct} 
-        />
+        <ProductCard key={p.id} product={p} onAddToCart={addToCart} onSelect={setSelectedProduct} />
       ))}
     </div>
   )
