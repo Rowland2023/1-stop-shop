@@ -41,19 +41,6 @@ class ProductAdmin(admin.ModelAdmin):
         if obj.main_image: return "Admin Upload (Main)"
         return "Missing"
     
-@admin.register(Product)
-class ProductAdmin(admin.ModelAdmin):
-    # Use fieldsets to fix the layout issue
-    fieldsets = (
-        ('General Information', {
-            'fields': ('name', 'price', 'category')
-        }),
-        ('Description & Media', {
-            'fields': ('description', 'image_display', 'main_image')
-        }),
-    )
-    list_display = ('thumbnail', 'name', 'category', 'price', 'get_image_source')
-    inlines = [ProductImageInline]
 
     # You can safely remove the 'save_model' method entirely now
 class OrderAdmin(admin.ModelAdmin):
