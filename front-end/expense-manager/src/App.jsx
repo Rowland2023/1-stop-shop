@@ -79,29 +79,34 @@ function App() {
 
   // --- API: AUTHENTICATION ---
   const handleAuth = async (e) => {
-    e.preventDefault();
-    const endpoint = authMode === "login" ? "/api/login/" : "/api/register/";
-
-    const payload = {
-        username: authData.username,
-        phone: authData.phone,
-        password: authData.password
-    };
-    try {
-      const res = await fetch(`${BASE_URL}${endpoint}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(authData),
-      });
-      const data = await res.json();
-      if (res.ok) {
-        setUser(data.user);
-        setView("grid");
-      } else {
-        alert(data.message || "Auth failed");
-      }
-    } catch (err) { alert("Backend unreachable. Please check CORS settings."); }
+  e.preventDefault();
+  const endpoint = authMode === "login" ? "/api/login/" : "/api/register/";
+  
+  // Package the data to match your Django view's data.get() calls
+  const payload = {
+    username: authData.username, // User identifier
+    phone: authData.phone,       // Mapped to Django's user.email field
+    password: authData.password
   };
+
+  try {
+    const res = await fetch(`${BASE_URL}${endpoint}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload), // Send the corrected object
+    });
+    
+    const data = await res.json();
+    if (res.ok) {
+      setUser(data); // Store the user object
+      setView("grid");
+    } else { 
+      alert(data.error || "Auth failed"); 
+    }
+  } catch (err) { 
+    alert("Backend unreachable."); 
+  }
+};
 
   // --- 1. PERSISTENCE & DATA FETCHING ---
   // Update activeMainImage whenever selectedProduct changes
@@ -254,18 +259,26 @@ function App() {
   <div className="view-container auth-screen" style={{ padding: '20px' }}>
     <h1>{authMode === "login" ? "Login" : "Register"}</h1>
     
-    {/* Use 'username' as the key to match Django's data.get('username') */}
     <input 
-      placeholder="Phone Number" 
+      placeholder="Username" 
       value={authData.username} 
-      onChange={(e) => setAuthData({...authData, username: e.target.value})} 
+      onChange={e => setAuthData({...authData, username: e.target.value})} 
     />
+    
+    {/* Only show phone input during registration */}
+    {authMode === "register" && (
+      <input 
+        placeholder="Phone Number" 
+        value={authData.phone} 
+        onChange={e => setAuthData({...authData, phone: e.target.value})} 
+      />
+    )}
     
     <input 
       type="password" 
       placeholder="Password" 
       value={authData.password} 
-      onChange={(e) => setAuthData({...authData, password: e.target.value})} 
+      onChange={e => setAuthData({...authData, password: e.target.value})} 
     />
     
     <button className="orange-curved-btn" onClick={handleAuth}>
