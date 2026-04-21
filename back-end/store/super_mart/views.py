@@ -15,15 +15,16 @@ from .tasks import trigger_invoice_generation
 @authentication_classes([]) 
 @permission_classes([AllowAny])
 def register_user(request):
-    data = request.data
-    phone = data.get('phone')
-    first_name = data.get('first_name')
-    password = data.get('password')
+    print("Incoming data:", request.data) 
+    
+    first_name = request.data.get('first_name')
+    phone = request.data.get('phone')
+    password = request.data.get('password')
     
     try:
         # 1. Validation
-        if not phone or not first_name or not password:
-            return Response({"error": "Phone, First Name, and Password are required"}, status=status.HTTP_400_BAD_REQUEST)
+        if not first_name or not phone or not password:
+            return Response({"error": "Missing credentials"}, status=status.HTTP_400_BAD_REQUEST)
         
         # 2. Check for existence (Using phone as the unique identifier)
         if Profile.objects.filter(phone_number=phone).exists():

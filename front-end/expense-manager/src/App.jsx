@@ -82,18 +82,20 @@ function App() {
   e.preventDefault();
   const endpoint = authMode === "login" ? "/api/login/" : "/api/register/";
   
-  // Package the data to match your Django view's data.get() calls
-  const payload = authMode === "login" 
-        ? { phone: authData.phone, password: authData.password }
-        : { phone: authData.phone, first_name: authData.first_name, password: authData.password };
+  // This object MUST match exactly the keys in request.data.get()
+  const payload = {
+    first_name: authData.first_name,
+    phone: authData.phone,
+    password: authData.password
+  };
 
   try {
     const res = await fetch(`${BASE_URL}${endpoint}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload), // Send the corrected object
+      body: JSON.stringify(payload), // Send the explicit payload
     });
-    
+    // ...
     const data = await res.json();
     if (res.ok) {
       setUser(data); // Store the user object
