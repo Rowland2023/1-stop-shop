@@ -243,16 +243,29 @@ function App() {
 
       <main>
   {/* AUTH VIEW */}
-  {view === "auth" && (
-    <div className="view-container auth-screen" style={{ padding: '40px', textAlign: 'center' }}>
-      <h1>{authMode === "login" ? "Login" : "Register"}</h1>
-      <input type="text" placeholder="Phone" style={{ display: 'block', margin: '10px auto' }} />
-      <input type="password" placeholder="Password" style={{ display: 'block', margin: '10px auto' }} />
-      <button className="orange-curved-btn" onClick={() => { setUser({ phone: "Member" }); setView("grid"); }}>
-        Submit
-      </button>
-    </div>
-  )}
+  {/* AUTH VIEW */}
+{view === "auth" && (
+  <div className="view-container auth-screen" style={{ padding: '40px', textAlign: 'center' }}>
+    <h1>{authMode === "login" ? "Login" : "Register"}</h1>
+    
+    <input 
+      type="text" 
+      placeholder="Phone (Username)" 
+      style={{ display: 'block', margin: '10px auto' }} 
+      onChange={(e) => setAuthData({...authData, phone: e.target.value})} 
+    />
+    <input 
+      type="password" 
+      placeholder="Password" 
+      style={{ display: 'block', margin: '10px auto' }} 
+      onChange={(e) => setAuthData({...authData, password: e.target.value})} 
+    />
+    
+    <button className="orange-curved-btn" onClick={handleAuth}>
+      {authMode === "login" ? "Login" : "Register"}
+    </button>
+  </div>
+)}
 
   {/* TRACKING VIEW */}
   {view === "tracking" && (
