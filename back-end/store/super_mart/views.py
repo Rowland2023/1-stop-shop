@@ -12,42 +12,48 @@ from .tasks import trigger_invoice_generation
 
 # --- 1. AUTH: REGISTRATION & LOGIN ---
 
+from .models import Profile  # Ensure Profile is imported
+
 @api_view(['POST'])
 @authentication_classes([]) 
 @permission_classes([AllowAny])
 def register_user(request):
     data = request.data
-    # Extract the new fields
     username = data.get('username')
-    phone = data.get('phone') # Using email field to store phone
+    phone = data.get('phone') 
     password = data.get('password')
     
     try:
         # 1. Validation
         if not username or not phone or not password:
-            return Response({"error": "All fields (username, phone, password) are required"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "All fields are required"}, status=status.HTTP_400_BAD_REQUEST)
         
-        # 2. Check for existence
+        # 2. Check for existence (Check username and phone uniqueness)
         if User.objects.filter(username=username).exists():
             return Response({"error": "Username already taken"}, status=status.HTTP_400_BAD_REQUEST)
+        if Profile.objects.filter(phone_number=phone).exists():
+            return Response({"error": "Phone number already registered"}, status=status.HTTP_400_BAD_REQUEST)
         
         # 3. Create user
-        # We map 'phone' to the 'email' field of the User model
         user = User.objects.create_user(
             username=username,
-            email=phone, 
             password=password
         )
         
+        # 4. Create the linked Profile
+        Profile.objects.create(
+            user=user,
+            phone_number=phone
+        )
+        
         return Response({
-            "message": "User created successfully",
+            "message": "User and profile created successfully",
             "user_id": user.id,
             "username": user.username
         }, status=status.HTTP_201_CREATED)
         
     except Exception as e:
         return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-    
 @api_view(['POST'])
 @authentication_classes([]) 
 @permission_classes([AllowAny])
