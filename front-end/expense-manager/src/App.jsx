@@ -84,6 +84,7 @@ function App() {
 
     const payload = {
         username: authData.username,
+        phone: authData.phone,
         password: authData.password
     };
     try {

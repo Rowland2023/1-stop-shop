@@ -17,43 +17,69 @@ from .tasks import trigger_invoice_generation
 @permission_classes([AllowAny])
 def register_user(request):
     data = request.data
+    # Extract the new fields
+    username = data.get('username')
+    phone = data.get('phone') # Using email field to store phone
+    password = data.get('password')
+    
     try:
-        if User.objects.filter(username=data.get('username')).exists():
-            return Response({"error": "Username/Phone already taken"}, status=status.HTTP_400_BAD_REQUEST)
+        # 1. Validation
+        if not username or not phone or not password:
+            return Response({"error": "All fields (username, phone, password) are required"}, status=status.HTTP_400_BAD_REQUEST)
         
+        # 2. Check for existence
+        if User.objects.filter(username=username).exists():
+            return Response({"error": "Username already taken"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # 3. Create user
+        # We map 'phone' to the 'email' field of the User model
         user = User.objects.create_user(
-            username=data.get('username'),
-            password=data.get('password')
+            username=username,
+            email=phone, 
+            password=password
         )
+        
         return Response({
             "message": "User created successfully",
-            "user_id": user.id
+            "user_id": user.id,
+            "username": user.username
         }, status=status.HTTP_201_CREATED)
+        
     except Exception as e:
         return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
+    
 @api_view(['POST'])
 @authentication_classes([]) 
 @permission_classes([AllowAny])
 def login_user(request):
-    """
-    Verifies credentials and returns user details.
-    """
     data = request.data
-    username = data.get('username')
+    identifier = data.get('username') # The user enters this in the 'username' field
     password = data.get('password')
     
-    user = authenticate(username=username, password=password)
+    if not identifier or not password:
+        return Response({"error": "Missing credentials"}, status=status.HTTP_400_BAD_REQUEST)
+
+    # 1. Try to authenticate using the provided username
+    user = authenticate(username=identifier, password=password)
     
+    # 2. If that fails, try to find the user by their phone (which we stored in the email field)
+    if user is None:
+        try:
+            user_by_phone = User.objects.get(email=identifier)
+            user = authenticate(username=user_by_phone.username, password=password)
+        except User.DoesNotExist:
+            user = None
+
     if user is not None:
         return Response({
             "message": "Login successful",
             "user_id": user.id,
-            "username": user.username
+            "username": user.username,
+            "phone": user.email # Returning the stored phone number
         }, status=status.HTTP_200_OK)
     else:
-        return Response({"error": "Invalid Email or Password"}, status=status.HTTP_401_UNAUTHORIZED)
-
+        return Response({"error": "Invalid username or password"}, status=status.HTTP_401_UNAUTHORIZED)
+    
 # --- 2. HRM: EMPLOYEE DATA API ---
 @api_view(['GET'])
 @authentication_classes([]) 

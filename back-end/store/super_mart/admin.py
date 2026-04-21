@@ -58,7 +58,7 @@ class AttendanceAdmin(admin.ModelAdmin):
 
 @admin.register(Payroll)
 class PayrollAdmin(admin.ModelAdmin):
-    list_display = ('employee', 'pay_period', 'gross_salary')
+    list_display = ('employee', 'pay_period', 'gross_salary', 'amount', 'is_paid')
 
 @admin.register(PerformanceReview)
 class PerformanceReviewAdmin(admin.ModelAdmin):
