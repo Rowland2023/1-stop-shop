@@ -15,7 +15,7 @@ from .tasks import trigger_invoice_generation
 @authentication_classes([]) 
 @permission_classes([AllowAny])
 def register_user(request):
-    print("Incoming data:", request.data) 
+    print("DEBUG: Request Data:", request.data) # Check the server logs
     
     first_name = request.data.get('first_name')
     phone = request.data.get('phone')

@@ -70,7 +70,7 @@ function App() {
   // --- AUTH & USER STATES ---
   const [user, setUser] = useState(null);
   const [authMode, setAuthMode] = useState("login"); // 'login' or 'register'
-  const [authData, setAuthData] = useState({ phone: "", password: "" });
+ const [authData, setAuthData] = useState({ phone: "", password: "", first_name: "" });
 
   // --- TRACKING & HISTORY STATES ---
   const [trackInput, setTrackInput] = useState("");
@@ -181,7 +181,7 @@ function App() {
     const totalAmount = cart.reduce((sum, item) => sum + (parseFloat(item.price) * item.quantity), 0) + 1500;
 
     const handler = window.PaystackPop.setup({
-      key: PAYSTACK_PUBLIC_KEY,
+      key: 'pk_live_21207f639d252b46e35e171dca6b075f79cba433',
       email: user ? `${user.phone}@mebuy.com` : 'guest@mebuy.com',
       amount: Math.round(totalAmount * 100),
       currency: 'NGN',
