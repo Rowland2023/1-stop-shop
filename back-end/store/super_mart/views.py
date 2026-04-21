@@ -1,42 +1,39 @@
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
-from django.http import JsonResponse
 from rest_framework import viewsets, status
 from rest_framework.decorators import api_view, permission_classes, authentication_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 
-from .models import Product, Order, OrderItem, Employee, Payroll
-from .serializers import ProductSerializer, OrderItemSerializer 
+from .models import Product, Order, OrderItem, Employee, Payroll, Profile
+from .serializers import ProductSerializer, OrderItemSerializer, OrderSerializer 
 from .tasks import trigger_invoice_generation 
 
 # --- 1. AUTH: REGISTRATION & LOGIN ---
-
-from .models import Profile  # Ensure Profile is imported
 
 @api_view(['POST'])
 @authentication_classes([]) 
 @permission_classes([AllowAny])
 def register_user(request):
     data = request.data
-    username = data.get('username')
-    phone = data.get('phone') 
+    phone = data.get('phone')
+    first_name = data.get('first_name')
     password = data.get('password')
     
     try:
         # 1. Validation
-        if not username or not phone or not password:
-            return Response({"error": "All fields are required"}, status=status.HTTP_400_BAD_REQUEST)
+        if not phone or not first_name or not password:
+            return Response({"error": "Phone, First Name, and Password are required"}, status=status.HTTP_400_BAD_REQUEST)
         
-        # 2. Check for existence (Check username and phone uniqueness)
-        if User.objects.filter(username=username).exists():
-            return Response({"error": "Username already taken"}, status=status.HTTP_400_BAD_REQUEST)
+        # 2. Check for existence (Using phone as the unique identifier)
         if Profile.objects.filter(phone_number=phone).exists():
             return Response({"error": "Phone number already registered"}, status=status.HTTP_400_BAD_REQUEST)
         
-        # 3. Create user
+        # 3. Create user 
+        # We use the phone number as the username to keep auth simple
         user = User.objects.create_user(
-            username=username,
+            username=phone, 
+            first_name=first_name,
             password=password
         )
         
@@ -47,45 +44,36 @@ def register_user(request):
         )
         
         return Response({
-            "message": "User and profile created successfully",
+            "message": "User registered successfully",
             "user_id": user.id,
-            "username": user.username
+            "first_name": user.first_name
         }, status=status.HTTP_201_CREATED)
         
     except Exception as e:
         return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
 @api_view(['POST'])
 @authentication_classes([]) 
 @permission_classes([AllowAny])
 def login_user(request):
     data = request.data
-    identifier = data.get('username') # The user enters this in the 'username' field
+    phone = data.get('phone')
     password = data.get('password')
     
-    if not identifier or not password:
-        return Response({"error": "Missing credentials"}, status=status.HTTP_400_BAD_REQUEST)
-
-    # 1. Try to authenticate using the provided username
-    user = authenticate(username=identifier, password=password)
+    # We use the phone number (which we set as the username) to authenticate
+    user = authenticate(username=phone, password=password)
     
-    # 2. If that fails, try to find the user by their phone (which we stored in the email field)
-    if user is None:
-        try:
-            user_by_phone = User.objects.get(email=identifier)
-            user = authenticate(username=user_by_phone.username, password=password)
-        except User.DoesNotExist:
-            user = None
-
     if user is not None:
         return Response({
             "message": "Login successful",
             "user_id": user.id,
-            "username": user.username,
-            "phone": user.email # Returning the stored phone number
+            "first_name": user.first_name,
+            "phone": phone
         }, status=status.HTTP_200_OK)
     else:
-        return Response({"error": "Invalid username or password"}, status=status.HTTP_401_UNAUTHORIZED)
-    
+        return Response({"error": "Invalid Phone or Password"}, status=status.HTTP_401_UNAUTHORIZED)
+
+
 # --- 2. HRM: EMPLOYEE DATA API ---
 @api_view(['GET'])
 @authentication_classes([]) 

@@ -19,7 +19,7 @@ admin.site.unregister(User)
 class CustomUserAdmin(UserAdmin):
     inlines = (ProfileInline,)
     # 'date_joined' is built into the standard User model
-    list_display = ('username', 'email', 'get_phone', 'get_date_created', 'date_joined') 
+    list_display = ('username', 'first_name', 'get_phone', 'get_date_created', 'date_joined') 
 
     def get_phone(self, obj):
         return obj.profile.phone_number if hasattr(obj, 'profile') else "N/A"

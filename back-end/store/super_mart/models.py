@@ -9,7 +9,7 @@ class Profile(models.Model):
     date_created = models.DateTimeField(auto_now_add=True) # Added this
     
     def __str__(self):
-        return f"{self.user.username} - {self.phone_number}"
+        return f"{self.user.phone_number} - {self.user.first_name}"
 
 # --- 1. MARKETPLACE & INVENTORY ---
 
@@ -97,8 +97,8 @@ class Attendance(models.Model):
 class Payroll(models.Model):
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='payrolls')
     pay_period = models.CharField(max_length=50) 
-    gross_salary = models.DecimalField(max_digits=10, decimal_places=2) # Ensure this matches
-    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    gross_salary = models.DecimalField(max_digits=12, decimal_places=2 , default=0.00) # Ensure this matches
+    amount = models.DecimalField(max_digits=12, decimal_places=2 , default=0.00)
     is_paid = models.BooleanField(default=False)
 
 class PerformanceReview(models.Model):

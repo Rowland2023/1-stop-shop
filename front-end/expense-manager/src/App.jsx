@@ -83,11 +83,9 @@ function App() {
   const endpoint = authMode === "login" ? "/api/login/" : "/api/register/";
   
   // Package the data to match your Django view's data.get() calls
-  const payload = {
-    username: authData.username, // User identifier
-    phone: authData.phone,       // Mapped to Django's user.email field
-    password: authData.password
-  };
+  const payload = authMode === "login" 
+        ? { phone: authData.phone, password: authData.password }
+        : { phone: authData.phone, first_name: authData.first_name, password: authData.password };
 
   try {
     const res = await fetch(`${BASE_URL}${endpoint}`, {
@@ -259,18 +257,19 @@ function App() {
   <div className="view-container auth-screen" style={{ padding: '20px' }}>
     <h1>{authMode === "login" ? "Login" : "Register"}</h1>
     
+    {/* 1. Use the phone number field for both Login and Register */}
     <input 
-      placeholder="Username" 
-      value={authData.username} 
-      onChange={e => setAuthData({...authData, username: e.target.value})} 
+      placeholder="Phone Number" 
+      value={authData.phone} 
+      onChange={e => setAuthData({...authData, phone: e.target.value})} 
     />
     
-    {/* Only show phone input during registration */}
+    {/* 2. ONLY show First Name during registration */}
     {authMode === "register" && (
       <input 
-        placeholder="Phone Number" 
-        value={authData.phone} 
-        onChange={e => setAuthData({...authData, phone: e.target.value})} 
+        placeholder="First Name" 
+        value={authData.first_name} 
+        onChange={e => setAuthData({...authData, first_name: e.target.value})} 
       />
     )}
     

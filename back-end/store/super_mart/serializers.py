@@ -1,5 +1,6 @@
 import os
 from rest_framework import serializers
+
 from .models import (
     Product, Order, OrderItem, 
     Employee, Attendance, Payroll, PerformanceReview, ProductImage
@@ -70,27 +71,20 @@ class ProductSerializer(serializers.ModelSerializer):
             
         return "/static/placeholder.png"
     
+
+
 class OrderItemSerializer(serializers.ModelSerializer):
-    product_name = serializers.ReadOnlyField(source='product.name')
-    product_image = serializers.SerializerMethodField()
-    
     class Meta:
         model = OrderItem
-        fields = ['id', 'product', 'product_name', 'product_image', 'quantity', 'price_at_purchase']
+        fields = '__all__'
 
-    def get_product_image(self, obj):
-        # 1. Check the general image field
-        if obj.product.image_display:
-            return secure_url(obj.product.image_display)
-        # 2. Check the Cloudinary field
-        if obj.product.main_image:
-            return secure_url(obj.product.main_image)
-        # 3. Fallback to additional images
-        first_img = obj.product.images.first()
-        if first_img:
-            return secure_url(first_img.image)
-        return None
-    
+# Add this class below OrderItemSerializer
+class OrderSerializer(serializers.ModelSerializer):
+    items = OrderItemSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Order
+        fields = '__all__'
 # --- 2. HRM & EMPLOYEE SERIALIZERS ---
 
 class AttendanceSerializer(serializers.ModelSerializer):
