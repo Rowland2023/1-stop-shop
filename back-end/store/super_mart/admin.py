@@ -23,21 +23,23 @@ class OrderItemInline(admin.TabularInline):
 # --- 3. Model Admins ---
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
+    # Added 'image_display' to the fields list so it actually shows up in the form
+    fields = ('name', 'price', 'category', 'image_display', 'main_image') 
     list_display = ('thumbnail', 'name', 'category', 'price', 'get_image_source')
     inlines = [ProductImageInline]
 
     def thumbnail(self, obj):
+        # Focus on the new Cloudinary field
+        if obj.image_display:
+            return format_html('<img src="{}" style="width: 50px; height: 50px; border-radius: 4px;" />', obj.image_display.url)
         if obj.main_image:
             return format_html('<img src="{}" style="width: 50px; height: 50px; border-radius: 4px;" />', obj.main_image.url)
-        if obj.image_path:
-            return format_html('<img src="/static/{}" style="width: 50px; height: 50px;" />', obj.image_path)
         return "No Image"
 
     def get_image_source(self, obj):
-        if obj.main_image: return "Admin Upload"
-        return f"Static: {obj.image_path}" if obj.image_path else "Missing"
-
-@admin.register(Order)
+        if obj.image_display: return "Cloudinary (Display)"
+        if obj.main_image: return "Admin Upload (Main)"
+        return "Missing"
 class OrderAdmin(admin.ModelAdmin):
     list_display = ('id', 'user_id', 'total_price', 'status', 'download_receipt')
     inlines = [OrderItemInline]
