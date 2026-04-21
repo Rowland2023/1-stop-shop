@@ -24,7 +24,7 @@ class OrderItemInline(admin.TabularInline):
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
     # Added 'image_display' to the fields list so it actually shows up in the form
-    fields = ('name', 'price', 'category', 'image_display', 'main_image') 
+    fields = ('name', 'price', 'category', 'image_display', 'main_image','description') 
     list_display = ('thumbnail', 'name', 'category', 'price', 'get_image_source')
     inlines = [ProductImageInline]
 
@@ -51,7 +51,7 @@ class ProductAdmin(admin.ModelAdmin):
             obj.main_image = request.FILES['main_image']
             
         super().save_model(request, obj, form, change)
-        
+
 class OrderAdmin(admin.ModelAdmin):
     list_display = ('id', 'user_id', 'total_price', 'status', 'download_receipt')
     inlines = [OrderItemInline]
