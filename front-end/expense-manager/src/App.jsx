@@ -242,70 +242,74 @@ function App() {
       </aside>
 
       <main>
-        {view === "tracking" && (
-          <div className="view-container tracking-screen">
-            <h1>📦 Track Your Shipment</h1>
-            <input type="text" placeholder="Order ID" value={trackInput} onChange={(e) => setTrackInput(e.target.value)} />
-            <button className="track-btn-action" onClick={handleTrackOrder}>Check Status</button>
-            {trackingData && <div className="tracking-timeline">Status: {trackingData.status}</div>}
-          </div>
-        )}
+  {/* AUTH VIEW */}
+  {view === "auth" && (
+    <div className="view-container auth-screen" style={{ padding: '40px', textAlign: 'center' }}>
+      <h1>{authMode === "login" ? "Login" : "Register"}</h1>
+      <input type="text" placeholder="Phone" style={{ display: 'block', margin: '10px auto' }} />
+      <input type="password" placeholder="Password" style={{ display: 'block', margin: '10px auto' }} />
+      <button className="orange-curved-btn" onClick={() => { setUser({ phone: "Member" }); setView("grid"); }}>
+        Submit
+      </button>
+    </div>
+  )}
 
-        {view === "account" && (
-          <div className="view-container account-screen">
-            <h1>Order History</h1>
-            {userOrders.map(o => <div key={o.id}>{o.id} - ₦{o.total_price}</div>)}
-          </div>
-        )}
+  {/* TRACKING VIEW */}
+  {view === "tracking" && (
+    <div className="view-container tracking-screen">
+      <h1>📦 Track Your Shipment</h1>
+      <input type="text" placeholder="Order ID" value={trackInput} onChange={(e) => setTrackInput(e.target.value)} />
+      <button className="track-btn-action" onClick={handleTrackOrder}>Check Status</button>
+      {trackingData && <div className="tracking-timeline">Status: {trackingData.status}</div>}
+    </div>
+  )}
 
-        {view === "auth" && (
-          <div className="view-container auth-screen">
-            <h1>{authMode === "login" ? "Login" : "Register"}</h1>
-            <input placeholder="Phone" />
-            <input type="password" placeholder="Password" />
-            <button className="orange-curved-btn" onClick={() => {setUser({phone: "Member"}); setView("grid")}}>Submit</button>
-          </div>
-        )}
+  {/* ACCOUNT VIEW */}
+  {view === "account" && (
+    <div className="view-container account-screen">
+      <h1>Order History</h1>
+      {userOrders.map(o => <div key={o.id}>{o.id} - ₦{o.total_price}</div>)}
+    </div>
+  )}
 
-        {view === "grid" && selectedProduct ? (
-          <div className="detail-screen" style={{ padding: '20px' }}>
-            <button onClick={() => setSelectedProduct(null)}>← Back to Products</button>
-            
-            <h1>{selectedProduct.name}</h1>
-            
-            <div className="product-gallery">
-              {/* Main Image in Detail View - controlled by activeMainImage state */}
-              <img 
-                src={getImageUrl(activeMainImage)} 
-                style={{ width: '100%', maxWidth: '400px', objectFit: 'contain' }} 
-              />
-              
-              {/* Thumbnail Strip - clickable to update activeMainImage */}
-              <div className="thumb-strip" style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
-                {selectedProduct.additional_images?.map((imgObj, idx) => (
-                  <img 
-                    key={idx} 
-                    src={getImageUrl(imgObj.image)} 
-                    onClick={() => setActiveMainImage(imgObj.image)}
-                    style={{ width: '80px', height: '80px', cursor: 'pointer', objectFit: 'cover', border: activeMainImage === imgObj.image ? '2px solid orange' : 'none' }}
-                  />
-                ))}
-              </div>
-            </div>
-
-            <div className="product-description">
-              <h3>Product Details</h3>
-              <p>{selectedProduct.description || "No description provided by the merchant."}</p>
+  {/* PRODUCT GRID & DETAIL VIEW (Only rendered when view is 'grid') */}
+  {view === "grid" && (
+    <>
+      {selectedProduct ? (
+        <div className="detail-screen" style={{ padding: '20px' }}>
+          <button onClick={() => setSelectedProduct(null)}>← Back to Products</button>
+          <h1>{selectedProduct.name}</h1>
+          <div className="product-gallery">
+            <img 
+              src={getImageUrl(activeMainImage)} 
+              style={{ width: '100%', maxWidth: '400px', objectFit: 'contain' }} 
+            />
+            <div className="thumb-strip" style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+              {selectedProduct.additional_images?.map((imgObj, idx) => (
+                <img 
+                  key={idx} 
+                  src={getImageUrl(imgObj.image)} 
+                  onClick={() => setActiveMainImage(imgObj.image)}
+                  style={{ width: '80px', height: '80px', cursor: 'pointer', objectFit: 'cover', border: activeMainImage === imgObj.image ? '2px solid orange' : 'none' }}
+                />
+              ))}
             </div>
           </div>
-        ) : (
-          <div className="product-grid">
-            {filteredProducts.map((p) => (
-              <ProductCard key={p.id} product={p} onAddToCart={addToCart} onSelect={setSelectedProduct} />
-            ))}
+          <div className="product-description">
+            <h3>Product Details</h3>
+            <p>{selectedProduct.description || "No description provided by the merchant."}</p>
           </div>
-        )}
-      </main>
+        </div>
+      ) : (
+        <div className="product-grid">
+          {filteredProducts.map((p) => (
+            <ProductCard key={p.id} product={p} onAddToCart={addToCart} onSelect={setSelectedProduct} />
+          ))}
+        </div>
+      )}
+    </>
+  )}
+</main>
 
       {/* RIGHT SIDEBAR - Updated with Orange Curved Buttons */}
       <aside className={`right-sidebar ${cartOpen ? "open" : ""}`}>
