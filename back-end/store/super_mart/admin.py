@@ -40,6 +40,18 @@ class ProductAdmin(admin.ModelAdmin):
         if obj.image_display: return "Cloudinary (Display)"
         if obj.main_image: return "Admin Upload (Main)"
         return "Missing"
+    
+    def save_model(self, request, obj, form, change):
+        # 1. Force the image_display if it exists in the files
+        if 'image_display' in request.FILES:
+            obj.image_display = request.FILES['image_display']
+            
+        # 2. Force the main_image if it exists in the files
+        if 'main_image' in request.FILES:
+            obj.main_image = request.FILES['main_image']
+            
+        super().save_model(request, obj, form, change)
+        
 class OrderAdmin(admin.ModelAdmin):
     list_display = ('id', 'user_id', 'total_price', 'status', 'download_receipt')
     inlines = [OrderItemInline]
