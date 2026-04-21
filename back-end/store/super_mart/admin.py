@@ -1,10 +1,35 @@
 from django.contrib import admin
+from django.contrib.auth.models import User
 from django.utils.html import format_html
+from django.contrib.auth.admin import UserAdmin
 from .models import (
     Employee, Attendance, Payroll, PerformanceReview, 
     Product, Order, OrderItem, ProductImage
 )
 
+# --- Register User with Profile Inline ---
+class ProfileInline(admin.StackedInline):
+    model = Profile
+    can_delete = False
+
+# Unregister default User to customize it
+admin.site.unregister(User)
+
+@admin.register(User)
+class CustomUserAdmin(UserAdmin):
+    inlines = (ProfileInline,)
+    list_display = ('username', 'email', 'get_phone') # Shows phone in list
+
+    def get_phone(self, obj):
+        # This pulls the phone from your Profile model
+        return obj.profile.phone_number if hasattr(obj, 'profile') else "N/A"
+    get_phone.short_description = 'Phone Number'
+
+# --- Register your Profile model explicitly ---
+@admin.register(Profile)
+class ProfileAdmin(admin.ModelAdmin):
+    list_display = ('user', 'phone_number')
+    
 # --- 1. Global Branding ---
 admin.site.site_header = "Lagos Tech Hub: Market-Place & HRM"
 admin.site.index_title = "Command Center"
