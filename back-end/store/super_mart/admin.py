@@ -41,20 +41,25 @@ class ProductAdmin(admin.ModelAdmin):
         if obj.main_image: return "Admin Upload (Main)"
         return "Missing"
     
-    @admin.register(Product)
-class ProductAdmin(admin.ModelAdmin):
-    # Use fieldsets to fix the layout issue
-    fieldsets = (
-        ('General Information', {
-            'fields': ('name', 'price', 'category')
-        }),
-        ('Description & Media', {
-            'fields': ('description', 'image_display', 'main_image')
-        }),
-    )
-    list_display = ('thumbnail', 'name', 'category', 'price', 'get_image_source')
-    inlines = [ProductImageInline]
 
+@admin.register(Product)
+class ProductAdmin(admin.ModelAdmin):
+    # REMOVE 'main_image' from here if it is not in models.py
+    fields = ('name', 'price', 'category', 'image_display') 
+    
+    # REMOVE 'main_image' from here as well
+    list_display = ('thumbnail', 'name', 'category', 'price', 'get_image_source')
+
+    def thumbnail(self, obj):
+        # Ensure this strictly uses the new field
+        if hasattr(obj, 'image_display') and obj.image_display:
+            return format_html('<img src="{}" style="width: 50px; height: 50px; border-radius: 4px;" />', obj.image_display.url)
+        return "No Image"
+
+    def get_image_source(self, obj):
+        if hasattr(obj, 'image_display') and obj.image_display: return "Cloudinary"
+        return "Missing"
+    
     # You can safely remove the 'save_model' method entirely now
 class OrderAdmin(admin.ModelAdmin):
     list_display = ('id', 'user_id', 'total_price', 'status', 'download_receipt')
