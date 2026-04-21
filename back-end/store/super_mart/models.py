@@ -6,6 +6,7 @@ from cloudinary.models import CloudinaryField
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     phone_number = models.CharField(max_length=15, unique=True)
+    date_created = models.DateTimeField(auto_now_add=True) # Added this
     
     def __str__(self):
         return f"{self.user.username} - {self.phone_number}"

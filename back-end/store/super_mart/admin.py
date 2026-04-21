@@ -4,7 +4,7 @@ from django.utils.html import format_html
 from django.contrib.auth.admin import UserAdmin
 from .models import (
     Employee, Attendance, Payroll, PerformanceReview, 
-    Product, Order, OrderItem, ProductImage
+    Product, Order, OrderItem, ProductImage,Profile
 )
 
 # --- Register User with Profile Inline ---
@@ -18,18 +18,22 @@ admin.site.unregister(User)
 @admin.register(User)
 class CustomUserAdmin(UserAdmin):
     inlines = (ProfileInline,)
-    list_display = ('username', 'email', 'get_phone') # Shows phone in list
+    # 'date_joined' is built into the standard User model
+    list_display = ('username', 'email', 'get_phone', 'get_date_created', 'date_joined') 
 
     def get_phone(self, obj):
-        # This pulls the phone from your Profile model
         return obj.profile.phone_number if hasattr(obj, 'profile') else "N/A"
     get_phone.short_description = 'Phone Number'
+
+    def get_date_created(self, obj):
+        return obj.profile.date_created.strftime('%Y-%m-%d') if hasattr(obj, 'profile') else "N/A"
+    get_date_created.short_description = 'Profile Created'
 
 # --- Register your Profile model explicitly ---
 @admin.register(Profile)
 class ProfileAdmin(admin.ModelAdmin):
     list_display = ('user', 'phone_number')
-    
+
 # --- 1. Global Branding ---
 admin.site.site_header = "Lagos Tech Hub: Market-Place & HRM"
 admin.site.index_title = "Command Center"
