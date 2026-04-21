@@ -19,11 +19,10 @@ def register_user(request):
     data = request.data
     try:
         if User.objects.filter(username=data.get('username')).exists():
-            return Response({"error": "Username already taken"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "Username/Phone already taken"}, status=status.HTTP_400_BAD_REQUEST)
         
         user = User.objects.create_user(
             username=data.get('username'),
-            email=data.get('email'),
             password=data.get('password')
         )
         return Response({
@@ -50,7 +49,7 @@ def login_user(request):
         return Response({
             "message": "Login successful",
             "user_id": user.id,
-            "email": user.email
+            "username": user.username
         }, status=status.HTTP_200_OK)
     else:
         return Response({"error": "Invalid Email or Password"}, status=status.HTTP_401_UNAUTHORIZED)
@@ -109,7 +108,7 @@ def order_list(request):
                 total_price=data.get('total'),
                 status='Pending' 
             )
-
+            
             order_items_data = [] 
             for item in data.get('items', []):
                 product = Product.objects.get(id=item['id'])
