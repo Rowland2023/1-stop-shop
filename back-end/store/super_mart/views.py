@@ -7,7 +7,7 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 
 from .models import Product, Order, OrderItem, Employee, Payroll
-from .serializers import ProductSerializer, OrderSerializer 
+from .serializers import ProductSerializer, OrderItemSerializer 
 from .tasks import trigger_invoice_generation 
 
 # --- 1. AUTH: REGISTRATION & LOGIN ---

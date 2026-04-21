@@ -26,7 +26,7 @@ class Product(models.Model):
     price = models.DecimalField(max_digits=12, decimal_places=2)
     category = models.CharField(max_length=50, choices=CATEGORY_CHOICES)
     main_image = CloudinaryField('image', null=True, blank=True)
-    image_display = models.ImageField(upload_to='products/main/', blank=True, null=True)
+    image_display = CloudinaryField('image', null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
