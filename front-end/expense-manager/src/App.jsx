@@ -81,6 +81,11 @@ function App() {
   const handleAuth = async (e) => {
     e.preventDefault();
     const endpoint = authMode === "login" ? "/api/login/" : "/api/register/";
+
+    const payload = {
+        username: authData.username,
+        password: authData.password
+    };
     try {
       const res = await fetch(`${BASE_URL}${endpoint}`, {
         method: "POST",
@@ -245,28 +250,28 @@ function App() {
   {/* AUTH VIEW */}
   {/* AUTH VIEW */}
 {view === "auth" && (
-  <div className="view-container auth-screen" style={{ padding: '40px', textAlign: 'center' }}>
+  <div className="view-container auth-screen" style={{ padding: '20px' }}>
     <h1>{authMode === "login" ? "Login" : "Register"}</h1>
     
+    {/* Use 'username' as the key to match Django's data.get('username') */}
     <input 
-      type="text" 
-      placeholder="Phone (Username)" 
-      style={{ display: 'block', margin: '10px auto' }} 
-      onChange={(e) => setAuthData({...authData, phone: e.target.value})} 
+      placeholder="Phone Number" 
+      value={authData.username} 
+      onChange={(e) => setAuthData({...authData, username: e.target.value})} 
     />
+    
     <input 
       type="password" 
       placeholder="Password" 
-      style={{ display: 'block', margin: '10px auto' }} 
+      value={authData.password} 
       onChange={(e) => setAuthData({...authData, password: e.target.value})} 
     />
     
     <button className="orange-curved-btn" onClick={handleAuth}>
-      {authMode === "login" ? "Login" : "Register"}
+      {authMode === "login" ? "Login" : "Submit"}
     </button>
   </div>
 )}
-
   {/* TRACKING VIEW */}
   {view === "tracking" && (
     <div className="view-container tracking-screen">
