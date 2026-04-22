@@ -84,7 +84,7 @@ function App() {
   const endpoint = isLogin ? "/api/login/" : "/api/register/";
   
   const payload = {
-    phone_number: authData.phone, // Ensure this matches the key expected by your view
+    phone_number: authData.phone_number, // Ensure this matches the key expected by your view
     password: authData.password,
     ...(isLogin ? {} : { first_name: authData.first_name })
   };
