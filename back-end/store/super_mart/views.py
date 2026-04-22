@@ -27,12 +27,12 @@ def register_user(request):
 @authentication_classes([]) 
 @permission_classes([AllowAny])
 def login_user(request):
-    phone = request.data.get('phone_number')
+    phone_number = request.data.get('phone_number')
     password = request.data.get('password')
 
     # 1. Find the user by the phone number in the related Profile
     try:
-        profile = Profile.objects.get(phone_number=phone)
+        profile = Profile.objects.get(phone_number=phone_number)
         user = profile.user
     except Profile.DoesNotExist:
         return Response({"error": "Invalid Phone or Password"}, status=status.HTTP_401_UNAUTHORIZED)
@@ -44,7 +44,7 @@ def login_user(request):
             "message": "Login successful",
             "user_id": user.id,
             "first_name": user.first_name,
-            "phone": phone
+            "phone_number": phone_number
         }, status=status.HTTP_200_OK)
     else:
         return Response({"error": "Invalid Phone or Password"}, status=status.HTTP_401_UNAUTHORIZED)
