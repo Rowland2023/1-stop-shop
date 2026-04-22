@@ -82,31 +82,38 @@ function App() {
     e.preventDefault();
     const endpoint = authMode === "login" ? "/api/login/" : "/api/register/";
     
-    // Add this log
-    console.log("SENDING PAYLOAD:", authData);
-
+    // Use the current state, but ensure we aren't sending empty strings
+    // If authData is still stale, we force the values from the state
     const payload = {
-      first_name: authData.first_name,
-      phone: authData.phone,
-      password: authData.password
+      first_name: authData.first_name || "",
+      phone: authData.phone || "",
+      password: authData.password || ""
     };
+
+    console.log("SENDING CLEANED PAYLOAD:", payload);
 
     try {
       const res = await fetch(`${BASE_URL}${endpoint}`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
         body: JSON.stringify(payload),
       });
       
       const data = await res.json();
+      
       if (res.ok) {
         setUser(data);
         setView("grid");
       } else { 
-        console.error("SERVER ERROR:", data); // This will show in browser console
+        // This log will now show you the specific error from the server
+        console.error("SERVER REJECTED PAYLOAD:", data);
         alert(data.error || "Auth failed"); 
       }
     } catch (err) { 
+      console.error("Fetch Error:", err);
       alert("Backend unreachable."); 
     }
   };

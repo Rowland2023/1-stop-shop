@@ -1,3 +1,5 @@
+import json # Ensure this is imported at the top
+from django.db import transaction # Import for database safety
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
 from rest_framework import viewsets, status
@@ -14,37 +16,36 @@ from .tasks import trigger_invoice_generation
 @api_view(['POST'])
 @authentication_classes([]) 
 @permission_classes([AllowAny])
+@transaction.atomic # Ensures that if User or Profile fails, everything rolls back
 def register_user(request):
-    data = request.data
-    if not data:
+    # Safely handle data parsing
+    data = request.data if request.data else {}
+    if not data and request.body:
         try:
             data = json.loads(request.body)
-        except:
-            return Response({"error": "Could not parse request body"}, status=400)
+        except json.JSONDecodeError:
+            return Response({"error": "Invalid JSON format"}, status=400)
 
     first_name = data.get('first_name')
     phone = data.get('phone')
     password = data.get('password')
     
-    print(f"DEBUG: Parsed Data -> {first_name}, {phone}, {password}")
-    try:
-        # 1. Validation
-        if not first_name or not phone or not password:
-            return Response({
+    # Debug log
+    print(f"DEBUG: Attempting registration for {phone}")
+
+    # 1. Validation
+    if not first_name or not phone or not password:
+        return Response({
             "error": "Missing credentials",
-            "received": {
-                "first_name": first_name,
-                "phone": phone,
-                "password": password
-            }
+            "received": {"first_name": bool(first_name), "phone": bool(phone), "password": bool(password)}
         }, status=status.HTTP_400_BAD_REQUEST)
-        
-        # 2. Check for existence (Using phone as the unique identifier)
+    
+    try:
+        # 2. Check for existence
         if Profile.objects.filter(phone_number=phone).exists():
             return Response({"error": "Phone number already registered"}, status=status.HTTP_400_BAD_REQUEST)
         
-        # 3. Create user 
-        # We use the phone number as the username to keep auth simple
+        # 3. Create user
         user = User.objects.create_user(
             username=phone, 
             first_name=first_name,
@@ -64,8 +65,10 @@ def register_user(request):
         }, status=status.HTTP_201_CREATED)
         
     except Exception as e:
-        return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        print(f"DEBUG: CRITICAL ERROR: {str(e)}")
+        return Response({"error": "Database error during registration"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+# ... (rest of your views remain unchanged)
 @api_view(['POST'])
 @authentication_classes([]) 
 @permission_classes([AllowAny])
