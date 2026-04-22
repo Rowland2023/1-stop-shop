@@ -15,32 +15,11 @@ from .tasks import trigger_invoice_generation
 @authentication_classes([]) 
 @permission_classes([AllowAny])
 def register_user(request):
-    # Print the raw content to the terminal
-    print("--- DEBUG START ---")
-    print("Request Content-Type:", request.content_type)
-    print("Raw Body:", request.body)
-    print("Parsed Data:", request.data)
-    print("--- DEBUG END ---")
-    
-    # Check if request.data is empty
-    if not request.data:
-        return Response({"error": "Backend received empty body"}, status=400)
-
-    first_name = request.data.get('first_name')
-    phone = request.data.get('phone')
-    password = request.data.get('password')
-    
-    # Strict validation with feedback
-    if not all([first_name, phone, password]):
-        return Response({
-            "error": "Missing credentials",
-            "debug": {
-                "first_name": first_name,
-                "phone": phone,
-                "password": password
-            }
-        }, status=400)
-    
+    serializer = UserRegistrationSerializer(data=request.data)
+    if serializer.is_valid():
+        serializer.save()
+        return Response({"message": "User registered"}, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     # ... rest of your code
 @api_view(['POST'])
 @authentication_classes([]) 

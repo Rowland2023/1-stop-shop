@@ -1,6 +1,6 @@
 import os
 from rest_framework import serializers
-
+from django.contrib.auth.models import User
 from .models import (
     Product, Order, OrderItem, 
     Employee, Attendance, Payroll, PerformanceReview, ProductImage
@@ -113,3 +113,14 @@ class EmployeeSerializer(serializers.ModelSerializer):
             'email', 'department', 'position', 'salary', 
             'is_active', 'date_joined', 'payrolls', 'attendance'
         ]
+
+class UserRegistrationSerializer(serializers.ModelSerializer):
+    phone = serializers.CharField(source='username') # Mapping phone to username
+    
+    class Meta:
+        model = User
+        fields = ['first_name', 'phone', 'password']
+        extra_kwargs = {'password': {'write_only': True}}
+
+    def create(self, validated_data):
+        return User.objects.create_user(**validated_data)
