@@ -94,15 +94,19 @@ function App() {
   // --- API: AUTHENTICATION ---
   const handleAuth = async (e) => {
   e.preventDefault();
-  const isLogin = authMode === "login";
-  const endpoint = isLogin ? "/api/login/" : "/api/register/";
   
+  // Validation check before sending
+  if (!authData.phone_number || !authData.password) {
+      alert("Please provide both phone number and password.");
+      return;
+  }
+
+  const isLogin = authMode === "login";
   const payload = {
-    phone_number: authData.phone_number, // Ensure this matches the key expected by your view
+    phone_number: authData.phone_number,
     password: authData.password,
     ...(isLogin ? {} : { first_name: authData.first_name })
   };
-
   try {
     const res = await fetch(`${BASE_URL}${endpoint}`, {
       method: "POST",

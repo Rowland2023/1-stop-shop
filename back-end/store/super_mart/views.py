@@ -27,16 +27,21 @@ def register_user(request):
 @authentication_classes([]) 
 @permission_classes([AllowAny])
 def login_user(request):
+    # Use .get() to avoid KeyErrors if the field is missing
     phone_number = request.data.get('phone_number')
     password = request.data.get('password')
 
-    # 1. Find the user by the phone number in the related Profile
+    if not phone_number or not password:
+        return Response({"error": "Missing credentials"}, status=status.HTTP_400_BAD_REQUEST)
+
     try:
+        # Ensure your Profile model has the field 'phone_number'
         profile = Profile.objects.get(phone_number=phone_number)
         user = profile.user
     except Profile.DoesNotExist:
         return Response({"error": "Invalid Phone or Password"}, status=status.HTTP_401_UNAUTHORIZED)
     
+    # Authenticate against the User model
     user = authenticate(username=user.username, password=password)
 
     if user is not None:
@@ -48,7 +53,6 @@ def login_user(request):
         }, status=status.HTTP_200_OK)
     else:
         return Response({"error": "Invalid Phone or Password"}, status=status.HTTP_401_UNAUTHORIZED)
-
 
 # --- 2. HRM: EMPLOYEE DATA API ---
 @api_view(['GET'])
