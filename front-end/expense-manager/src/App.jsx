@@ -80,7 +80,7 @@ function App() {
   // --- API: AUTHENTICATION ---
   const handleAuth = async (e) => {
   e.preventDefault();
-  console.log("Current authData state:", authData);
+  const endpoint = authMode === "login" ? "/api/login/" : "/api/register/";
   
   // This object MUST match exactly the keys in request.data.get()
   const payload = {
@@ -88,7 +88,7 @@ function App() {
     phone: authData.phone,
     password: authData.password
   };
-  
+
   try {
     const res = await fetch(`${BASE_URL}${endpoint}`, {
       method: "POST",
@@ -107,7 +107,6 @@ function App() {
     alert("Backend unreachable."); 
   }
 };
-console.log("Payload being sent:", JSON.stringify(payload));
 
   // --- 1. PERSISTENCE & DATA FETCHING ---
   // Update activeMainImage whenever selectedProduct changes
@@ -254,6 +253,7 @@ console.log("Payload being sent:", JSON.stringify(payload));
       </aside>
 
       <main>
+  {/* AUTH VIEW */}
   {/* AUTH VIEW */}
 {view === "auth" && (
   <div className="view-container auth-screen" style={{ padding: '20px' }}>
