@@ -1,45 +1,41 @@
-import json # Ensure this is imported at the top
-from django.db import transaction # Import for database safety
-from django.contrib.auth.models import User
-from django.contrib.auth import authenticate
-from rest_framework import viewsets, status
+import json
+from django.db import transaction
+from rest_framework.response import Response
+from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes, authentication_classes
 from rest_framework.permissions import AllowAny
-from rest_framework.response import Response
-
-from .models import Product, Order, OrderItem, Employee, Payroll, Profile
-from .serializers import ProductSerializer, OrderItemSerializer, OrderSerializer 
-from .tasks import trigger_invoice_generation 
-
-# --- 1. AUTH: REGISTRATION & LOGIN ---
 
 @api_view(['POST'])
-@authentication_classes([]) 
+@authentication_classes([])
 @permission_classes([AllowAny])
-@transaction.atomic # Ensures that if User or Profile fails, everything rolls back
+@transaction.atomic
 def register_user(request):
-    # Safely handle data parsing
-    data = request.data if request.data else {}
+    # Log incoming request to identify if the body is even reaching the server
+    print(f"DEBUG: Request Content-Type: {request.content_type}")
+    
+    # Defensive parsing
+    data = request.data
     if not data and request.body:
         try:
-            data = json.loads(request.body)
-        except json.JSONDecodeError:
-            return Response({"error": "Invalid JSON format"}, status=400)
-
+            data = json.loads(request.body.decode('utf-8'))
+        except Exception as e:
+            return Response({"error": "Invalid JSON", "details": str(e)}, status=400)
+    
     first_name = data.get('first_name')
     phone = data.get('phone')
     password = data.get('password')
     
-    # Debug log
-    print(f"DEBUG: Attempting registration for {phone}")
-
-    # 1. Validation
+    # Critical Validation Log
     if not first_name or not phone or not password:
         return Response({
             "error": "Missing credentials",
-            "received": {"first_name": bool(first_name), "phone": bool(phone), "password": bool(password)}
+            "received": {
+                "first_name": bool(first_name),
+                "phone": bool(phone),
+                "password": bool(password)
+            }
         }, status=status.HTTP_400_BAD_REQUEST)
-    
+        
     try:
         # 2. Check for existence
         if Profile.objects.filter(phone_number=phone).exists():
