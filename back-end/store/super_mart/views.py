@@ -15,7 +15,7 @@ from .tasks import trigger_invoice_generation
 @authentication_classes([]) 
 @permission_classes([AllowAny])
 def register_user(request):
-    print("DEBUG: Request Data:", request.data) # Check the server logs
+    print("DEBUG: Full Request Data received:", request.data)
     
     first_name = request.data.get('first_name')
     phone = request.data.get('phone')
@@ -24,7 +24,14 @@ def register_user(request):
     try:
         # 1. Validation
         if not first_name or not phone or not password:
-            return Response({"error": "Missing credentials"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({
+            "error": "Missing credentials",
+            "received": {
+                "first_name": first_name,
+                "phone": phone,
+                "password": password
+            }
+        }, status=status.HTTP_400_BAD_REQUEST)
         
         # 2. Check for existence (Using phone as the unique identifier)
         if Profile.objects.filter(phone_number=phone).exists():

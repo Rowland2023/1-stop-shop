@@ -82,25 +82,32 @@ function App() {
   e.preventDefault();
   const endpoint = authMode === "login" ? "/api/login/" : "/api/register/";
   
-  // This object MUST match exactly the keys in request.data.get()
+  // Ensure we are using the most current state directly
   const payload = {
     first_name: authData.first_name,
     phone: authData.phone,
     password: authData.password
   };
 
+  // ADD THIS: Simple client-side check before sending
+  if (!payload.phone || !payload.password || (authMode === 'register' && !payload.first_name)) {
+      alert("Please fill in all required fields.");
+      return;
+  }
+
   try {
     const res = await fetch(`${BASE_URL}${endpoint}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload), // Send the explicit payload
+      body: JSON.stringify(payload), 
     });
-    // ...
+    
     const data = await res.json();
     if (res.ok) {
-      setUser(data); // Store the user object
+      setUser(data);
       setView("grid");
     } else { 
+      // This will show you exactly what the server thinks is missing
       alert(data.error || "Auth failed"); 
     }
   } catch (err) { 
