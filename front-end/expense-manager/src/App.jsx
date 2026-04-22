@@ -83,12 +83,14 @@ function App() {
   const isLogin = authMode === "login";
   const endpoint = isLogin ? "/api/login/" : "/api/register/";
   
-  // Construct payload dynamically based on mode
   const payload = {
     phone: authData.phone,
     password: authData.password,
-    ...(isLogin ? {} : { first_name: authData.first_name }) // Only add first_name if registering
+    ...(isLogin ? {} : { first_name: authData.first_name })
   };
+
+  // ADD THIS LOG
+  console.log("Sending to:", endpoint, "Payload:", JSON.stringify(payload));
 
   try {
     const res = await fetch(`${BASE_URL}${endpoint}`, {

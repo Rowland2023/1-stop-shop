@@ -15,6 +15,7 @@ from .tasks import trigger_invoice_generation
 @authentication_classes([]) 
 @permission_classes([AllowAny])
 def register_user(request):
+    print("DEBUG: Request Data:", request.data)
     data = request.data
     
     # Clearly define what is needed for registration
