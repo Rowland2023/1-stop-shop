@@ -7,51 +7,40 @@ from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes, authentication_classes
 from rest_framework.permissions import AllowAny
 from rest_framework import viewsets # <--- ADD THIS
+from django.contrib.auth.models import User
+from super_mart.models import Profile
 
 @api_view(['POST'])
-@authentication_classes([])
+@authentication_classes([]) 
 @permission_classes([AllowAny])
-@transaction.atomic
 def register_user(request):
-    # Log incoming request to identify if the body is even reaching the server
-    print(f"DEBUG: Request Content-Type: {request.content_type}")
-    
-    # Defensive parsing
+    # 1. Define data first
     data = request.data
-    if not data and request.body:
-        try:
-            data = json.loads(request.body.decode('utf-8'))
-        except Exception as e:
-            return Response({"error": "Invalid JSON", "details": str(e)}, status=400)
+    print(f"DEBUG: Data received keys: {list(data.keys())}")
     
-    first_name = data.get('first_name')
-    phone = data.get('phone')
-    password = data.get('password')
-    
-    # Critical Validation Log
-    if not first_name or not phone or not password:
-        return Response({
-            "error": "Missing credentials",
-            "received": {
-                "first_name": bool(first_name),
-                "phone": bool(phone),
-                "password": bool(password)
-            }
-        }, status=status.HTTP_400_BAD_REQUEST)
-        
+    # 2. Extract with Error Handling
     try:
-        # 2. Check for existence
+        first_name = data['first_name']
+        phone = data['phone']
+        password = data['password']
+    except KeyError as e:
+        return Response({"error": f"Missing field in request: {e}"}, status=status.HTTP_400_BAD_REQUEST)
+
+    # 3. Validation Logic
+    if not first_name or not phone or not password:
+        return Response({"error": "Fields cannot be empty"}, status=status.HTTP_400_BAD_REQUEST)
+    
+    # 4. Database Operations
+    try:
         if Profile.objects.filter(phone_number=phone).exists():
             return Response({"error": "Phone number already registered"}, status=status.HTTP_400_BAD_REQUEST)
         
-        # 3. Create user
         user = User.objects.create_user(
             username=phone, 
             first_name=first_name,
             password=password
         )
         
-        # 4. Create the linked Profile
         Profile.objects.create(
             user=user,
             phone_number=phone
@@ -59,14 +48,13 @@ def register_user(request):
         
         return Response({
             "message": "User registered successfully",
-            "user_id": user.id,
-            "first_name": user.first_name
+            "user_id": user.id
         }, status=status.HTTP_201_CREATED)
         
     except Exception as e:
         print(f"DEBUG: CRITICAL ERROR: {str(e)}")
-        return Response({"error": "Database error during registration"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
+        return Response({"error": "Database error", "details": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
 # ... (rest of your views remain unchanged)
 @api_view(['POST'])
 @authentication_classes([]) 
