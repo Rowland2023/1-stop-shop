@@ -80,22 +80,23 @@ function App() {
   // --- API: AUTHENTICATION ---
   const handleAuth = async (e) => {
   e.preventDefault();
-  const endpoint = authMode === "login" ? "/api/login/" : "/api/register/";
+  const isLogin = authMode === "login";
+  const endpoint = isLogin ? "/api/login/" : "/api/register/";
   
-  // This object MUST match exactly the keys in request.data.get()
+  // Construct payload dynamically based on mode
   const payload = {
-    first_name: authData.first_name,
     phone: authData.phone,
-    password: authData.password
+    password: authData.password,
+    ...(isLogin ? {} : { first_name: authData.first_name }) // Only add first_name if registering
   };
 
   try {
     const res = await fetch(`${BASE_URL}${endpoint}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload), // Send the explicit payload
+      body: JSON.stringify(payload),
     });
-    // ...
+    // ... rest of your code
     const data = await res.json();
     if (res.ok) {
       setUser(data); // Store the user object
