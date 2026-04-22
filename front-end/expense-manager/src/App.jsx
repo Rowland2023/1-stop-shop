@@ -70,12 +70,12 @@ function App() {
   // --- AUTH & USER STATES ---
   const [user, setUser] = useState(null);
   const [authMode, setAuthMode] = useState("login"); // 'login' or 'register'
-  {/* 1. Use the phone_number field for both Login and Register */}
-  <input 
-    placeholder="Phone Number" 
-    value={authData.phone_number} 
-    onChange={e => setAuthData({...authData, phone_number: e.target.value})} 
-  />
+  // Ensure initial state matches your backend expectations exactly
+  const [authData, setAuthData] = useState({ 
+    phone_number: "", 
+    password: "", 
+    first_name: "" 
+  });
   // --- TRACKING & HISTORY STATES ---
   const [trackInput, setTrackInput] = useState("");
   const [trackingData, setTrackingData] = useState(null);
@@ -265,31 +265,29 @@ function App() {
       <main>
   {/* AUTH VIEW */}
   {/* AUTH VIEW */}
-{view === "auth" && (
+  {view === "auth" && (
   <div className="view-container auth-screen" style={{ padding: '20px' }}>
     <h1>{authMode === "login" ? "Login" : "Register"}</h1>
     
-    {/* 1. Use the phone number field for both Login and Register */}
     <input 
       placeholder="Phone Number" 
-      value={authData.phone} 
-      onChange={e => setAuthData({...authData, phone: e.target.value})} 
+      value={authData.phone_number || ""} 
+      onChange={(e) => setAuthData(prev => ({ ...prev, phone_number: e.target.value }))} 
     />
     
-    {/* 2. ONLY show First Name during registration */}
     {authMode === "register" && (
       <input 
         placeholder="First Name" 
-        value={authData.first_name} 
-        onChange={e => setAuthData({...authData, first_name: e.target.value})} 
+        value={authData.first_name || ""} 
+        onChange={(e) => setAuthData(prev => ({ ...prev, first_name: e.target.value }))} 
       />
     )}
     
     <input 
       type="password" 
       placeholder="Password" 
-      value={authData.password} 
-      onChange={e => setAuthData({...authData, password: e.target.value})} 
+      value={authData.password || ""} 
+      onChange={(e) => setAuthData(prev => ({ ...prev, password: e.target.value }))} 
     />
     
     <button className="orange-curved-btn" onClick={handleAuth}>
