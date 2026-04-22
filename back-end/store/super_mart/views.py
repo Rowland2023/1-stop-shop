@@ -27,7 +27,7 @@ def register_user(request):
 @authentication_classes([]) 
 @permission_classes([AllowAny])
 def login_user(request):
-    phone = request.data.get('phone')
+    phone = request.data.get('phone_number')
     password = request.data.get('password')
 
     # 1. Find the user by the phone number in the related Profile

@@ -84,20 +84,23 @@ function App() {
   const endpoint = isLogin ? "/api/login/" : "/api/register/";
   
   const payload = {
-    phone_number: authData.phone_number,
+    phone_number: authData.phone, // Ensure this matches the key expected by your view
     password: authData.password,
     ...(isLogin ? {} : { first_name: authData.first_name })
   };
 
-  // ADD THIS LOG
-  console.log("Sending to:", endpoint, "Payload:", JSON.stringify(payload));
-
   try {
     const res = await fetch(`${BASE_URL}${endpoint}`, {
       method: "POST",
-      headers: { "Accept": "application/json","Content-Type": "application/json" },
+      headers: { 
+        "Accept": "application/json",
+        "Content-Type": "application/json" 
+      },
+      // CRITICAL: Include this to send session cookies
+      credentials: "include", 
       body: JSON.stringify(payload),
     });
+  
     // ... rest of your code
     const data = await res.json();
     if (res.ok) {
