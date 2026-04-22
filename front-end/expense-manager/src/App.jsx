@@ -85,12 +85,12 @@ function App() {
     // Use the current state, but ensure we aren't sending empty strings
     // If authData is still stale, we force the values from the state
     const payload = {
-      first_name: authData.first_name || "",
-      phone: authData.phone || "",
-      password: authData.password || ""
+      first_name: authData.first_name,
+      phone: authData.phone,
+      password: authData.password
     };
 
-    console.log("SENDING CLEANED PAYLOAD:", payload);
+    console.log("DEBUG: Payload being sent:", payload);
 
     try {
       const res = await fetch(`${BASE_URL}${endpoint}`, {
