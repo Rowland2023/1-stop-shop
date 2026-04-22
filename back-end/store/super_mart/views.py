@@ -17,12 +17,17 @@ from .tasks import trigger_invoice_generation
 @authentication_classes([]) 
 @permission_classes([AllowAny])
 def register_user(request):
-    serializer = UserRegistrationSerializer(data=request.data)
+    # Map 'phone_number' from frontend to 'phone' expected by serializer
+    data = request.data.copy()
+    if 'phone_number' in data:
+        data['phone'] = data['phone_number']
+        
+    serializer = UserRegistrationSerializer(data=data)
     if serializer.is_valid():
         serializer.save()
         return Response({"message": "User registered"}, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    # ... rest of your code
+
 @api_view(['POST'])
 @authentication_classes([]) 
 @permission_classes([AllowAny])

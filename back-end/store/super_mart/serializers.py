@@ -114,8 +114,9 @@ class EmployeeSerializer(serializers.ModelSerializer):
             'is_active', 'date_joined', 'payrolls', 'attendance'
         ]
 
+# serializers.py
 class UserRegistrationSerializer(serializers.ModelSerializer):
-    phone = serializers.CharField(source='username') # Mapping phone to username
+    phone = serializers.CharField(write_only=True) # Explicitly accept phone
     
     class Meta:
         model = User
@@ -123,4 +124,9 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         extra_kwargs = {'password': {'write_only': True}}
 
     def create(self, validated_data):
-        return User.objects.create_user(**validated_data)
+        phone = validated_data.pop('phone')
+        # Create the User
+        user = User.objects.create_user(**validated_data)
+        # Create the mandatory Profile
+        Profile.objects.create(user=user, phone_number=phone)
+        return user
