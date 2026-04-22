@@ -9,7 +9,7 @@ class Profile(models.Model):
     date_created = models.DateTimeField(auto_now_add=True) # Added this
     
     def __str__(self):
-        return f"{self.user.phone_number} - {self.user.first_name}"
+        return f"{self.phone_number} - {self.user.first_name}"
 
 # --- 1. MARKETPLACE & INVENTORY ---
 

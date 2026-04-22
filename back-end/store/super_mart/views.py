@@ -1,9 +1,12 @@
 import json
+from .models import Product           # ADD THIS to define 'Product'
+from .serializers import ProductSerializer # You likely need this too
 from django.db import transaction
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes, authentication_classes
 from rest_framework.permissions import AllowAny
+from rest_framework import viewsets # <--- ADD THIS
 
 @api_view(['POST'])
 @authentication_classes([])
