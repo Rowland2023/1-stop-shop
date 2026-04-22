@@ -15,12 +15,18 @@ from .tasks import trigger_invoice_generation
 @authentication_classes([]) 
 @permission_classes([AllowAny])
 def register_user(request):
-    print("DEBUG: Full Request Data received:", request.data)
+    data = request.data
+    if not data:
+        try:
+            data = json.loads(request.body)
+        except:
+            return Response({"error": "Could not parse request body"}, status=400)
+
+    first_name = data.get('first_name')
+    phone = data.get('phone')
+    password = data.get('password')
     
-    first_name = request.data.get('first_name')
-    phone = request.data.get('phone')
-    password = request.data.get('password')
-    
+    print(f"DEBUG: Parsed Data -> {first_name}, {phone}, {password}")
     try:
         # 1. Validation
         if not first_name or not phone or not password:
