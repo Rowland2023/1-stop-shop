@@ -79,42 +79,37 @@ function App() {
 
   // --- API: AUTHENTICATION ---
   const handleAuth = async (e) => {
-  e.preventDefault();
-  const endpoint = authMode === "login" ? "/api/login/" : "/api/register/";
-  
-  // Ensure we are using the most current state directly
-  const payload = {
-    first_name: authData.first_name,
-    phone: authData.phone,
-    password: authData.password
-  };
-
-  // ADD THIS: Simple client-side check before sending
-  if (!payload.phone || !payload.password || (authMode === 'register' && !payload.first_name)) {
-      alert("Please fill in all required fields.");
-      return;
-  }
-
-  try {
-    const res = await fetch(`${BASE_URL}${endpoint}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload), 
-    });
+    e.preventDefault();
+    const endpoint = authMode === "login" ? "/api/login/" : "/api/register/";
     
-    const data = await res.json();
-    if (res.ok) {
-      setUser(data);
-      setView("grid");
-    } else { 
-      // This will show you exactly what the server thinks is missing
-      alert(data.error || "Auth failed"); 
-    }
-  } catch (err) { 
-    alert("Backend unreachable."); 
-  }
-};
+    // Add this log
+    console.log("SENDING PAYLOAD:", authData);
 
+    const payload = {
+      first_name: authData.first_name,
+      phone: authData.phone,
+      password: authData.password
+    };
+
+    try {
+      const res = await fetch(`${BASE_URL}${endpoint}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      
+      const data = await res.json();
+      if (res.ok) {
+        setUser(data);
+        setView("grid");
+      } else { 
+        console.error("SERVER ERROR:", data); // This will show in browser console
+        alert(data.error || "Auth failed"); 
+      }
+    } catch (err) { 
+      alert("Backend unreachable."); 
+    }
+  };
   // --- 1. PERSISTENCE & DATA FETCHING ---
   // Update activeMainImage whenever selectedProduct changes
   useEffect(() => {
