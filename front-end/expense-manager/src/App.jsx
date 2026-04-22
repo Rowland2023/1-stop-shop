@@ -110,8 +110,10 @@ function App() {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",
-          "X-CSRFToken": csrftoken // CRITICAL: This is likely what is missing
+          "X-CSRFToken": csrftoken 
         },
+        // ADD THIS LINE
+        credentials: "include", 
         body: JSON.stringify(payload),
       });
       
@@ -120,10 +122,8 @@ function App() {
         setUser(data);
         setView("grid");
       } else { 
-        // If you see "Missing Credentials" here, the backend is 
-        // explicitly rejecting the request body structure.
         console.error("Backend Error Response:", data);
-        alert(data.error || "Authentication failed. Check console."); 
+        alert(data.error || "Authentication failed."); 
       }
     } catch (err) { 
       console.error("Fetch Error:", err);
