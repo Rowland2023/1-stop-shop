@@ -78,25 +78,39 @@ function App() {
   const [userOrders, setUserOrders] = useState([]);
 
   // --- API: AUTHENTICATION ---
+  // Helper to get CSRF token from cookies
+  const getCookie = (name) => {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      const cookies = document.cookie.split(';');
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  };
+
   const handleAuth = async (e) => {
     e.preventDefault();
     const endpoint = authMode === "login" ? "/api/login/" : "/api/register/";
-    
-    // Construct payload explicitly using current state
+    const csrftoken = getCookie('csrftoken');
+
     const payload = {
       first_name: authData.first_name,
       phone: authData.phone,
       password: authData.password
     };
 
-    console.log("DEBUG: Final Payload sent to " + endpoint + ":", payload);
-
     try {
       const res = await fetch(`${BASE_URL}${endpoint}`, {
         method: "POST",
         headers: { 
-          "Content-Type": "application/json", 
-          "Accept": "application/json" 
+          "Content-Type": "application/json",
+          "X-CSRFToken": csrftoken // CRITICAL: This is likely what is missing
         },
         body: JSON.stringify(payload),
       });
@@ -106,12 +120,14 @@ function App() {
         setUser(data);
         setView("grid");
       } else { 
-        console.error("SERVER REJECTED PAYLOAD:", data);
-        alert(data.error || "Authentication failed."); 
+        // If you see "Missing Credentials" here, the backend is 
+        // explicitly rejecting the request body structure.
+        console.error("Backend Error Response:", data);
+        alert(data.error || "Authentication failed. Check console."); 
       }
     } catch (err) { 
       console.error("Fetch Error:", err);
-      alert("Backend unreachable."); 
+      alert("Backend unreachable or CORS error."); 
     }
   };
   // --- 1. PERSISTENCE & DATA FETCHING ---
