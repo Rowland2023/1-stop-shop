@@ -70,7 +70,7 @@ function App() {
   // --- AUTH & USER STATES ---
   const [user, setUser] = useState(null);
   const [authMode, setAuthMode] = useState("login"); // 'login' or 'register'
- const [authData, setAuthData] = useState({ phone: "", password: "", first_name: "" });
+ const [authData, setAuthData] = useState({ phone_number: "", password: "", first_name: "" });
 
   // --- TRACKING & HISTORY STATES ---
   const [trackInput, setTrackInput] = useState("");
@@ -84,7 +84,7 @@ function App() {
   const endpoint = isLogin ? "/api/login/" : "/api/register/";
   
   const payload = {
-    phone: authData.phone,
+    phone_number: authData.phone_number,
     password: authData.password,
     ...(isLogin ? {} : { first_name: authData.first_name })
   };

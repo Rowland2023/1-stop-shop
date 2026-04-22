@@ -3,7 +3,9 @@ from django.contrib.auth import authenticate
 from rest_framework import viewsets, status
 from rest_framework.decorators import api_view, permission_classes, authentication_classes
 from rest_framework.permissions import AllowAny
+from rest_framework.views import APIView
 from rest_framework.response import Response
+from .models import Profile
 
 from .models import Product, Order, OrderItem, Employee, Payroll, Profile
 from .serializers import ProductSerializer, OrderItemSerializer, OrderSerializer 
@@ -25,13 +27,18 @@ def register_user(request):
 @authentication_classes([]) 
 @permission_classes([AllowAny])
 def login_user(request):
-    data = request.data
-    phone = data.get('phone')
-    password = data.get('password')
+    phone = request.data.get('phone')
+    password = request.data.get('password')
+
+    # 1. Find the user by the phone number in the related Profile
+    try:
+        profile = Profile.objects.get(phone_number=phone)
+        user = profile.user
+    except Profile.DoesNotExist:
+        return Response({"error": "Invalid Phone or Password"}, status=status.HTTP_401_UNAUTHORIZED)
     
-    # We use the phone number (which we set as the username) to authenticate
-    user = authenticate(username=phone, password=password)
-    
+    user = authenticate(username=user.username, password=password)
+
     if user is not None:
         return Response({
             "message": "Login successful",
