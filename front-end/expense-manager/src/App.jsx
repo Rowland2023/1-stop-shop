@@ -70,8 +70,12 @@ function App() {
   // --- AUTH & USER STATES ---
   const [user, setUser] = useState(null);
   const [authMode, setAuthMode] = useState("login"); // 'login' or 'register'
- const [authData, setAuthData] = useState({ phone_number: "", password: "", first_name: "" });
-
+  {/* 1. Use the phone_number field for both Login and Register */}
+  <input 
+    placeholder="Phone Number" 
+    value={authData.phone_number} 
+    onChange={e => setAuthData({...authData, phone_number: e.target.value})} 
+  />
   // --- TRACKING & HISTORY STATES ---
   const [trackInput, setTrackInput] = useState("");
   const [trackingData, setTrackingData] = useState(null);

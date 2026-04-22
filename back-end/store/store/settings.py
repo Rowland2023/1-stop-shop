@@ -68,6 +68,7 @@ TEMPLATES = [
 WSGI_APPLICATION = 'store.wsgi.application'
 
 # --- CORS & SECURITY ---
+
 CORS_ALLOW_CREDENTIALS = True
 
 CORS_ALLOWED_ORIGINS = [
@@ -80,7 +81,8 @@ CORS_ALLOWED_ORIGINS = [
 CORS_ALLOW_HEADERS = [
     "accept",
     "authorization",
-    "content-type",
+    "Content-Type",
+    "Set-Cookie",
     "user-agent",
     "x-csrftoken",
     "x-requested-with",
@@ -90,6 +92,13 @@ CSRF_TRUSTED_ORIGINS = [
     "https://frontend-rdmj.onrender.com",
     "https://back-end-wdk7.onrender.com",
 ]
+# settings.py
+
+# Ensure cookies are sent over HTTPS and are accessible across origins
+SESSION_COOKIE_SECURE = True
+SESSION_COOKIE_SAMESITE = 'None' 
+CSRF_COOKIE_SECURE = True
+CSRF_COOKIE_SAMESITE = 'None'
 
 USE_X_FORWARDED_HOST = True
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
