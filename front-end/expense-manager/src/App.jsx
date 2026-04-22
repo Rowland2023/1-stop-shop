@@ -6,31 +6,21 @@ const BASE_URL = import.meta.env.VITE_API_URL || "";
 const CLOUDINARY_BASE = "https://res.cloudinary.com/dscxqsew5/";
 const PAYSTACK_PUBLIC_KEY = 'pk_live_21207f639d252b46e35e171dca6b075f79cba433';
 
-// --- UTILS ---
+// Helper function updated for safety
+// Improved helper to handle both Cloudinary strings and full URLs
 const getImageUrl = (input) => {
   if (!input) return "/static/placeholder.png";
+  
+  // If it's the object structure from your serializer
   const path = (typeof input === 'object' && input !== null) ? input.image : input;
+  
   if (typeof path !== 'string') return "/static/placeholder.png";
   if (path.startsWith("http")) return path;
+  
   const cleanPath = path.startsWith("/") ? path.substring(1) : path;
   return `${CLOUDINARY_BASE}${cleanPath}`;
 };
 
-function getCookie(name) {
-  let cookieValue = null;
-  if (document.cookie && document.cookie !== '') {
-    const cookies = document.cookie.split(';');
-    for (let i = 0; i < cookies.length; i++) {
-      const cookie = cookies[i].trim();
-      if (cookie.substring(0, name.length + 1) === (name + '=')) {
-        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-        break;
-      }
-    }
-  }
-  return cookieValue;
-}
-// --- COMPONENTS ---
 function ProductCard({ product, onAddToCart, onSelect }) {
   const [tempQty, setTempQty] = useState(1);
   
@@ -80,12 +70,8 @@ function App() {
   // --- AUTH & USER STATES ---
   const [user, setUser] = useState(null);
   const [authMode, setAuthMode] = useState("login"); // 'login' or 'register'
-  // Ensure initial state matches your backend expectations exactly
-  const [authData, setAuthData] = useState({ 
-    phone_number: "", 
-    password: "", 
-    first_name: "" 
-  });
+ const [authData, setAuthData] = useState({ phone: "", password: "", first_name: "" });
+
   // --- TRACKING & HISTORY STATES ---
   const [trackInput, setTrackInput] = useState("");
   const [trackingData, setTrackingData] = useState(null);
@@ -94,27 +80,22 @@ function App() {
   // --- API: AUTHENTICATION ---
   const handleAuth = async (e) => {
   e.preventDefault();
-  const isLogin = authMode === "login";
-  const endpoint = isLogin ? "/api/login/" : "/api/register/";
+  const endpoint = authMode === "login" ? "/api/login/" : "/api/register/";
   
+  // This object MUST match exactly the keys in request.data.get()
   const payload = {
-    phone_number: authData.phone_number, // Ensure this matches the key expected by your view
-    password: authData.password,
-    ...(isLogin ? {} : { first_name: authData.first_name })
+    first_name: authData.first_name,
+    phone: authData.phone,
+    password: authData.password
   };
+
   try {
     const res = await fetch(`${BASE_URL}${endpoint}`, {
       method: "POST",
-      headers: { 
-        "Accept": "application/json",
-        "Content-Type": "application/json" 
-      },
-      // CRITICAL: Include this to send session cookies
-      credentials: "include", 
-      body: JSON.stringify(payload),
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload), // Send the explicit payload
     });
-  
-    // ... rest of your code
+    // ...
     const data = await res.json();
     if (res.ok) {
       setUser(data); // Store the user object
@@ -274,29 +255,31 @@ function App() {
       <main>
   {/* AUTH VIEW */}
   {/* AUTH VIEW */}
-  {view === "auth" && (
+{view === "auth" && (
   <div className="view-container auth-screen" style={{ padding: '20px' }}>
     <h1>{authMode === "login" ? "Login" : "Register"}</h1>
     
+    {/* 1. Use the phone number field for both Login and Register */}
     <input 
       placeholder="Phone Number" 
-      value={authData.phone_number || ""} 
-      onChange={(e) => setAuthData(prev => ({ ...prev, phone_number: e.target.value }))} 
+      value={authData.phone} 
+      onChange={e => setAuthData({...authData, phone: e.target.value})} 
     />
     
+    {/* 2. ONLY show First Name during registration */}
     {authMode === "register" && (
       <input 
         placeholder="First Name" 
-        value={authData.first_name || ""} 
-        onChange={(e) => setAuthData(prev => ({ ...prev, first_name: e.target.value }))} 
+        value={authData.first_name} 
+        onChange={e => setAuthData({...authData, first_name: e.target.value})} 
       />
     )}
     
     <input 
       type="password" 
       placeholder="Password" 
-      value={authData.password || ""} 
-      onChange={(e) => setAuthData(prev => ({ ...prev, password: e.target.value }))} 
+      value={authData.password} 
+      onChange={e => setAuthData({...authData, password: e.target.value})} 
     />
     
     <button className="orange-curved-btn" onClick={handleAuth}>

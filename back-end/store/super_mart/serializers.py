@@ -1,6 +1,6 @@
 import os
 from rest_framework import serializers
-from django.contrib.auth.models import User
+
 from .models import (
     Product, Order, OrderItem, 
     Employee, Attendance, Payroll, PerformanceReview, ProductImage
@@ -113,20 +113,3 @@ class EmployeeSerializer(serializers.ModelSerializer):
             'email', 'department', 'position', 'salary', 
             'is_active', 'date_joined', 'payrolls', 'attendance'
         ]
-
-# serializers.py
-class UserRegistrationSerializer(serializers.ModelSerializer):
-    phone = serializers.CharField(write_only=True) # Explicitly accept phone
-    
-    class Meta:
-        model = User
-        fields = ['first_name', 'phone', 'password']
-        extra_kwargs = {'password': {'write_only': True}}
-
-    def create(self, validated_data):
-        phone = validated_data.pop('phone')
-        # Create the User
-        user = User.objects.create_user(**validated_data)
-        # Create the mandatory Profile
-        Profile.objects.create(user=user, phone_number=phone)
-        return user
