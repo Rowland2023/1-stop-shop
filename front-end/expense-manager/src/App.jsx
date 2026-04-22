@@ -94,16 +94,11 @@ function App() {
   // --- API: AUTHENTICATION ---
   const handleAuth = async (e) => {
   e.preventDefault();
-  
-  // Validation check before sending
-  if (!authData.phone_number || !authData.password) {
-      alert("Please provide both phone number and password.");
-      return;
-  }
-
   const isLogin = authMode === "login";
+  const endpoint = isLogin ? "/api/login/" : "/api/register/";
+  
   const payload = {
-    phone_number: authData.phone_number,
+    phone_number: authData.phone_number, // Ensure this matches the key expected by your view
     password: authData.password,
     ...(isLogin ? {} : { first_name: authData.first_name })
   };
