@@ -4,27 +4,19 @@ import "./App.css";
 // --- CONFIG ---
 const BASE_URL = import.meta.env.VITE_API_URL || "";
 const CLOUDINARY_BASE = "https://res.cloudinary.com/dscxqsew5/";
-const PAYSTACK_PUBLIC_KEY = 'pk_live_21207f639d252b46e35e171dca6b075f79cba433';
 
-// Helper function updated for safety
-// Improved helper to handle both Cloudinary strings and full URLs
+// --- HELPERS ---
 const getImageUrl = (input) => {
   if (!input) return "/static/placeholder.png";
-  
-  // If it's the object structure from your serializer
   const path = (typeof input === 'object' && input !== null) ? input.image : input;
-  
   if (typeof path !== 'string') return "/static/placeholder.png";
   if (path.startsWith("http")) return path;
-  
   const cleanPath = path.startsWith("/") ? path.substring(1) : path;
   return `${CLOUDINARY_BASE}${cleanPath}`;
 };
 
 function ProductCard({ product, onAddToCart, onSelect }) {
   const [tempQty, setTempQty] = useState(1);
-  
-  // Safe Image Logic: Check main_image_url OR grab the first from gallery
   const gallery = product.additional_images || [];
   const primaryImg = product.main_image_url || (gallery.length > 0 ? gallery[0].image : null);
   const displayImage = getImageUrl(primaryImg);
@@ -32,12 +24,7 @@ function ProductCard({ product, onAddToCart, onSelect }) {
   return (
     <div className="product-card">
       <div className="img-frame" onClick={() => onSelect(product)} style={{ cursor: 'pointer' }}>
-        <img 
-          src={displayImage} 
-          alt={product.name} 
-          className="zoom-effect" 
-          onError={(e) => { e.target.src = "/static/placeholder.png"; }} 
-        />
+        <img src={displayImage} alt={product.name} className="zoom-effect" onError={(e) => { e.target.src = "/static/placeholder.png"; }} />
       </div>
       <h3>{product.name}</h3>
       <p className="price-text">₦{parseFloat(product.price || 0).toLocaleString()}</p>
@@ -49,30 +36,19 @@ function ProductCard({ product, onAddToCart, onSelect }) {
   );
 }
 
-// ... rest of your App component remains the same
 function App() {
-  // --- CORE STATES ---
   const [products, setProducts] = useState([]);
   const [category, setCategory] = useState("food");
-  const [cart, setCart] = useState(() => {
-    const savedCart = localStorage.getItem("shop_cart_data");
-    return savedCart ? JSON.parse(savedCart) : [];
-  });
+  const [cart, setCart] = useState(() => JSON.parse(localStorage.getItem("shop_cart_data")) || []);
   const [cartOpen, setCartOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-
-  // --- VIEW & UI STATES ---
-  const [view, setView] = useState("grid"); // 'grid', 'tracking', 'account', 'auth'
+  const [view, setView] = useState("grid");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [activeMainImage, setActiveMainImage] = useState(null);
-  
-  // --- AUTH & USER STATES ---
   const [user, setUser] = useState(null);
-  const [authMode, setAuthMode] = useState("login"); // 'login' or 'register'
- const [authData, setAuthData] = useState({ phone: "", password: "", first_name: "" });
-
-  // --- TRACKING & HISTORY STATES ---
+  const [authMode, setAuthMode] = useState("login");
+  const [authData, setAuthData] = useState({ phone: "", password: "", first_name: "" });
   const [trackInput, setTrackInput] = useState("");
   const [trackingData, setTrackingData] = useState(null);
   const [userOrders, setUserOrders] = useState([]);
@@ -82,123 +58,67 @@ function App() {
     e.preventDefault();
     const endpoint = authMode === "login" ? "/api/login/" : "/api/register/";
     
-    // Use the current state, but ensure we aren't sending empty strings
-    // If authData is still stale, we force the values from the state
+    // Construct payload explicitly using current state
     const payload = {
       first_name: authData.first_name,
       phone: authData.phone,
       password: authData.password
     };
 
-    console.log("DEBUG: Payload being sent:", payload);
+    console.log("DEBUG: Final Payload sent to " + endpoint + ":", payload);
 
     try {
       const res = await fetch(`${BASE_URL}${endpoint}`, {
         method: "POST",
         headers: { 
-          "Content-Type": "application/json",
-          "Accept": "application/json"
+          "Content-Type": "application/json", 
+          "Accept": "application/json" 
         },
         body: JSON.stringify(payload),
       });
       
       const data = await res.json();
-      
       if (res.ok) {
         setUser(data);
         setView("grid");
       } else { 
-        // This log will now show you the specific error from the server
         console.error("SERVER REJECTED PAYLOAD:", data);
-        alert(data.error || "Auth failed"); 
+        alert(data.error || "Authentication failed."); 
       }
     } catch (err) { 
       console.error("Fetch Error:", err);
       alert("Backend unreachable."); 
     }
   };
-  // --- 1. PERSISTENCE & DATA FETCHING ---
-  // Update activeMainImage whenever selectedProduct changes
-  useEffect(() => {
-    if (selectedProduct) {
-      setActiveMainImage(selectedProduct.main_image_url || selectedProduct.additional_images?.[0]?.image);
-    }
-  }, [selectedProduct]);
 
+  // --- DATA FETCHING & PERSISTENCE ---
   useEffect(() => {
-    localStorage.setItem("shop_cart_data", JSON.stringify(cart));
-  }, [cart]);
+    fetch(`${BASE_URL}/api/products/`, { credentials: "include" })
+      .then((res) => res.json())
+      .then((data) => setProducts(Array.isArray(data) ? data : (data.results || [])))
+      .catch((err) => console.error("Fetch error:", err));
+  }, []);
 
-  useEffect(() => {
-  fetch(`${BASE_URL}/api/products/`, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    // Required to send cookies (session/CSRF) to the backend
-    credentials: "include" 
-  })
-    .then((res) => {
-      if (!res.ok) throw new Error("Network response was not ok");
-      return res.json();
-    })
-    .then((data) => {
-      const productData = Array.isArray(data) ? data : (data.results || []);
-      setProducts(productData);
-    })
-    .catch((err) => console.error("Fetch error:", err));
-}, []);
+  useEffect(() => { localStorage.setItem("shop_cart_data", JSON.stringify(cart)); }, [cart]);
 
-  useEffect(() => {
-    if (view === "account" && user) {
-      fetch(`${BASE_URL}/api/orders/`)
-        .then((res) => res.json())
-        .then((data) => {
-          const ordersArray = Array.isArray(data) ? data : (data.results || []);
-          setUserOrders(ordersArray);
-        })
-        .catch((err) => console.error("Order fetch error:", err));
-    }
-  }, [view, user]);
-
-  // --- 2. LOGIC HANDLERS ---
+  // --- HANDLERS ---
   const addToCart = (product, qty = 1) => {
-    setCart((prevCart) => {
-      const existingItem = prevCart.find((item) => item.id === product.id);
-      if (existingItem) {
-        return prevCart.map((item) => 
-          item.id === product.id ? { ...item, quantity: item.quantity + qty } : item
-        );
-      }
-      return [...prevCart, { ...product, quantity: qty }];
+    setCart((prev) => {
+      const existing = prev.find((i) => i.id === product.id);
+      return existing ? prev.map((i) => i.id === product.id ? {...i, quantity: i.quantity + qty} : i) : [...prev, { ...product, quantity: qty }];
     });
   };
 
-  const handleTrackOrder = async () => {
-    if (!trackInput) return alert("Enter an Order ID");
-    try {
-      const response = await fetch(`${BASE_URL}/api/orders/${trackInput}/`);
-      const data = await response.json();
-      if (response.ok) setTrackingData(data);
-      else alert("Order not found.");
-    } catch (err) { alert("Connection failed."); }
-  };
-
   const checkoutWithPaystack = async () => {
-    if (cart.length === 0) return alert("Cart is empty!");
+    if (cart.length === 0) return alert("Cart empty!");
     setIsProcessing(true);
-    const totalAmount = cart.reduce((sum, item) => sum + (parseFloat(item.price) * item.quantity), 0) + 1500;
-
+    const totalAmount = cart.reduce((s, i) => s + (i.price * i.quantity), 0) + 1500;
     const handler = window.PaystackPop.setup({
       key: 'pk_live_21207f639d252b46e35e171dca6b075f79cba433',
       email: user ? `${user.phone}@mebuy.com` : 'guest@mebuy.com',
       amount: Math.round(totalAmount * 100),
       currency: 'NGN',
-      callback: (response) => {
-        setIsProcessing(false);
-        setCart([]);
-        alert("Payment Successful! Reference: " + response.reference);
-      },
+      callback: () => { setIsProcessing(false); setCart([]); alert("Payment Successful!"); },
       onClose: () => setIsProcessing(false)
     });
     handler.openIframe();
@@ -211,19 +131,13 @@ function App() {
 
   return (
     <div className="app-grid-wrapper">
-      {/* HEADER */}
       <header className="brand-header">
         <div className="header-inner" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
           <h1 onClick={() => setView("grid")} className="logo-text" style={{ cursor: 'pointer' }}>MeBuy</h1>
-          
-          <button className="cart-toggle-btn" onClick={() => setCartOpen(!cartOpen)}>
-           🛒 {cart.reduce((acc, item) => acc + item.quantity, 0)}
-            <span> ₦{cart.reduce((sum, item) => sum + (item.price * item.quantity), 0).toLocaleString()}</span>
-          </button>
+          <button className="cart-toggle-btn" onClick={() => setCartOpen(!cartOpen)}>🛒 {cart.reduce((a, i) => a + i.quantity, 0)}</button>
         </div>
       </header>
 
-      {/* NAVIGATION */}
       <nav className="main-nav">
         <div className="nav-container">
           <div className="nav-group left">
@@ -248,141 +162,56 @@ function App() {
         </div>
       </nav>
 
-      {/* SIDEBARS & MAIN - Ensure these are direct children of app-grid-wrapper */}
       <aside className="left-sidebar">
         <h3>Categories</h3>
         <nav className="side-nav">
-          {["food", "electronics", "office", "style&fashion", "sex-toys", "rent-house", "car-sales", "kitchen-items"].map((catId) => (
-            <button key={catId} className={category === catId ? "active" : ""} 
-              onClick={() => { setCategory(catId); setView("grid"); setSelectedProduct(null); }}>
-              {catId.toUpperCase()}
-            </button>
+          {["food", "electronics", "office", "style&fashion", "sex-toys", "rent-house", "car-sales", "kitchen-items"].map((cat) => (
+            <button key={cat} className={category === cat ? "active" : ""} onClick={() => { setCategory(cat); setView("grid"); setSelectedProduct(null); }}>{cat.toUpperCase()}</button>
           ))}
         </nav>
       </aside>
 
       <main>
-  {/* AUTH VIEW */}
-  {/* AUTH VIEW */}
-{view === "auth" && (
-  <div className="view-container auth-screen" style={{ padding: '20px' }}>
-    <h1>{authMode === "login" ? "Login" : "Register"}</h1>
-    
-    {/* 1. Use the phone number field for both Login and Register */}
-    <input 
-      placeholder="Phone Number" 
-      value={authData.phone} 
-      onChange={e => setAuthData({...authData, phone: e.target.value})} 
-    />
-    
-    {/* 2. ONLY show First Name during registration */}
-    {authMode === "register" && (
-      <input 
-        placeholder="First Name" 
-        value={authData.first_name} 
-        onChange={e => setAuthData({...authData, first_name: e.target.value})} 
-      />
-    )}
-    
-    <input 
-      type="password" 
-      placeholder="Password" 
-      value={authData.password} 
-      onChange={e => setAuthData({...authData, password: e.target.value})} 
-    />
-    
-    <button className="orange-curved-btn" onClick={handleAuth}>
-      {authMode === "login" ? "Login" : "Submit"}
-    </button>
-  </div>
-)}
-  {/* TRACKING VIEW */}
-  {view === "tracking" && (
-    <div className="view-container tracking-screen">
-      <h1>📦 Track Your Shipment</h1>
-      <input type="text" placeholder="Order ID" value={trackInput} onChange={(e) => setTrackInput(e.target.value)} />
-      <button className="track-btn-action" onClick={handleTrackOrder}>Check Status</button>
-      {trackingData && <div className="tracking-timeline">Status: {trackingData.status}</div>}
-    </div>
-  )}
-
-  {/* ACCOUNT VIEW */}
-  {view === "account" && (
-    <div className="view-container account-screen">
-      <h1>Order History</h1>
-      {userOrders.map(o => <div key={o.id}>{o.id} - ₦{o.total_price}</div>)}
-    </div>
-  )}
-
-  {/* PRODUCT GRID & DETAIL VIEW (Only rendered when view is 'grid') */}
-  {view === "grid" && (
-    <>
-      {selectedProduct ? (
-        <div className="detail-screen" style={{ padding: '20px' }}>
-          <button onClick={() => setSelectedProduct(null)}>← Back to Products</button>
-          <h1>{selectedProduct.name}</h1>
-          <div className="product-gallery">
-            <img 
-              src={getImageUrl(activeMainImage)} 
-              style={{ width: '100%', maxWidth: '400px', objectFit: 'contain' }} 
-            />
-            <div className="thumb-strip" style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
-              {selectedProduct.additional_images?.map((imgObj, idx) => (
-                <img 
-                  key={idx} 
-                  src={getImageUrl(imgObj.image)} 
-                  onClick={() => setActiveMainImage(imgObj.image)}
-                  style={{ width: '80px', height: '80px', cursor: 'pointer', objectFit: 'cover', border: activeMainImage === imgObj.image ? '2px solid orange' : 'none' }}
-                />
-              ))}
+        {view === "auth" && (
+          <div className="view-container auth-screen" style={{ padding: '20px' }}>
+            <h1>{authMode === "login" ? "Login" : "Register"}</h1>
+            <input placeholder="Phone Number" value={authData.phone} onChange={e => setAuthData(p => ({...p, phone: e.target.value}))} />
+            {authMode === "register" && (
+              <input placeholder="First Name" value={authData.first_name} onChange={e => setAuthData(p => ({...p, first_name: e.target.value}))} />
+            )}
+            <input type="password" placeholder="Password" value={authData.password} onChange={e => setAuthData(p => ({...p, password: e.target.value}))} />
+            <button className="orange-curved-btn" onClick={handleAuth}>{authMode === "login" ? "Login" : "Submit"}</button>
+          </div>
+        )}
+        
+        {view === "grid" && (
+          selectedProduct ? (
+            <div className="detail-screen" style={{ padding: '20px' }}>
+              <button onClick={() => setSelectedProduct(null)}>← Back</button>
+              <h1>{selectedProduct.name}</h1>
+              <div className="product-gallery">
+                <img src={getImageUrl(activeMainImage || selectedProduct.main_image_url)} style={{ width: '100%', maxWidth: '400px' }} />
+              </div>
             </div>
-          </div>
-          <div className="product-description">
-            <h3>Product Details</h3>
-            <p>{selectedProduct.description || "No description provided by the merchant."}</p>
-          </div>
-        </div>
-      ) : (
-        <div className="product-grid">
-          {filteredProducts.map((p) => (
-            <ProductCard key={p.id} product={p} onAddToCart={addToCart} onSelect={setSelectedProduct} />
-          ))}
-        </div>
-      )}
-    </>
-  )}
-</main>
+          ) : (
+            <div className="product-grid">
+              {filteredProducts.map((p) => <ProductCard key={p.id} product={p} onAddToCart={addToCart} onSelect={setSelectedProduct} />)}
+            </div>
+          )
+        )}
+      </main>
 
-      {/* RIGHT SIDEBAR - Updated with Orange Curved Buttons */}
       <aside className={`right-sidebar ${cartOpen ? "open" : ""}`}>
         <div className="cart-container" style={{ padding: '20px' }}>
           <h3>Your Cart</h3>
-          <div className="cart-items-list" style={{ marginBottom: '20px' }}>
-            {cart.map((item, index) => (
-              <div key={index} className="cart-item" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
-                <span>{item.name} (x{item.quantity})</span>
-                <span>₦{(item.price * item.quantity).toLocaleString()}</span>
-              </div>
-            ))}
-          </div>
-          
-          <div className="total-section" style={{ borderTop: '1px solid #eee', paddingTop: '15px' }}>
-            <p>Subtotal: ₦{cart.reduce((s, i) => s + (i.price * i.quantity), 0).toLocaleString()}</p>
-            <p><strong>Total: ₦{(cart.reduce((s, i) => s + (i.price * i.quantity), 0) + (cart.length > 0 ? 1500 : 0)).toLocaleString()}</strong></p>
-            
-            {/* The Buttons requested */}
-            <div className="cart-action-stack" style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '20px' }}>
-              <button className="checkout-btn-curved" disabled={isProcessing} onClick={checkoutWithPaystack}>
-                {isProcessing ? "Processing..." : "Checkout Now"}
-              </button>
-              <button className="clear-cart-btn-curved" onClick={() => setCart([])}>
-                Clear Cart
-              </button>
-            </div>
+          <div className="cart-action-stack" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <button className="checkout-btn-curved" onClick={checkoutWithPaystack}>Checkout Now</button>
+            <button className="clear-cart-btn-curved" onClick={() => setCart([])}>Clear Cart</button>
           </div>
         </div>
       </aside>
     </div>
   );
 }
+
 export default App;
