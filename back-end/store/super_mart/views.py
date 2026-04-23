@@ -18,47 +18,11 @@ from django.utils.decorators import method_decorator
 @authentication_classes([]) 
 @permission_classes([AllowAny])
 def register_user(request):
-    # 1. Define data first
-    data = request.data
-    print(f"DEBUG: Data received keys: {list(data.keys())}")
-    
-    # 2. Extract with Error Handling
-    try:
-        first_name = data['first_name']
-        phone = data['phone']
-        password = data['password']
-    except KeyError as e:
-        return Response({"error": f"Missing field in request: {e}"}, status=status.HTTP_400_BAD_REQUEST)
+    print("CONTENT TYPE:", request.content_type)
+    print("RAW BODY:", request.body)
+    print("PARSED DATA:", request.data)
 
-    # 3. Validation Logic
-    if not first_name or not phone or not password:
-        return Response({"error": "Fields cannot be empty"}, status=status.HTTP_400_BAD_REQUEST)
-    
-    # 4. Database Operations
-    try:
-        if Profile.objects.filter(phone_number=phone).exists():
-            return Response({"error": "Phone number already registered"}, status=status.HTTP_400_BAD_REQUEST)
-        
-        user = User.objects.create_user(
-            username=phone, 
-            first_name=first_name,
-            password=password
-        )
-        
-        Profile.objects.create(
-            user=user,
-            phone_number=phone
-        )
-        
-        return Response({
-            "message": "User registered successfully",
-            "user_id": user.id
-        }, status=status.HTTP_201_CREATED)
-        
-    except Exception as e:
-        print(f"DEBUG: CRITICAL ERROR: {str(e)}")
-        return Response({"error": "Database error", "details": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
+    return Response({"debug": "check logs"})
 # ... (rest of your views remain unchanged)
 @api_view(['POST'])
 @authentication_classes([]) 
