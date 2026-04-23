@@ -9,6 +9,14 @@ from rest_framework.permissions import AllowAny
 from rest_framework import viewsets # <--- ADD THIS
 from django.contrib.auth.models import User
 from super_mart.models import Profile
+from django.views.decorators.csrf import ensure_csrf_cookie
+from django.http import JsonResponse
+
+
+
+@ensure_csrf_cookie
+def get_csrf_token(request):
+    return JsonResponse({"detail": "CSRF cookie set"})
 
 @api_view(['POST'])
 @authentication_classes([]) 

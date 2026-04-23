@@ -78,6 +78,20 @@ function App() {
   const [userOrders, setUserOrders] = useState([]);
 
   // --- API: AUTHENTICATION ---
+  function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i].trim();
+      if (cookie.substring(0, name.length + 1) === (name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
   const handleAuth = async (e) => {
   e.preventDefault();
   const endpoint = authMode === "login" ? "/api/login/" : "/api/register/";
@@ -87,7 +101,11 @@ function App() {
     const res = await fetch(`${BASE_URL}${endpoint}`, {
       method: "POST",
       headers: { "Content-Type": "application/json","X-CSRFToken": getCookie("csrftoken") },
-      body: JSON.stringify({ first_name: "John", phone: "07062933995", password: "password123" }),
+      body: JSON.stringify({ 
+  first_name: authData.first_name, 
+  phone: authData.phone, 
+  password: authData.password 
+}),
       credentials: "include",
     });
     
@@ -107,8 +125,17 @@ function App() {
     alert("Backend unreachable.");
   }
 };
-
   // --- 1. PERSISTENCE & DATA FETCHING ---
+  // Add this to your main App component or a global auth provider
+const [csrfReady, setCsrfReady] = useState(false);
+
+useEffect(() => {
+  const seedCSRF = async () => {
+    await fetch(`${BASE_URL}/api/get-csrf-token/`);
+    setCsrfReady(true);
+  };
+  seedCSRF();
+}, []);
   // Update activeMainImage whenever selectedProduct changes
   useEffect(() => {
     if (selectedProduct) {
@@ -259,14 +286,12 @@ function App() {
   <div className="view-container auth-screen" style={{ padding: '20px' }}>
     <h1>{authMode === "login" ? "Login" : "Register"}</h1>
     
-    {/* 1. Use the phone number field for both Login and Register */}
     <input 
       placeholder="Phone Number" 
       value={authData.phone} 
       onChange={e => setAuthData({...authData, phone: e.target.value})} 
     />
     
-    {/* 2. ONLY show First Name during registration */}
     {authMode === "register" && (
       <input 
         placeholder="First Name" 
@@ -282,8 +307,13 @@ function App() {
       onChange={e => setAuthData({...authData, password: e.target.value})} 
     />
     
-    <button className="orange-curved-btn" onClick={handleAuth}>
-      {authMode === "login" ? "Login" : "Submit"}
+    {/* REPLACE YOUR OLD BUTTON WITH THIS ONE: */}
+    <button 
+      className="orange-curved-btn" 
+      disabled={!csrfReady} 
+      onClick={handleAuth}
+    >
+      {csrfReady ? (authMode === "login" ? "Login" : "Submit") : "Connecting..."}
     </button>
   </div>
 )}
