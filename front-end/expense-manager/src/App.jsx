@@ -79,23 +79,44 @@ function App() {
 
   // --- API: AUTHENTICATION ---
   const handleAuth = async (e) => {
-    e.preventDefault();
-    const endpoint = authMode === "login" ? "/api/login/" : "/api/register/";
-    try {
-      const res = await fetch(`${BASE_URL}${endpoint}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(authData),    
-      });
-      const data = await res.json();
-      if (res.ok) {
-        setUser(data.user);
-        setView("grid");
-      } else {
-        alert(data.message || "Auth failed");
-      }
-    } catch (err) { alert("Backend unreachable. Please check CORS settings."); }
+  e.preventDefault();
+  const endpoint = authMode === "login" ? "/api/login/" : "/api/register/";
+  
+  // Create a clean object with only the fields your backend expects
+  const payload = {
+    phone: authData.phone,
+    password: authData.password,
+    first_name: authData.first_name,
   };
+
+  try {
+    console.log("Sending JSON:", JSON.stringify(payload)); // For debugging
+    
+    const res = await fetch(`${BASE_URL}${endpoint}`, {
+      method: "POST",
+      headers: { 
+        "Content-Type": "application/json",
+        "Accept": "application/json" 
+      },
+      body: JSON.stringify(payload) // This IS the conversion to JSON
+    });
+
+    const data = await res.json();
+    
+    if (res.ok) {
+      setUser(data.user);
+      setView("grid");
+    } else {
+      // This will show you exactly why the backend says "Missing credentials"
+      console.error("Backend Error Details:", data);
+      alert(data.message || JSON.stringify(data));
+    }
+  } catch (err) {
+    console.error("Fetch Error:", err);
+    alert("Backend unreachable.");
+  }
+};
+
   // --- 1. PERSISTENCE & DATA FETCHING ---
   // Update activeMainImage whenever selectedProduct changes
   useEffect(() => {
