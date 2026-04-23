@@ -19,20 +19,22 @@ from django.utils.decorators import method_decorator
 @permission_classes([AllowAny])
 def register_user(request):
     # 1. Define data first
-    data = request.data
     print(f"DEBUG: Data received keys: {list(data.keys())}")
-    
+
     # 2. Extract with Error Handling
     try:
-        first_name = data['first_name']
-        phone = data['phone']
-        password = data['password']
+        first_name = request.data.get('first_name')
+        phone = request.data.get('phone')
+        password = request.data.get('password')
     except KeyError as e:
         return Response({"error": f"Missing field in request: {e}"}, status=status.HTTP_400_BAD_REQUEST)
 
     # 3. Validation Logic
     if not first_name or not phone or not password:
-        return Response({"error": "Fields cannot be empty"}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({
+        "error": "Missing credentials",
+        "received": request.data
+    }, status=400)
     
     # 4. Database Operations
     try:
