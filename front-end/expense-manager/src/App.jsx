@@ -85,8 +85,7 @@ function App() {
       const res = await fetch(`${BASE_URL}${endpoint}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(authData),
-        credentials: "include"
+        body: JSON.stringify(authData),    
       });
       const data = await res.json();
       if (res.ok) {
