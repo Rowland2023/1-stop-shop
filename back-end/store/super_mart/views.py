@@ -23,7 +23,9 @@ def get_csrf_token(request):
 @permission_classes([AllowAny])
 def register_user(request):
     # 1. Define data first
-    print(f"DEBUG: RAW REQUEST DATA: {request.data}")
+    print(f"DEBUG: Content-Type: {request.content_type}")
+    print(f"DEBUG: Body: {request.body}")
+    
     
     # 2. Extract with Error Handling
     data = request.data
