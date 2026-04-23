@@ -10,28 +10,25 @@ from rest_framework import viewsets # <--- ADD THIS
 from django.contrib.auth.models import User
 from super_mart.models import Profile
 
-
 @api_view(['POST'])
 @authentication_classes([]) 
 @permission_classes([AllowAny])
 def register_user(request):
     # 1. Define data first
+    data = request.data
     print(f"DEBUG: Data received keys: {list(data.keys())}")
-
+    
     # 2. Extract with Error Handling
     try:
-        first_name = request.data.get('first_name')
-        phone = request.data.get('phone')
-        password = request.data.get('password')
+        first_name = data['first_name']
+        phone = data['phone']
+        password = data['password']
     except KeyError as e:
         return Response({"error": f"Missing field in request: {e}"}, status=status.HTTP_400_BAD_REQUEST)
 
     # 3. Validation Logic
     if not first_name or not phone or not password:
-        return Response({
-        "error": "Missing credentials",
-        "received": request.data
-    }, status=400)
+        return Response({"error": "Fields cannot be empty"}, status=status.HTTP_400_BAD_REQUEST)
     
     # 4. Database Operations
     try:
