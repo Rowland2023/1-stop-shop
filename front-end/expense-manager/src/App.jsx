@@ -78,57 +78,23 @@ function App() {
   const [userOrders, setUserOrders] = useState([]);
 
   // --- API: AUTHENTICATION ---
-  // Helper to get CSRF token from cookies
-  const getCookie = (name) => {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-      const cookies = document.cookie.split(';');
-      for (let i = 0; i < cookies.length; i++) {
-        const cookie = cookies[i].trim();
-        if (cookie.substring(0, name.length + 1) === (name + '=')) {
-          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-          break;
-        }
-      }
-    }
-    return cookieValue;
-  };
-
   const handleAuth = async (e) => {
-  e.preventDefault();
-  const endpoint = authMode === "login" ? "/api/login/" : "/api/register/";
-  const csrftoken = getCookie('csrftoken');
-
-  const payload = {
-    first_name: authData.first_name,
-    phone: authData.phone,
-    password: authData.password
-  };
-
-  try {
-    const res = await fetch(`${BASE_URL}${endpoint}`, {
-      method: "POST",
-      headers: { 
-        "Content-Type": "application/json",
-        "X-CSRFToken": csrftoken 
-      },
-      credentials: "include", 
-      // ADD JSON.stringify() HERE:
-      body: JSON.stringify(payload), 
-    });
-
+    e.preventDefault();
+    const endpoint = authMode === "login" ? "/api/login/" : "/api/register/";
+    try {
+      const res = await fetch(`${BASE_URL}${endpoint}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(authData),
+      });
       const data = await res.json();
       if (res.ok) {
-        setUser(data);
+        setUser(data.user);
         setView("grid");
-      } else { 
-        console.error("Backend Error Response:", data);
-        alert(data.error || "Authentication failed."); 
+      } else {
+        alert(data.message || "Auth failed");
       }
-    } catch (err) { 
-      console.error("Fetch Error:", err);
-      alert("Backend unreachable or CORS error."); 
-    }
+    } catch (err) { alert("Backend unreachable. Please check CORS settings."); }
   };
   // --- 1. PERSISTENCE & DATA FETCHING ---
   // Update activeMainImage whenever selectedProduct changes
