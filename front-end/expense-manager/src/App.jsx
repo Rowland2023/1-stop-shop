@@ -82,26 +82,17 @@ function App() {
   e.preventDefault();
   const endpoint = authMode === "login" ? "/api/login/" : "/api/register/";
   
-  // Create a clean object with only the fields your backend expects
-  const payload = {
-    phone: authData.phone,
-    password: authData.password,
-    first_name: authData.first_name,
-  };
-
+  // Explicitly construct the object
   try {
-    console.log("Sending JSON:", JSON.stringify(payload)); // For debugging
-    
     const res = await fetch(`${BASE_URL}${endpoint}`, {
       method: "POST",
-      headers: { 
-        "Content-Type": "application/json",
-        "Accept": "application/json" 
-      },
-      body: JSON.stringify(payload) // This IS the conversion to JSON
+      headers: { "Content-Type": "application/json","X-CSRFToken": getCookie("csrftoken") },
+      body: JSON.stringify({ first_name: "John", phone: "07062933995", password: "password123" }),
+      credentials: "include",
     });
-
+    
     const data = await res.json();
+    // ...
     
     if (res.ok) {
       setUser(data.user);
