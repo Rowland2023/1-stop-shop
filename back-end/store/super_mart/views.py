@@ -10,6 +10,10 @@ from rest_framework import viewsets # <--- ADD THIS
 from django.contrib.auth.models import User
 from super_mart.models import Profile
 
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
+
+@csrf_exempt
 @api_view(['POST'])
 @authentication_classes([]) 
 @permission_classes([AllowAny])

@@ -110,7 +110,6 @@ function App() {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",
-          "X-CSRFToken": csrftoken 
         },
         // ADD THIS LINE
         credentials: "include", 
