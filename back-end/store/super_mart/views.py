@@ -15,10 +15,10 @@ from super_mart.models import Profile
 @permission_classes([AllowAny])
 def register_user(request):
     # 1. Define data first
-    data = request.data
-    print(f"DEBUG: Data received keys: {list(data.keys())}")
+    print(f"DEBUG: RAW REQUEST DATA: {request.data}")
     
     # 2. Extract with Error Handling
+    data = request.data
     try:
         first_name = data['first_name']
         phone = data['phone']
