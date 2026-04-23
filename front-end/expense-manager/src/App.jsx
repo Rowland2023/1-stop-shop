@@ -78,25 +78,9 @@ function App() {
   const [userOrders, setUserOrders] = useState([]);
 
   // --- API: AUTHENTICATION ---
-  const handleAuth = async (e) => {
-    e.preventDefault();
-    const endpoint = authMode === "login" ? "/api/login/" : "/api/register/";
-    try {
-      const res = await fetch(`${BASE_URL}${endpoint}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(authData),
-        credentials: "include"
-      });
-      const data = await res.json();
-      if (res.ok) {
-        setUser(data.user);
-        setView("grid");
-      } else {
-        alert(data.message || "Auth failed");
-      }
-    } catch (err) { alert("Backend unreachable. Please check CORS settings."); }
-  };
+  const [user, setUser] = useState(null);
+  const [authMode, setAuthMode] = useState("login"); // 'login' or 'register'
+  const [authData, setAuthData] = useState({ phone: "", password: "" });
   // --- 1. PERSISTENCE & DATA FETCHING ---
   // Update activeMainImage whenever selectedProduct changes
   useEffect(() => {
