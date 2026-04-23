@@ -86,6 +86,7 @@ function App() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(authData),
+        credentials: "include"
       });
       const data = await res.json();
       if (res.ok) {
