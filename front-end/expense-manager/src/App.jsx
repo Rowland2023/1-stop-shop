@@ -95,27 +95,28 @@ function App() {
   };
 
   const handleAuth = async (e) => {
-    e.preventDefault();
-    const endpoint = authMode === "login" ? "/api/login/" : "/api/register/";
-    const csrftoken = getCookie('csrftoken');
+  e.preventDefault();
+  const endpoint = authMode === "login" ? "/api/login/" : "/api/register/";
+  const csrftoken = getCookie('csrftoken');
 
-    const payload = {
-      first_name: authData.first_name,
-      phone: authData.phone,
-      password: authData.password
-    };
+  const payload = {
+    first_name: authData.first_name,
+    phone: authData.phone,
+    password: authData.password
+  };
 
-    try {
-      const res = await fetch(`${BASE_URL}${endpoint}`, {
-        method: "POST",
-        headers: { 
-          "Content-Type": "application/json",
-        },
-        // ADD THIS LINE
-        credentials: "include", 
-        body: JSON.stringify(payload),
-      });
-      
+  try {
+    const res = await fetch(`${BASE_URL}${endpoint}`, {
+      method: "POST",
+      headers: { 
+        "Content-Type": "application/json",
+        "X-CSRFToken": csrftoken 
+      },
+      credentials: "include", 
+      // ADD JSON.stringify() HERE:
+      body: JSON.stringify(payload), 
+    });
+
       const data = await res.json();
       if (res.ok) {
         setUser(data);
