@@ -12,9 +12,8 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-your-dev-key-here')
 DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
 ALLOWED_HOSTS = [
-    'back-end-wdk7.onrender.com', 
-    'frontend-rdmj.onrender.com', 
-    'localhost', 
+    '.onrender.com',
+    'localhost',
     '127.0.0.1'
 ]
 
@@ -77,6 +76,19 @@ CORS_ALLOWED_ORIGINS = [
     
 ]
 
+# Only enforce strict HTTPS cookies in production
+if not DEBUG:
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SESSION_COOKIE_SAMESITE = 'None'
+    CSRF_COOKIE_SAMESITE = 'None'
+else:
+    # Use Lax for local development so cookies work over HTTP
+    SESSION_COOKIE_SAMESITE = 'Lax'
+    CSRF_COOKIE_SAMESITE = 'Lax'
+    SESSION_COOKIE_SECURE = False
+    CSRF_COOKIE_SECURE = False
+    
 CORS_ALLOW_HEADERS = [
     "accept",
     "authorization",
@@ -91,8 +103,6 @@ CSRF_TRUSTED_ORIGINS = [
     "https://back-end-wdk7.onrender.com",
 ]
 
-USE_X_FORWARDED_HOST = True
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 # --- Database ---
 DATABASES = {
