@@ -1,5 +1,5 @@
 // db/department.js
-const pool = require('./db'); // The file where you exported your 'pool'
+const pool = require('../config/db'); // The file where you exported your 'pool'
 
 const Department = {
   create: async (name) => {
