@@ -18,6 +18,9 @@ from django.http import JsonResponse
 def get_csrf_token(request):
     return JsonResponse({"detail": "CSRF cookie set"})
 
+from django.views.decorators.csrf import csrf_exempt
+
+@csrf_exempt
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def register_user(request):
