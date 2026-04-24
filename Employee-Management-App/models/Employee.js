@@ -1,4 +1,4 @@
-const pool = require('../db'); // Your pg Pool instance
+const pool = require('../config/db'); // Your pg Pool instance
 
 const Employee = {
   create: async ({ firstName, lastName, dob, email, phoneNumber, departmentId }) => {
