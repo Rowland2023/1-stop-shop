@@ -10,7 +10,7 @@ router.register(r'products', views.ProductViewSet)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    
+    path('api/get-csrf-token/', get_csrf_token, name='get-csrf-token'),
     # Core API Endpoints
     path('api/', include(router.urls)),
     

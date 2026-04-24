@@ -22,18 +22,16 @@ def get_csrf_token(request):
 @permission_classes([AllowAny])
 def register_user(request):
     data = request.data
+    # Print the data to Render Logs so you can see what is REALLY arriving
+    print(f"DEBUG: Received Data: {data}") 
     
-    # Use .get() to avoid KeyError if a field is missing
-    first_name = data.get('first_name')
+    # Use .get() to prevent crashing if a field is missing
     phone = data.get('phone')
     password = data.get('password')
+    first_name = data.get('first_name', 'User') # Default to 'User' if name is missing
 
-    # Explicit check for missing data
-    if not first_name or not phone or not password:
-        return Response(
-            {"error": "Missing credentials. Please provide first_name, phone, and password."}, 
-            status=status.HTTP_400_BAD_REQUEST
-        )
+    if not phone or not password:
+        return Response({"error": "Phone and Password are required"}, status=400)
 
     # Now, explicitly use the phone as the username
     try:
