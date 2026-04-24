@@ -10,13 +10,14 @@ router.register(r'products', views.ProductViewSet)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/get-csrf-token/', get_csrf_token, name='get-csrf-token'),
+    
     # Core API Endpoints
     path('api/', include(router.urls)),
     
-    # Authentication (Solves the Login 404)
+    # Authentication & CSRF
     path('api/register/', views.register_user, name='register'),
     path('api/login/', views.login_user, name='login'),
+    path('api/get-csrf-token/', views.get_csrf_token, name='get-csrf-token'), # <--- ADD THIS
     
     # HRM & Marketplace
     path('api/employees/<str:employee_id>/', views.employee_detail_api),
