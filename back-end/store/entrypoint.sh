@@ -1,12 +1,12 @@
-rm entrypoint.sh
-# Paste the contents fresh from your editor to ensure no hidden Windows characters
-cat << 'EOF' > entrypoint.sh
-#!/bin/bash
+#!/usr/bin/env bash
 set -e
-echo "Running migrations..."
-python manage.py migrate --noinput
-echo "Collecting static files..."
+
+echo "Running collectstatic..."
 python manage.py collectstatic --noinput
-echo "Starting server..."
+
+echo "Running migrations..."
+# If this line fails, it will now print an error before exiting
+python manage.py migrate --noinput || { echo "MIGRATION FAILED - Check your DB credentials/schema"; exit 1; }
+
+echo "Starting Gunicorn..."
 exec "$@"
-EOF

@@ -6,9 +6,7 @@ WORKDIR /app
 # Install system dependencies
 RUN apt-get update && apt-get install -y libpq-dev gcc && rm -rf /var/lib/apt/lists/*
 
-# Since your Docker Build Context is set to 'back-end/store',
-# you need to copy from that folder into /app.
-# If these files are inside 'back-end/store/', you might need to adjust paths:
+# Copy requirements
 COPY requirements.txt /app/
 RUN pip install --no-cache-dir -r /app/requirements.txt
 
@@ -21,7 +19,9 @@ RUN python manage.py collectstatic --no-input
 
 # Copy and setup entrypoint
 COPY entrypoint.sh /app/entrypoint.sh
-RUN chmod +x /app/entrypoint.sh
+# 1. Force the file to be LF (Linux) format (removes potential Windows \r characters)
+# 2. Make it executable
+RUN sed -i 's/\r$//' /app/entrypoint.sh && chmod +x /app/entrypoint.sh
 
 EXPOSE 8000
 ENTRYPOINT ["/app/entrypoint.sh"]
