@@ -11,6 +11,8 @@ from django.contrib.auth.models import User
 from super_mart.models import Profile
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.http import JsonResponse
+from django.shortcuts import render, get_object_or_404
+from .models import Order, Payroll  # Ensure Payroll is added here
 # in views.py
 
 
