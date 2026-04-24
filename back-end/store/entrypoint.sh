@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/sh
 set -e
 
 echo "--- Entrypoint started ---" 2>&1
