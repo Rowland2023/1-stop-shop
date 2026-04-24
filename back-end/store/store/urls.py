@@ -9,20 +9,18 @@ router = DefaultRouter()
 router.register(r'products', views.ProductViewSet)
 
 urlpatterns = [
+    path('', api_root_view, name='root-landing'),
     path('admin/', admin.site.urls),
     
-    # Core API Endpoints
+    # API Routes
     path('api/', include(router.urls)),
-    
-    # Authentication & CSRF
-    path('api/register/', views.register_user, name='register'),
-    path('api/login/', views.login_user, name='login'),
-    path('api/get-csrf-token/', views.get_csrf_token, name='get-csrf-token'), # <--- ADD THIS
-    
-    # HRM & Marketplace
-    path('api/employees/<str:employee_id>/', views.employee_detail_api),
     path('api/orders/', views.order_list, name='order-list'), 
     path('api/orders/<int:order_id>/', views.get_order_detail, name='order-detail'),
+    path('api/register/', views.register_user, name='register'),
+    path('api/login/', views.login_user, name='login'),
+    # ADDED THIS LINE BELOW:
+    path('api/get-csrf-token/', views.get_csrf_token, name='get-csrf-token'),
+    path('api/employees/<str:employee_id>/', views.employee_detail_api, name='employee-detail'),
 ]
 
 # Serving Static/Media in Development/Render Debug mode
