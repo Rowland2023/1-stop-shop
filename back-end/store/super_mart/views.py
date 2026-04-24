@@ -19,34 +19,26 @@ def get_csrf_token(request):
     return JsonResponse({"detail": "CSRF cookie set"})
 
 @api_view(['POST'])
-@authentication_classes([]) 
 @permission_classes([AllowAny])
 def register_user(request):
-    # 1. Define data first
-    print(f"DEBUG: Content-Type: {request.content_type}")
-    print(f"DEBUG: Body: {request.body}")
-    
-    
-    # 2. Extract with Error Handling
     data = request.data
-    try:
-        first_name = data['first_name']
-        phone = data['phone']
-        password = data['password']
-    except KeyError as e:
-        return Response({"error": f"Missing field in request: {e}"}, status=status.HTTP_400_BAD_REQUEST)
-
-    # 3. Validation Logic
-    if not first_name or not phone or not password:
-        return Response({"error": "Fields cannot be empty"}, status=status.HTTP_400_BAD_REQUEST)
     
-    # 4. Database Operations
+    # Use .get() to avoid KeyError if a field is missing
+    first_name = data.get('first_name')
+    phone = data.get('phone')
+    password = data.get('password')
+
+    # Explicit check for missing data
+    if not first_name or not phone or not password:
+        return Response(
+            {"error": "Missing credentials. Please provide first_name, phone, and password."}, 
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    # Now, explicitly use the phone as the username
     try:
-        if Profile.objects.filter(phone_number=phone).exists():
-            return Response({"error": "Phone number already registered"}, status=status.HTTP_400_BAD_REQUEST)
-        
         user = User.objects.create_user(
-            username=phone, 
+            username=phone,  # Use phone as username
             first_name=first_name,
             password=password
         )
@@ -55,16 +47,9 @@ def register_user(request):
             user=user,
             phone_number=phone
         )
-        
-        return Response({
-            "message": "User registered successfully",
-            "user_id": user.id
-        }, status=status.HTTP_201_CREATED)
-        
+        return Response({"message": "User registered successfully"}, status=status.HTTP_201_CREATED)
     except Exception as e:
-        print(f"DEBUG: CRITICAL ERROR: {str(e)}")
-        return Response({"error": "Database error", "details": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
+        return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 # ... (rest of your views remain unchanged)
 @api_view(['POST'])
 @authentication_classes([]) 
