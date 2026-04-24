@@ -121,3 +121,12 @@ class PerformanceReview(models.Model):
     review_date = models.DateField()
     rating = models.IntegerField(choices=[(i, str(i)) for i in range(1, 6)])
     reviewer = models.CharField(max_length=100)
+
+class Invoice(models.Model):
+    order = models.OneToOneField(Order, on_delete=models.CASCADE, related_name='invoice')
+    invoice_number = models.CharField(max_length=50, unique=True)
+    issued_by = models.ForeignKey(Employee, on_delete=models.SET_NULL, null=True, blank=True)
+    issued_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f"Invoice {self.invoice_number} for Order {self.order.id}"

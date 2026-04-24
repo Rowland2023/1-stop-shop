@@ -177,3 +177,16 @@ def get_order_detail(request, order_id):
         return Response({"id": order.id, "total": str(order.total_price), "user_id": order.user_id, "items": items_list, "status": getattr(order, 'status', 'Processing')})
     except Order.DoesNotExist:
         return Response({"error": "Order not found"}, status=404)
+    
+
+from django.shortcuts import render, get_object_or_404
+from .models import Order, Invoice
+
+def print_receipt(request, order_id):
+    order = get_object_or_404(Order, id=order_id)
+    # Assuming you want to show the order items and details
+    context = {
+        'order': order,
+        'items': order.items.all(), # 'items' is the related_name from OrderItem
+    }
+    return render(request, 'super_mart/receipt.html', context)

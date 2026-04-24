@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        @media print { .no-print { display: none; } }
+        body { font-family: sans-serif; padding: 20px; }
+        .receipt-box { border: 1px solid #000; padding: 20px; width: 300px; }
+    </style>
+</head>
+<body>
+    <div class="receipt-box">
+        <h2>Receipt for Order #{{ order.id }}</h2>
+        <p>Total: ${{ order.total_price }}</p>
+        <ul>
+            {% for item in items %}
+                <li>{{ item.product.name }} x {{ item.quantity }} - ${{ item.price_at_purchase }}</li>
+            {% endfor %}
+        </ul>
+        <button class="no-print" onclick="window.print()">Print Receipt</button>
+    </div>
+</body>
+</html>

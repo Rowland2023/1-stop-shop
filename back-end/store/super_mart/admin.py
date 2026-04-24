@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.models import User
 from django.utils.html import format_html
+from django.urls import reverse
 from django.contrib.auth.admin import UserAdmin
 from .models import (
     Employee, Attendance, Payroll, PerformanceReview, 
@@ -68,16 +69,21 @@ class ProductAdmin(admin.ModelAdmin):
         if hasattr(obj, 'image_display') and obj.image_display: return "Cloudinary"
         if hasattr(obj, 'main_image') and obj.main_image: return "Admin Upload"
         return "Missing"
-
+# ...
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
     list_display = ('id', 'user_id', 'total_price', 'status', 'download_receipt')
     inlines = [OrderItemInline]
 
     def download_receipt(self, obj):
-        invoice_url = f"https://invoice-service-ttn6.onrender.com/api/invoices/generate?order_id={obj.id}"
-        return format_html('<a href="{}" target="_blank" style="background:#2e7d32; color:white; padding:5px; border-radius:4px;">Receipt</a>', invoice_url)
-
+        # This points to the internal Django view we created
+        url = reverse('print_receipt', args=[obj.id])
+        return format_html(
+            '<a href="{}" target="_blank" style="background:#2e7d32; color:white; padding:5px; border-radius:4px;">Receipt</a>', 
+            url
+        )
+    download_receipt.short_description = 'Receipt'
+    
 @admin.register(Employee)
 class EmployeeAdmin(admin.ModelAdmin):
     list_display = ('employee_id', 'first_name', 'last_name', 'department', 'is_active')
