@@ -24,5 +24,8 @@ COPY entrypoint.sh /app/entrypoint.sh
 RUN sed -i 's/\r$//' /app/entrypoint.sh && chmod +x /app/entrypoint.sh
 
 EXPOSE 8000
-ENTRYPOINT ["/app/entrypoint.sh"]
+# Bypass the shebang by calling the shell explicitly
+ENTRYPOINT ["/bin/sh", "/app/store/entrypoint.sh"]
+
+# Ensure the CMD is explicitly passing arguments
 CMD ["gunicorn", "store.wsgi:application", "--bind", "0.0.0.0:8000"]
