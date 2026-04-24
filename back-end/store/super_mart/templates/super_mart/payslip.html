@@ -1,24 +1,40 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Payslip - {{ payroll.employee.first_name }}</title>
     <style>
-        body { font-family: sans-serif; padding: 40px; }
-        .slip { border: 2px solid #333; padding: 20px; width: 400px; margin: auto; }
-        .header { border-bottom: 1px solid #ccc; margin-bottom: 20px; }
+        body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #333; line-height: 1.6; }
+        .invoice-box { max-width: 600px; margin: auto; padding: 30px; border: 1px solid #eee; box-shadow: 0 0 10px rgba(0, 0, 0, 0.15); }
+        .header { display: flex; justify-content: space-between; border-bottom: 2px solid #2e7d32; padding-bottom: 20px; margin-bottom: 20px; }
+        .header h1 { color: #2e7d32; margin: 0; }
+        table { width: 100%; border-collapse: collapse; }
+        table td { padding: 8px; vertical-align: top; }
+        .total { font-weight: bold; border-top: 2px solid #eee; text-align: right; }
+        .btn-print { background: #2e7d32; color: white; padding: 10px 20px; border: none; cursor: pointer; border-radius: 4px; margin-top: 20px; }
+        @media print { .no-print { display: none; } }
     </style>
 </head>
 <body>
-    <div class="slip">
+    <div class="invoice-box">
         <div class="header">
-            <h1>Payslip</h1>
+            <div>
+                <h1>PAYSLIP</h1>
+                <p>Lagos Tech Hub</p>
+            </div>
+            <div style="text-align: right;">
+                <strong>Period:</strong> {{ payroll.pay_period }}<br>
+                <strong>Employee ID:</strong> {{ payroll.employee.employee_id }}
+            </div>
         </div>
-        <p><strong>Employee:</strong> {{ payroll.employee.first_name }} {{ payroll.employee.last_name }}</p>
-        <p><strong>Period:</strong> {{ payroll.pay_period }}</p>
-        <hr>
-        <p><strong>Gross Salary:</strong> ${{ payroll.gross_salary }}</p>
-        <p><strong>Net Amount:</strong> ${{ payroll.amount }}</p>
-        <p><strong>Status:</strong> {{ payroll.is_paid|yesno:"Paid,Pending" }}</p>
+
+        <table>
+            <tr><td><strong>Employee:</strong></td><td>{{ payroll.employee.first_name }} {{ payroll.employee.last_name }}</td></tr>
+            <tr><td><strong>Position:</strong></td><td>{{ payroll.employee.position }}</td></tr>
+            <tr><td colspan="2"><hr></td></tr>
+            <tr><td>Gross Salary:</td><td style="text-align: right;">${{ payroll.gross_salary }}</td></tr>
+            <tr class="total"><td>Net Amount Payable:</td><td>${{ payroll.amount }}</td></tr>
+        </table>
+
+        <button class="no-print btn-print" onclick="window.print()">Print Document</button>
     </div>
 </body>
 </html>
