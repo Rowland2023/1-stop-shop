@@ -71,6 +71,13 @@ class OrderItem(models.Model):
     quantity = models.PositiveIntegerField(default=1)
     price_at_purchase = models.DecimalField(max_digits=12, decimal_places=2)
 
+# --- 1. NEW DEPARTMENT MODEL ---
+class Department(models.Model):
+    name = models.CharField(max_length=255, unique=True)
+
+    def __str__(self):
+        return self.name
+
 # --- 2. EMPLOYEE MANAGEMENT (HRM) ---
 
 class Employee(models.Model):
@@ -78,7 +85,15 @@ class Employee(models.Model):
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
     email = models.EmailField(unique=True)
-    department = models.CharField(max_length=100)
+    
+    # Linked to Department model, pointing to 'department_id' column
+    department = models.ForeignKey(
+        Department, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        db_column='department_id'
+    )
+    
     position = models.CharField(max_length=100)
     salary = models.DecimalField(max_digits=12, decimal_places=2)
     is_active = models.BooleanField(default=True)
