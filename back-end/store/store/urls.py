@@ -4,6 +4,8 @@ from rest_framework.routers import DefaultRouter
 from django.conf import settings
 from django.conf.urls.static import static
 from super_mart import views 
+from super_mart.views import api_root_view
+
 
 router = DefaultRouter()
 router.register(r'products', views.ProductViewSet)

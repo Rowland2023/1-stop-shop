@@ -11,6 +11,12 @@ from django.contrib.auth.models import User
 from super_mart.models import Profile
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.http import JsonResponse
+# in views.py
+
+
+@api_view(['GET'])
+def api_root_view(request):
+    return Response({"message": "Welcome to the API root"})
 
 
 
