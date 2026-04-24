@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Payslip - {{ payroll.employee.first_name }}</title>
+    <style>
+        body { font-family: sans-serif; padding: 40px; }
+        .slip { border: 2px solid #333; padding: 20px; width: 400px; margin: auto; }
+        .header { border-bottom: 1px solid #ccc; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+    <div class="slip">
+        <div class="header">
+            <h1>Payslip</h1>
+        </div>
+        <p><strong>Employee:</strong> {{ payroll.employee.first_name }} {{ payroll.employee.last_name }}</p>
+        <p><strong>Period:</strong> {{ payroll.pay_period }}</p>
+        <hr>
+        <p><strong>Gross Salary:</strong> ${{ payroll.gross_salary }}</p>
+        <p><strong>Net Amount:</strong> ${{ payroll.amount }}</p>
+        <p><strong>Status:</strong> {{ payroll.is_paid|yesno:"Paid,Pending" }}</p>
+    </div>
+</body>
+</html>
