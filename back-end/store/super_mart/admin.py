@@ -1,7 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.models import User
 from django.utils.html import format_html
-from django.urls import reverse
 from django.contrib.auth.admin import UserAdmin
 from .models import (
     Employee, Attendance, Payroll, PerformanceReview, 
@@ -69,7 +68,10 @@ class ProductAdmin(admin.ModelAdmin):
         if hasattr(obj, 'image_display') and obj.image_display: return "Cloudinary"
         if hasattr(obj, 'main_image') and obj.main_image: return "Admin Upload"
         return "Missing"
+
+from django.urls import reverse
 # ...
+
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
     list_display = ('id', 'user_id', 'total_price', 'status', 'download_receipt')
@@ -83,7 +85,6 @@ class OrderAdmin(admin.ModelAdmin):
             url
         )
     download_receipt.short_description = 'Receipt'
-    
 @admin.register(Employee)
 class EmployeeAdmin(admin.ModelAdmin):
     list_display = ('employee_id', 'first_name', 'last_name', 'department', 'is_active')
@@ -94,8 +95,17 @@ class AttendanceAdmin(admin.ModelAdmin):
 
 @admin.register(Payroll)
 class PayrollAdmin(admin.ModelAdmin):
-    list_display = ('employee', 'pay_period', 'gross_salary', 'amount', 'is_paid')
+    # Add 'print_payslip' to the list_display
+    list_display = ('employee', 'pay_period', 'gross_salary', 'amount', 'is_paid', 'print_payslip')
 
+    def print_payslip(self, obj):
+        # We use a new URL name 'print_payroll' for this specific document
+        url = reverse('print_payroll', args=[obj.id])
+        return format_html(
+            '<a href="{}" target="_blank" style="background:#1976d2; color:white; padding:5px; border-radius:4px;">Print Slip</a>', 
+            url
+        )
+    print_payslip.short_description = 'Actions'
 @admin.register(PerformanceReview)
 class PerformanceReviewAdmin(admin.ModelAdmin):
     list_display = ('employee', 'review_date', 'rating')

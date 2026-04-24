@@ -190,3 +190,7 @@ def print_receipt(request, order_id):
         'items': order.items.all(), # 'items' is the related_name from OrderItem
     }
     return render(request, 'super_mart/receipt.html', context)
+
+def print_payroll(request, payroll_id):
+    payroll = get_object_or_404(Payroll, id=payroll_id)
+    return render(request, 'super_mart/payslip.html', {'payroll': payroll})
