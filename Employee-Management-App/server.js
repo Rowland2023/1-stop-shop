@@ -1,18 +1,24 @@
 const app = require('./app');
-const mongoose = require('mongoose');
+const { Pool } = require('pg');
 
 const PORT = process.env.PORT || 3000;
-// Note: 'mongodb' matches the service name in your docker-compose.yml
-const MONGO_URI = process.env.MONGO_URI || 'mongodb://mongodb:27017/employee';
+// Use the DATABASE_URL environment variable we set in Render
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false // Necessary for Render Postgres
+  }
+});
 
-mongoose.connect(MONGO_URI)
+// Test the connection
+pool.connect()
   .then(() => {
-    console.log('Connected to MongoDB via Service: mongodb');
+    console.log('Connected to PostgreSQL database');
     app.listen(PORT, '0.0.0.0', () => {
       console.log(`Employee Service active on port ${PORT}`);
     });
   })
   .catch(err => {
     console.error('Database connection failed. Exiting...', err);
-    process.exit(1); // Tell Docker the container failed
+    process.exit(1);
   });
