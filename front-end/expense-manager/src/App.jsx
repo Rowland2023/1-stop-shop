@@ -96,33 +96,36 @@ function App() {
   e.preventDefault();
   const endpoint = authMode === "login" ? "/api/login/" : "/api/register/";
   
-  // Explicitly construct the object
+  // Construct payload explicitly
+  const payload = {
+    first_name: authData.first_name,
+    phone: authData.phone,
+    password: authData.password
+  };
+
+  console.log("Sending Payload:", JSON.stringify(payload)); // Check browser console
+
   try {
     const res = await fetch(`${BASE_URL}${endpoint}`, {
       method: "POST",
-      headers: { "Content-Type": "application/json","X-CSRFToken": getCookie("csrftoken") },
-      body: JSON.stringify({ 
-  first_name: authData.first_name, 
-  phone: authData.phone, 
-  password: authData.password 
-}),
+      headers: { 
+        "Content-Type": "application/json",
+        "X-CSRFToken": getCookie("csrftoken") 
+      },
+      body: JSON.stringify(payload),
       credentials: "include",
     });
     
     const data = await res.json();
-    // ...
-    
     if (res.ok) {
-      setUser(data.user);
+      setUser(data.user || data);
       setView("grid");
     } else {
-      // This will show you exactly why the backend says "Missing credentials"
-      console.error("Backend Error Details:", data);
-      alert(data.message || JSON.stringify(data));
+      console.error("Backend Error:", data);
+      alert(data.error || "Authentication failed");
     }
   } catch (err) {
     console.error("Fetch Error:", err);
-    alert("Backend unreachable.");
   }
 };
   // --- 1. PERSISTENCE & DATA FETCHING ---
