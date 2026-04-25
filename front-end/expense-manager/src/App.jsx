@@ -73,6 +73,7 @@ function App() {
   const [authMode, setAuthMode] = useState("login"); // 'login' or 'register'
   const [authData, setAuthData] = useState({ phone: "", password: "", first_name: "" });
   const [welcomeMessage, setWelcomeMessage] = useState("");
+  const [paystackLoaded, setPaystackLoaded] = useState(false);
 
   // --- TRACKING & HISTORY STATES ---
   const [trackInput, setTrackInput] = useState("");
@@ -196,6 +197,16 @@ useEffect(() => {
     }
   }, [view, user]);
 
+  useEffect(() => {
+  const checkPaystack = setInterval(() => {
+    if (window.PaystackPop) {
+      setPaystackLoaded(true);
+      clearInterval(checkPaystack);
+    }
+  }, 500);
+  return () => clearInterval(checkPaystack);
+}, []);
+
   // --- 2. LOGIC HANDLERS ---
   const addToCart = (product, qty = 1) => {
     setCart((prevCart) => {
@@ -276,17 +287,19 @@ useEffect(() => {
       
       {/* Dynamic User Greeting */}
       {user && (
-        <span className="user-tag" style={{ 
+  <span className="user-tag" style={{ 
     fontWeight: 'bold', 
-    backgroundColor: 'rgba(255, 255, 255, 0.2)', // Light semi-transparent bubble
-    padding: '5px 12px',
+    backgroundColor: '#ff6600', // Using a solid 'brand' orange (high contrast against dark)
+    padding: '6px 15px',
     borderRadius: '20px',
-    color: '#ffffff', // White text
-    textShadow: '0px 1px 3px rgba(0,0,0,0.5)' // Subtle shadow for readability
+    color: '#ffffff',           // Crisp white text
+    fontSize: '0.9rem',
+    display: 'inline-block',
+    boxShadow: '0 2px 4px rgba(0,0,0,0.3)' // Stronger shadow for depth
   }}>
     Hi, {user.first_name}! 👤
   </span>
-      )}
+)}
 
       {/* Cart Button */}
       <button className="cart-toggle-btn" onClick={() => setCartOpen(!cartOpen)}>
@@ -449,8 +462,17 @@ useEffect(() => {
 
             {/* The Buttons requested */}
             <div className="cart-action-stack" style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '20px' }}>
-              <button className="checkout-btn-curved" disabled={isProcessing} onClick={checkoutWithPaystack}>
-                {isProcessing ? "Processing..." : "Checkout Now"}
+              <button 
+                  className="checkout-btn-curved" 
+                  // Disable if processing OR if Paystack isn't loaded yet
+                  disabled={isProcessing || !paystackLoaded} 
+                  onClick={checkoutWithPaystack}
+>
+                  {/* Change the text based on state */}
+                  {!paystackLoaded 
+                  ? "Loading Payment Gateway..." 
+                  : (isProcessing ? "Processing..." : "Checkout Now")
+                  }
               </button>
               <button className="clear-cart-btn-curved" onClick={() => setCart([])}>
                 Clear Cart
