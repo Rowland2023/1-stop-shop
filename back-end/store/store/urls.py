@@ -4,31 +4,29 @@ from rest_framework.routers import DefaultRouter
 from django.conf import settings
 from django.conf.urls.static import static
 from super_mart import views 
-from super_mart.views import api_root_view
-
 
 router = DefaultRouter()
 router.register(r'products', views.ProductViewSet)
+router.register(r'orders', views.OrderViewSet) # Using the ViewSet for CRUD operations
 
 urlpatterns = [
-    path('', api_root_view, name='root-landing'),
+    path('', views.api_root_view, name='root-landing'),
     path('admin/', admin.site.urls),
     
     # API Routes
     path('api/', include(router.urls)),
-    path('api/orders/', views.order_list, name='order-list'), 
-    path('api/orders/<int:order_id>/', views.get_order_detail, name='order-detail'),
     path('api/register/', views.register_user, name='register'),
     path('api/login/', views.login_user, name='login'),
-    path('receipt/<int:order_id>/', views.print_receipt, name='print_receipt'),
-    path('payroll/print/<int:payroll_id>/', views.print_payroll, name='print_payroll'),
     path('api/verify-payment/', views.verify_payment, name='verify_payment'),
-    # ADDED THIS LINE BELOW:
     path('api/get-csrf-token/', views.get_csrf_token, name='get-csrf-token'),
     path('api/employees/<str:employee_id>/', views.employee_detail_api, name='employee-detail'),
+    
+    # Print/Report Routes
+    path('receipt/<int:order_id>/', views.print_receipt, name='print_receipt'),
+    path('payroll/print/<int:payroll_id>/', views.print_payroll, name='print_payroll'),
 ]
 
-# Serving Static/Media in Development/Render Debug mode
+# Serving Static/Media
 if settings.DEBUG:
     from django.contrib.staticfiles.urls import staticfiles_urlpatterns
     urlpatterns += staticfiles_urlpatterns()

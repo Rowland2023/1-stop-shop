@@ -283,6 +283,17 @@ def render_receipt_pdf(request, order_id):
     context = {'order': order, 'items': order.items.all()}
     return render(request, 'super_mart/receipt.html', context)
 
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def print_receipt(request, order_id):
+    order = get_object_or_404(Order, id=order_id)
+    # Professional touch: Block unauthorized receipt access
+    if order.status != 'Paid':
+        return HttpResponse("Receipt not available: Payment pending.", status=403)
+        
+    context = {'order': order, 'items': order.items.all()}
+    return render(request, 'super_mart/receipt.html', context)
+
 # --- 6. HRM: PAYROLL PRINTING ---
 def print_payroll(request, payroll_id):
     payroll = get_object_or_404(Payroll, id=payroll_id)
