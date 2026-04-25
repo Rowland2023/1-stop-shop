@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import "./App.css";
 import { usePaystackPayment } from 'react-paystack';
-// --- CONFIG ---
+/* --- CONFIG --- */
 const BASE_URL = import.meta.env.VITE_API_URL || "";
 const CLOUDINARY_BASE = "https://res.cloudinary.com/dscxqsew5/";
 const PAYSTACK_PUBLIC_KEY = 'pk_live_21207f639d252b46e35e171dca6b075f79cba433';
@@ -23,7 +23,7 @@ const getImageUrl = (input) => {
 function ProductCard({ product, onAddToCart, onSelect }) {
   const [tempQty, setTempQty] = useState(1);
   
-  // Safe Image Logic: Check main_image_url OR grab the first from gallery
+  /* Safe Image Logic: Check main_image_url OR grab the first from gallery */
   const gallery = product.additional_images || [];
   const primaryImg = product.main_image_url || (gallery.length > 0 ? gallery[0].image : null);
   const displayImage = getImageUrl(primaryImg);
@@ -48,7 +48,7 @@ function ProductCard({ product, onAddToCart, onSelect }) {
   );
 }
 
-// ... rest of your App component remains the same
+/* ... rest of your App component remains the same */
 function App() {
   // --- CORE STATES ---
   const [products, setProducts] = useState([]);
@@ -60,7 +60,7 @@ function App() {
   const [cartOpen, setCartOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  // --- VIEW & UI STATES ---
+  /* --- VIEW & UI STATES --- */
   const [view, setView] = useState("grid"); // 'grid', 'tracking', 'account', 'auth'
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -69,19 +69,87 @@ function App() {
   const [paystackReady, setPaystackReady] = useState(false);
   const [loadAttempt, setLoadAttempt] = useState(0);
   
-  // --- AUTH & USER STATES ---
+  /* --- AUTH & USER STATES ---*/
   const [user, setUser] = useState(null);
-  const [authMode, setAuthMode] = useState("login"); // 'login' or 'register'
+  const [authMode, setAuthMode] = useState("login"); /* 'login' or 'register' */
   const [authData, setAuthData] = useState({ phone: "", password: "", first_name: "" });
   const [welcomeMessage, setWelcomeMessage] = useState("");
+  const [csrfReady, setCsrfReady] = useState(false);
   
 
-  // --- TRACKING & HISTORY STATES ---
+  /* --- TRACKING & HISTORY STATES --- */
   const [trackInput, setTrackInput] = useState("");
   const [trackingData, setTrackingData] = useState(null);
   const [userOrders, setUserOrders] = useState([]);
+  
+  /* --- 2. HOOKS & CALCULATIONS (Always second) --- */
+  const totalAmount = cart.reduce((sum, item) => sum + (parseFloat(item.price) * item.quantity), 0);
 
-  // --- API: AUTHENTICATION ---
+  const config = {
+    reference: (new Date()).getTime().toString(),
+    email: user ? `${user.phone}@mebuy.com` : 'guest@mebuy.com',
+    amount: Math.round(totalAmount * 100),
+    publicKey: 'pk_live_21207f639d252b46e35e171dca6b075f79cba433',
+  };
+
+  /* initializePayment is now defined safely at the top level */
+  const initializePayment = usePaystackPayment(config);
+
+// Seed CSRF token on app load
+useEffect(() => {
+  const seedCSRF = async () => {
+    await fetch(`${BASE_URL}/api/get-csrf-token/`);
+    setCsrfReady(true);
+  };
+  seedCSRF();
+}, []);
+
+/* Update activeMainImage whenever selectedProduct changes */
+  useEffect(() => {
+    if (selectedProduct) {
+      setActiveMainImage(selectedProduct.main_image_url || selectedProduct.additional_images?.[0]?.image);
+    }
+  }, [selectedProduct]);
+
+  useEffect(() => {
+    localStorage.setItem("shop_cart_data", JSON.stringify(cart));
+  }, [cart]);
+
+  useEffect(() => {
+  fetch(`${BASE_URL}/api/products/`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    /* Required to send cookies (session/CSRF) to the backend */
+    credentials: "include" 
+  })
+    .then((res) => {
+      if (!res.ok) throw new Error("Network response was not ok");
+      return res.json();
+    })
+    .then((data) => {
+      const productData = Array.isArray(data) ? data : (data.results || []);
+      setProducts(productData);
+    })
+    .catch((err) => console.error("Fetch error:", err));
+}, []);
+
+/* Fetch user orders when in account view */
+  useEffect(() => {
+    if (view === "account" && user) {
+      fetch(`${BASE_URL}/api/orders/`)
+        .then((res) => res.json())
+        .then((data) => {
+          const ordersArray = Array.isArray(data) ? data : (data.results || []);
+          setUserOrders(ordersArray);
+        })
+        .catch((err) => console.error("Order fetch error:", err));
+    }
+  }, [view, user]);
+
+
+  /* --- API: AUTHENTICATION ---*/
   function getCookie(name) {
   let cookieValue = null;
   if (document.cookie && document.cookie !== '') {
@@ -101,7 +169,7 @@ function App() {
   setIsSubmitting(true);
   const endpoint = authMode === "login" ? "/api/login/" : "/api/register/";
 
-  // Construct payload explicitly
+  /* Construct payload explicitly */
   const payload = {
     first_name: authData.first_name,
     phone: authData.phone,
@@ -126,11 +194,11 @@ function App() {
     // Since the API returns the user fields directly, we use 'data'
     setUser(data); 
     
-    // Use the first_name from the root of 'data'
+    /* Use the first_name from the root of 'data' */
     const name = data.first_name || "there";
     
-    //setWelcomeMessage(`Hi, ${name}! Welcome back.`);
-    //setTimeout(() => setWelcomeMessage(""), 5000);
+    /*setWelcomeMessage(`Hi, ${name}! Welcome back.`);*/
+    /*setTimeout(() => setWelcomeMessage(""), 5000); */
     
     setView("grid");
     } else {
@@ -144,73 +212,8 @@ function App() {
     setIsSubmitting(false); // <--- Add this
   }
 };
-  // --- 1. PERSISTENCE & DATA FETCHING ---
-  // Add this to your main App component or a global auth provider
-const [csrfReady, setCsrfReady] = useState(false);
 
-useEffect(() => {
-  const seedCSRF = async () => {
-    await fetch(`${BASE_URL}/api/get-csrf-token/`);
-    setCsrfReady(true);
-  };
-  seedCSRF();
-}, []);
-
-// Update activeMainImage whenever selectedProduct changes
-  useEffect(() => {
-    if (selectedProduct) {
-      setActiveMainImage(selectedProduct.main_image_url || selectedProduct.additional_images?.[0]?.image);
-    }
-  }, [selectedProduct]);
-
-  useEffect(() => {
-    localStorage.setItem("shop_cart_data", JSON.stringify(cart));
-  }, [cart]);
-
-  useEffect(() => {
-  fetch(`${BASE_URL}/api/products/`, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    // Required to send cookies (session/CSRF) to the backend
-    credentials: "include" 
-  })
-    .then((res) => {
-      if (!res.ok) throw new Error("Network response was not ok");
-      return res.json();
-    })
-    .then((data) => {
-      const productData = Array.isArray(data) ? data : (data.results || []);
-      setProducts(productData);
-    })
-    .catch((err) => console.error("Fetch error:", err));
-}, []);
-
-// Fetch user orders when in account view
-  useEffect(() => {
-    if (view === "account" && user) {
-      fetch(`${BASE_URL}/api/orders/`)
-        .then((res) => res.json())
-        .then((data) => {
-          const ordersArray = Array.isArray(data) ? data : (data.results || []);
-          setUserOrders(ordersArray);
-        })
-        .catch((err) => console.error("Order fetch error:", err));
-    }
-  }, [view, user]);
-
-// Inside your App component:
-const config = {
-    reference: (new Date()).getTime().toString(),
-    email: user ? `${user.phone}@mebuy.com` : 'guest@mebuy.com',
-    amount: Math.round(totalAmount * 100),
-    publicKey: 'pk_live_21207f639d252b46e35e171dca6b075f79cba433',
-};
-
-const initializePayment = usePaystackPayment(config);
-
-  // --- 2. LOGIC HANDLERS ---
+  /* --- 2. LOGIC HANDLERS ---*/
   const addToCart = (product, qty = 1) => {
     setCart((prevCart) => {
       const existingItem = prevCart.find((item) => item.id === product.id);
@@ -263,13 +266,12 @@ const initializePayment = usePaystackPayment(config);
       {user && (
   <span className="user-tag" style={{ 
     fontWeight: 'bold', 
-    backgroundColor: '#ff6600', // Using a solid 'brand' orange (high contrast against dark)
-    padding: '6px 15px',
+    backgroundColor: '#ff6600', 
     borderRadius: '20px',
-    color: '#ffffff',           // Crisp white text
+    color: '#ffffff',           
     fontSize: '0.9rem',
     display: 'inline-block',
-    boxShadow: '0 2px 4px rgba(0,0,0,0.3)' // Stronger shadow for depth
+    boxShadow: '0 2px 4px rgba(0,0,0,0.3)' 
   }}>
     Hi, {user.first_name}! 👤
   </span>
