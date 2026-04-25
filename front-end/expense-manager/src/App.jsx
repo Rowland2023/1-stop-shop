@@ -249,7 +249,7 @@ useEffect(() => {
   // Use a promise-based approach to ensure we catch errors
   try {
     const handler = window.PaystackPop.setup({
-      key: 'pk_live_21207f639d252b46e35e171dca6b075f79cba433',
+      key: pk_live_21207f639d252b46e35e171dca6b075f79cba433,
       email: user ? `${user.phone}@mebuy.com` : 'guest@mebuy.com',
       amount: Math.round(totalAmount * 100),
       currency: 'NGN',
