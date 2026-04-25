@@ -230,42 +230,40 @@ useEffect(() => {
   const checkoutWithPaystack = async () => {
   if (cart.length === 0) return alert("Cart is empty!");
 
-  // 1. Safety Check: Verify Paystack library is loaded in the browser
-  if (typeof window.PaystackPop === 'undefined') {
-    alert("Payment gateway is still initializing. Please wait a moment and try again.");
+  // Double-check library exists
+  if (!window.PaystackPop) {
+    alert("Payment gateway failed to load. Please refresh the page.");
     return;
   }
 
-  setIsProcessing(true);
-  const totalAmount = cart.reduce((sum, item) => sum + (parseFloat(item.price) * item.quantity), 0) + 1500;
+  setIsProcessing(true); // Start loading
 
   try {
+    const totalAmount = cart.reduce((sum, item) => sum + (parseFloat(item.price) * item.quantity), 0);
+
     const handler = window.PaystackPop.setup({
       key: 'pk_live_21207f639d252b46e35e171dca6b075f79cba433',
       email: user ? `${user.phone}@mebuy.com` : 'guest@mebuy.com',
       amount: Math.round(totalAmount * 100),
       currency: 'NGN',
       callback: (response) => {
-        // Success: Reset state and clear cart
-        setIsProcessing(false);
+        setIsProcessing(false); // Reset on success
         setCart([]);
         alert("Payment Successful! Reference: " + response.reference);
-        // TODO: Send response.reference to your Django backend to verify the transaction
+        // Here: Trigger your backend to verify the reference
       },
       onClose: () => {
-        // User closed the window: Reset processing state
-        setIsProcessing(false);
+        setIsProcessing(false); // Reset when user closes modal
       }
     });
 
     handler.openIframe();
   } catch (error) {
-    console.error("Paystack Setup Error:", error);
-    setIsProcessing(false); // Reset state if setup fails
-    alert("An error occurred initializing payment. Please try again.");
+    console.error("Paystack Error:", error);
+    setIsProcessing(false); // Reset on crash
+    alert("Payment setup failed. Please try again.");
   }
 };
-
   const filteredProducts = products.filter((p) => 
     p.category.toLowerCase() === category.toLowerCase() && 
     p.name.toLowerCase().includes(searchTerm.toLowerCase())
