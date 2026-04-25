@@ -200,22 +200,32 @@ useEffect(() => {
 
   // --- In your App Component ---
 // 1. Add this state at the top with your other states
+// Add a 'retry' counter to your state
 const [paystackReady, setPaystackReady] = useState(false);
+const [loadAttempt, setLoadAttempt] = useState(0);
 
-// 2. Use this Effect to initialize Paystack ONCE
 useEffect(() => {
+  // Check if already available
   if (window.PaystackPop) {
     setPaystackReady(true);
     return;
   }
 
+  // Attempt to inject script
   const script = document.createElement("script");
   script.src = "https://js.paystack.co/v1/inline.js";
   script.async = true;
-  script.onload = () => setPaystackReady(true);
-  script.onerror = () => console.error("Paystack script failed to load");
+  script.onload = () => {
+    // Double check that it actually attached
+    if (window.PaystackPop) {
+      setPaystackReady(true);
+    }
+  };
+  script.onerror = () => {
+    console.error("Paystack script failed to load");
+  };
   document.body.appendChild(script);
-}, []);
+}, [loadAttempt]); // Re-runs if loadAttempt changes
 
 // 3. Simplified Checkout Function
 const checkoutWithPaystack = () => {
@@ -471,17 +481,23 @@ const checkoutWithPaystack = () => {
             {/* The Buttons requested */}
             <div className="cart-action-stack" style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '20px' }}>
               <button 
-                  className="checkout-btn-curved" 
-                  // Disable if processing OR if Paystack isn't loaded yet
-                  disabled={isProcessing || !paystackReady} 
-                  onClick={checkoutWithPaystack}
+  className="checkout-btn-curved" 
+  disabled={isProcessing} 
+  onClick={() => {
+    if (!paystackReady) {
+      // Force a retry if it failed to load
+      setLoadAttempt(prev => prev + 1);
+      alert("Retrying payment gateway connection...");
+      return;
+    }
+    checkoutWithPaystack();
+  }}
 >
-                  {/* Change the text based on state */}
-                  {!paystackReady 
-                  ? "Loading Payment Gateway..." 
-                  : (isProcessing ? "Processing..." : "Checkout Now")
-                  }
-              </button>
+  {!paystackReady 
+    ? "Click to Retry Gateway..." 
+    : (isProcessing ? "Processing..." : "Checkout Now")
+  }
+</button>
               <button className="clear-cart-btn-curved" onClick={() => setCart([])}>
                 Clear Cart
               </button>
