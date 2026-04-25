@@ -67,13 +67,14 @@ function App() {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [activeMainImage, setActiveMainImage] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [paystackPop, setPaystackPop] = useState(null);
   
   // --- AUTH & USER STATES ---
   const [user, setUser] = useState(null);
   const [authMode, setAuthMode] = useState("login"); // 'login' or 'register'
   const [authData, setAuthData] = useState({ phone: "", password: "", first_name: "" });
   const [welcomeMessage, setWelcomeMessage] = useState("");
-  const [paystackLoaded, setPaystackLoaded] = useState(false);
+  
 
   // --- TRACKING & HISTORY STATES ---
   const [trackInput, setTrackInput] = useState("");
@@ -185,10 +186,7 @@ useEffect(() => {
     .catch((err) => console.error("Fetch error:", err));
 }, []);
 
-// --- REPLACE YOUR EXISTING PAYSTACK useEffect ---
-
-  
-
+// Fetch user orders when in account view
   useEffect(() => {
     if (view === "account" && user) {
       fetch(`${BASE_URL}/api/orders/`)
@@ -201,26 +199,46 @@ useEffect(() => {
     }
   }, [view, user]);
 
-  useEffect(() => {
-  // Check if it's already there
-  if (window.PaystackPop) {
-    setPaystackLoaded(true);
-    return;
-  }
-
-  // If not, inject it manually
+  // 2. Add this dedicated effect to load it properly
+useEffect(() => {
   const script = document.createElement("script");
   script.src = "https://js.paystack.co/v1/inline.js";
   script.async = true;
-  script.onload = () => setPaystackLoaded(true);
-  script.onerror = () => {
-    console.error("Failed to load Paystack script");
-    // Fallback: Enable button anyway so user isn't stuck
-    setPaystackLoaded(true); 
+  script.onload = () => {
+    if (window.PaystackPop) {
+      setPaystackPop(window.PaystackPop);
+    }
   };
   document.body.appendChild(script);
 }, []);
+// 3. Update your checkout function to use the state
+const checkoutWithPaystack = async () => {
+  if (cart.length === 0) return alert("Cart is empty!");
+  
+  if (!paystackPop) {
+    alert("Payment gateway is still initializing. Please wait a moment.");
+    return;
+  }
 
+  setIsProcessing(true);
+  
+  const totalAmount = cart.reduce((sum, item) => sum + (parseFloat(item.price) * item.quantity), 0);
+
+  const handler = paystackPop.setup({
+    key: "pk_live_21207f639d252b46e35e171dca6b075f79cba433",
+    email: user ? `${user.phone}@mebuy.com` : 'guest@mebuy.com',
+    amount: Math.round(totalAmount * 100),
+    currency: 'NGN',
+    callback: (response) => {
+      setIsProcessing(false);
+      setCart([]);
+      alert("Payment Successful! Reference: " + response.reference);
+    },
+    onClose: () => setIsProcessing(false)
+  });
+
+  handler.openIframe();
+};
   // --- 2. LOGIC HANDLERS ---
   const addToCart = (product, qty = 1) => {
     setCart((prevCart) => {
@@ -243,43 +261,6 @@ useEffect(() => {
       else alert("Order not found.");
     } catch (err) { alert("Connection failed."); }
   };
-
-  // 1. Remove the global useEffect that injects the script into document.body.
-// Keep only the logic inside the checkout function or a dedicated loader.
-
-const checkoutWithPaystack = async () => {
-  if (cart.length === 0) return alert("Cart is empty!");
-  setIsProcessing(true);
-
-  try {
-    // Check if Paystack is already loaded
-    if (!window.PaystackPop) {
-      throw new Error("Paystack script not loaded");
-    }
-
-    const totalAmount = cart.reduce((sum, item) => sum + (parseFloat(item.price) * item.quantity), 0);
-
-    const handler = window.PaystackPop.setup({
-      key: "pk_live_21207f639d252b46e35e171dca6b075f79cba433",
-      email: user ? `${user.phone}@mebuy.com` : 'guest@mebuy.com',
-      amount: Math.round(totalAmount * 100),
-      currency: 'NGN',
-      callback: (response) => {
-        setIsProcessing(false);
-        setCart([]);
-        alert("Payment Successful! Reference: " + response.reference);
-      },
-      onClose: () => setIsProcessing(false)
-    });
-
-    handler.openIframe();
-  } catch (error) {
-    console.error("Paystack Initialization Error:", error);
-    setIsProcessing(false);
-    // Tell the user why it failed if it's a known issue
-    alert("Could not start payment. Please disable ad-blockers and try again.");
-  }
-};
   const filteredProducts = products.filter((p) => 
     p.category.toLowerCase() === category.toLowerCase() && 
     p.name.toLowerCase().includes(searchTerm.toLowerCase())
