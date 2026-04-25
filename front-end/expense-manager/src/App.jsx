@@ -73,7 +73,7 @@ function App() {
   const [authMode, setAuthMode] = useState("login"); // 'login' or 'register'
   const [authData, setAuthData] = useState({ phone: "", password: "", first_name: "" });
   const [welcomeMessage, setWelcomeMessage] = useState("");
-  const [paystackLoaded, setPaystackLoaded] = useState(false);
+  const [paystackReady, setPaystackReady] = useState(false);
 
   // --- TRACKING & HISTORY STATES ---
   const [trackInput, setTrackInput] = useState("");
@@ -196,8 +196,8 @@ useEffect(() => {
   const script = document.createElement("script");
   script.src = "https://js.paystack.co/v1/inline.js";
   script.async = true;
-  script.onload = () => setPaystackLoaded(true);
-  script.onerror = () => console.error("Script load failed");
+  script.onload = () => setPaystackReady(true);
+  script.onerror = () => console.error("Paystack script failed to load");
   document.body.appendChild(script);
 }, []);
   
@@ -224,54 +224,31 @@ useEffect(() => {
     } catch (err) { alert("Connection failed."); }
   };
 
-  const checkoutWithPaystack = async () => {
+  // 3. Simplified Checkout Function
+const checkoutWithPaystack = () => {
   if (cart.length === 0) return alert("Cart is empty!");
+  if (!window.PaystackPop) return alert("Payment gateway not ready. Please refresh.");
 
   setIsProcessing(true);
+  const totalAmount = cart.reduce((sum, item) => sum + (parseFloat(item.price) * item.quantity), 0);
 
-  // Helper to load Paystack dynamically
-  const loadPaystack = () => {
-    return new Promise((resolve, reject) => {
-      // If already loaded, return the existing object
-      if (window.PaystackPop) return resolve(window.PaystackPop);
+  const handler = window.PaystackPop.setup({
+    key: "pk_live_21207f639d252b46e35e171dca6b075f79cba433",
+    email: user ? `${user.phone}@mebuy.com` : 'guest@mebuy.com',
+    amount: Math.round(totalAmount * 100),
+    currency: 'NGN',
+    callback: (response) => {
+      setIsProcessing(false);
+      setCart([]);
+      alert("Payment Successful! Reference: " + response.reference);
+      // Optional: Add logic here to notify your Django backend about the successful payment
+    },
+    onClose: () => {
+      setIsProcessing(false);
+    }
+  });
 
-      // Create and inject the script
-      const script = document.createElement("script");
-      script.src = "https://js.paystack.co/v1/inline.js";
-      script.async = true;
-      script.onload = () => resolve(window.PaystackPop);
-      script.onerror = () => reject(new Error("Paystack script failed to load"));
-      document.head.appendChild(script);
-    });
-  };
-
-  try {
-    // Wait for the script to be ready
-    const PaystackPop = await loadPaystack();
-
-    const totalAmount = cart.reduce((sum, item) => sum + (parseFloat(item.price) * item.quantity), 0);
-
-    const handler = PaystackPop.setup({
-      key: "pk_live_21207f639d252b46e35e171dca6b075f79cba433",
-      email: user ? `${user.phone}@mebuy.com` : 'guest@mebuy.com',
-      amount: Math.round(totalAmount * 100),
-      currency: 'NGN',
-      callback: (response) => {
-        setIsProcessing(false);
-        setCart([]);
-        alert("Payment Successful! Reference: " + response.reference);
-      },
-      onClose: () => {
-        setIsProcessing(false);
-      }
-    });
-
-    handler.openIframe();
-  } catch (error) {
-    console.error("Paystack Initialization Error:", error);
-    setIsProcessing(false);
-    alert("Payment gateway failed to initialize. Please check your internet connection and try again.");
-  }
+  handler.openIframe();
 };
   const filteredProducts = products.filter((p) => 
     p.category.toLowerCase() === category.toLowerCase() && 
