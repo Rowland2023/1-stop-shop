@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import "./App.css";
-
+import { PaystackButton } from '@paystack/inline-react';
 // --- CONFIG ---
 const BASE_URL = import.meta.env.VITE_API_URL || "";
 const CLOUDINARY_BASE = "https://res.cloudinary.com/dscxqsew5/";
@@ -204,54 +204,21 @@ useEffect(() => {
 const [paystackReady, setPaystackReady] = useState(false);
 const [loadAttempt, setLoadAttempt] = useState(0);
 
-useEffect(() => {
-  // Check if already available
-  if (window.PaystackPop) {
-    setPaystackReady(true);
-    return;
-  }
+import { PaystackButton } from '@paystack/inline-react';
 
-  // Attempt to inject script
-  const script = document.createElement("script");
-  script.src = "https://js.paystack.co/v1/inline.js";
-  script.async = true;
-  script.onload = () => {
-    // Double check that it actually attached
-    if (window.PaystackPop) {
-      setPaystackReady(true);
-    }
-  };
-  script.onerror = () => {
-    console.error("Paystack script failed to load");
-  };
-  document.body.appendChild(script);
-}, [loadAttempt]); // Re-runs if loadAttempt changes
+// Inside your App component, replace your checkout button with this:
+const totalAmount = cart.reduce((sum, item) => sum + (parseFloat(item.price) * item.quantity), 0);
 
-// 3. Simplified Checkout Function
-const checkoutWithPaystack = () => {
-  if (cart.length === 0) return alert("Cart is empty!");
-  if (!window.PaystackPop) return alert("Payment gateway not ready. Please refresh.");
-
-  setIsProcessing(true);
-  const totalAmount = cart.reduce((sum, item) => sum + (parseFloat(item.price) * item.quantity), 0);
-
-  const handler = window.PaystackPop.setup({
-    key: "pk_live_21207f639d252b46e35e171dca6b075f79cba433",
+const componentProps = {
     email: user ? `${user.phone}@mebuy.com` : 'guest@mebuy.com',
     amount: Math.round(totalAmount * 100),
-    currency: 'NGN',
-    callback: (response) => {
-      setIsProcessing(false);
-      setCart([]);
-      alert("Payment Successful! Reference: " + response.reference);
-      // Optional: Add logic here to notify your Django backend about the successful payment
+    publicKey: "pk_live_21207f639d252b46e35e171dca6b075f79cba433",
+    text: "Checkout Now",
+    onSuccess: (response) => {
+        setCart([]);
+        alert("Payment Successful! Reference: " + response.reference);
     },
-    onClose: () => {
-      setIsProcessing(false);
-    }
-  });
-
-  handler.openIframe();
+    onClose: () => alert("Transaction Cancelled"),
 };
 
   // --- 2. LOGIC HANDLERS ---
@@ -480,24 +447,7 @@ const checkoutWithPaystack = () => {
 
             {/* The Buttons requested */}
             <div className="cart-action-stack" style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '20px' }}>
-              <button 
-  className="checkout-btn-curved" 
-  disabled={isProcessing} 
-  onClick={() => {
-    if (!paystackReady) {
-      // Force a retry if it failed to load
-      setLoadAttempt(prev => prev + 1);
-      alert("Retrying payment gateway connection...");
-      return;
-    }
-    checkoutWithPaystack();
-  }}
->
-  {!paystackReady 
-    ? "Click to Retry Gateway..." 
-    : (isProcessing ? "Processing..." : "Checkout Now")
-  }
-</button>
+              <PaystackButton className="orange-curved-btn" {...componentProps} />  
               <button className="clear-cart-btn-curved" onClick={() => setCart([])}>
                 Clear Cart
               </button>
