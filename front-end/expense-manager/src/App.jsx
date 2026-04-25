@@ -6,7 +6,6 @@ const BASE_URL = import.meta.env.VITE_API_URL || "";
 const CLOUDINARY_BASE = "https://res.cloudinary.com/dscxqsew5/";
 const PAYSTACK_PUBLIC_KEY = 'pk_live_21207f639d252b46e35e171dca6b075f79cba433';
 
-// Helper function updated for safety
 // Improved helper to handle both Cloudinary strings and full URLs
 const getImageUrl = (input) => {
   if (!input) return "/static/placeholder.png";
@@ -200,30 +199,50 @@ useEffect(() => {
   }, [view, user]);
 
   // --- In your App Component ---
-const [paystackPop, setPaystackPop] = useState(null);
+// 1. Add this state at the top with your other states
+const [paystackReady, setPaystackReady] = useState(false);
 
+// 2. Use this Effect to initialize Paystack ONCE
 useEffect(() => {
-  // Check if it already exists before doing anything
   if (window.PaystackPop) {
-    setPaystackPop(window.PaystackPop);
+    setPaystackReady(true);
     return;
   }
 
   const script = document.createElement("script");
   script.src = "https://js.paystack.co/v1/inline.js";
   script.async = true;
-  
-  script.onload = () => {
-    if (window.PaystackPop) setPaystackPop(window.PaystackPop);
-  };
-  
-  script.onerror = () => {
-    console.error("Paystack script failed to load. Payment will be unavailable.");
-    // We DON'T crash here, we just leave paystackPop as null
-  };
-  
+  script.onload = () => setPaystackReady(true);
+  script.onerror = () => console.error("Paystack script failed to load");
   document.body.appendChild(script);
 }, []);
+
+// 3. Simplified Checkout Function
+const checkoutWithPaystack = () => {
+  if (cart.length === 0) return alert("Cart is empty!");
+  if (!window.PaystackPop) return alert("Payment gateway not ready. Please refresh.");
+
+  setIsProcessing(true);
+  const totalAmount = cart.reduce((sum, item) => sum + (parseFloat(item.price) * item.quantity), 0);
+
+  const handler = window.PaystackPop.setup({
+    key: "pk_live_21207f639d252b46e35e171dca6b075f79cba433",
+    email: user ? `${user.phone}@mebuy.com` : 'guest@mebuy.com',
+    amount: Math.round(totalAmount * 100),
+    currency: 'NGN',
+    callback: (response) => {
+      setIsProcessing(false);
+      setCart([]);
+      alert("Payment Successful! Reference: " + response.reference);
+      // Optional: Add logic here to notify your Django backend about the successful payment
+    },
+    onClose: () => {
+      setIsProcessing(false);
+    }
+  });
+
+  handler.openIframe();
+};
 
   // --- 2. LOGIC HANDLERS ---
   const addToCart = (product, qty = 1) => {
