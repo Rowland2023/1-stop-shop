@@ -218,54 +218,43 @@ useEffect(() => {
 }, []);
 
 // 3. Simplified Checkout Function
-const checkoutWithPaystack = () => {
+const checkoutWithPaystack = async () => {
   if (cart.length === 0) return alert("Cart is empty!");
-  if (!window.PaystackPop) return alert("Payment gateway not ready. Please refresh.");
-
   setIsProcessing(true);
-  const totalAmount = cart.reduce((sum, item) => sum + (parseFloat(item.price) * item.quantity), 0);
 
-  const handler = window.PaystackPop.setup({
-    key: "pk_live_21207f639d252b46e35e171dca6b075f79cba433",
-    email: user ? `${user.phone}@mebuy.com` : 'guest@mebuy.com',
-    amount: Math.round(totalAmount * 100),
-    currency: 'NGN',
-    callback: (response) => {
-      setIsProcessing(false);
-      setCart([]);
-      alert("Payment Successful! Reference: " + response.reference);
-      // Optional: Add logic here to notify your Django backend about the successful payment
-    },
-    onClose: () => {
-      setIsProcessing(false);
-    }
-  });
+  // 1. Check if the object exists
+  if (!window.PaystackPop) {
+    alert("Payment gateway is still loading. Please wait 3 seconds and click again.");
+    setIsProcessing(false);
+    return;
+  }
 
-  handler.openIframe();
+  try {
+    const totalAmount = cart.reduce((sum, item) => sum + (parseFloat(item.price) * item.quantity), 0);
+    
+    // 2. Use the object directly
+    const handler = window.PaystackPop.setup({
+      key: "pk_live_21207f639d252b46e35e171dca6b075f79cba433",
+      email: user ? `${user.phone}@mebuy.com` : 'guest@mebuy.com',
+      amount: Math.round(totalAmount * 100),
+      currency: 'NGN',
+      callback: (response) => {
+        setIsProcessing(false);
+        setCart([]);
+        alert("Payment Successful! Reference: " + response.reference);
+      },
+      onClose: () => setIsProcessing(false)
+    });
+
+    handler.openIframe();
+  } catch (error) {
+    console.error("Paystack Error:", error);
+    setIsProcessing(false);
+    alert("Initialization error. Ensure you have a stable internet connection.");
+  }
 };
 
-  // --- 2. LOGIC HANDLERS ---
-  const addToCart = (product, qty = 1) => {
-    setCart((prevCart) => {
-      const existingItem = prevCart.find((item) => item.id === product.id);
-      if (existingItem) {
-        return prevCart.map((item) => 
-          item.id === product.id ? { ...item, quantity: item.quantity + qty } : item
-        );
-      }
-      return [...prevCart, { ...product, quantity: qty }];
-    });
-  };
-
-  const handleTrackOrder = async () => {
-    if (!trackInput) return alert("Enter an Order ID");
-    try {
-      const response = await fetch(`${BASE_URL}/api/orders/${trackInput}/`);
-      const data = await response.json();
-      if (response.ok) setTrackingData(data);
-      else alert("Order not found.");
-    } catch (err) { alert("Connection failed."); }
-  };
+// --- 2. VIEW LOGIC & RENDERING ---
   const filteredProducts = products.filter((p) => 
     p.category.toLowerCase() === category.toLowerCase() && 
     p.name.toLowerCase().includes(searchTerm.toLowerCase())
