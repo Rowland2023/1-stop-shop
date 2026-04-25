@@ -66,6 +66,8 @@ function App() {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [activeMainImage, setActiveMainImage] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [paystackReady, setPaystackReady] = useState(false);
+  const [loadAttempt, setLoadAttempt] = useState(0);
   
   // --- AUTH & USER STATES ---
   const [user, setUser] = useState(null);
@@ -201,10 +203,9 @@ useEffect(() => {
   // --- In your App Component ---
 // 1. Add this state at the top with your other states
 // Add a 'retry' counter to your state
-const [paystackReady, setPaystackReady] = useState(false);
-const [loadAttempt, setLoadAttempt] = useState(0);
 
-import { PaystackButton } from '@paystack/inline-react';
+
+
 
 // Inside your App component, replace your checkout button with this:
 const totalAmount = cart.reduce((sum, item) => sum + (parseFloat(item.price) * item.quantity), 0);
