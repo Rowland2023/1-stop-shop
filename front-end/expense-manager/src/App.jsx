@@ -211,6 +211,38 @@ useEffect(() => {
   }
 }, []);
 
+  useEffect(() => {
+    if (view === "account" && user) {
+      fetch(`${BASE_URL}/api/orders/`)
+        .then((res) => res.json())
+        .then((data) => {
+          const ordersArray = Array.isArray(data) ? data : (data.results || []);
+          setUserOrders(ordersArray);
+        })
+        .catch((err) => console.error("Order fetch error:", err));
+    }
+  }, [view, user]);
+
+  useEffect(() => {
+  // Check if it's already there
+  if (window.PaystackPop) {
+    setPaystackLoaded(true);
+    return;
+  }
+
+  // If not, inject it manually
+  const script = document.createElement("script");
+  script.src = "https://js.paystack.co/v1/inline.js";
+  script.async = true;
+  script.onload = () => setPaystackLoaded(true);
+  script.onerror = () => {
+    console.error("Failed to load Paystack script");
+    // Fallback: Enable button anyway so user isn't stuck
+    setPaystackLoaded(true); 
+  };
+  document.body.appendChild(script);
+}, []);
+
   // --- 2. LOGIC HANDLERS ---
   const addToCart = (product, qty = 1) => {
     setCart((prevCart) => {
