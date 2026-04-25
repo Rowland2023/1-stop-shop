@@ -198,13 +198,30 @@ useEffect(() => {
   }, [view, user]);
 
   useEffect(() => {
-  const checkPaystack = setInterval(() => {
+  let attempts = 0;
+  
+  const checkPaystack = () => {
     if (window.PaystackPop) {
       setPaystackLoaded(true);
-      clearInterval(checkPaystack);
+      return true;
     }
-  }, 500);
-  return () => clearInterval(checkPaystack);
+    return false;
+  };
+
+  // 1. Try immediately
+  if (!checkPaystack()) {
+    // 2. Poll every 500ms for up to 10 seconds (20 attempts)
+    const interval = setInterval(() => {
+      attempts++;
+      if (checkPaystack() || attempts > 20) {
+        clearInterval(interval);
+        if (attempts > 20 && !window.PaystackPop) {
+          console.error("Paystack failed to load after 10 seconds.");
+        }
+      }
+    }, 500);
+    return () => clearInterval(interval);
+  }
 }, []);
 
   // --- 2. LOGIC HANDLERS ---
