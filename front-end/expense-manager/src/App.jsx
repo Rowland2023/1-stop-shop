@@ -73,7 +73,7 @@ function App() {
   const [authMode, setAuthMode] = useState("login"); // 'login' or 'register'
   const [authData, setAuthData] = useState({ phone: "", password: "", first_name: "" });
   const [welcomeMessage, setWelcomeMessage] = useState("");
-  const [paystackReady, setPaystackReady] = useState(false);
+  const [paystackLoaded, setPaystackLoaded] = useState(false);
 
   // --- TRACKING & HISTORY STATES ---
   const [trackInput, setTrackInput] = useState("");
@@ -185,22 +185,42 @@ useEffect(() => {
     .catch((err) => console.error("Fetch error:", err));
 }, []);
 
+// --- REPLACE YOUR EXISTING PAYSTACK useEffect ---
 
-// Remove all other Paystack useEffects and use this one
-useEffect(() => {
+  
+
+  useEffect(() => {
+    if (view === "account" && user) {
+      fetch(`${BASE_URL}/api/orders/`)
+        .then((res) => res.json())
+        .then((data) => {
+          const ordersArray = Array.isArray(data) ? data : (data.results || []);
+          setUserOrders(ordersArray);
+        })
+        .catch((err) => console.error("Order fetch error:", err));
+    }
+  }, [view, user]);
+
+  useEffect(() => {
+  // Check if it's already there
   if (window.PaystackPop) {
     setPaystackLoaded(true);
     return;
   }
 
+  // If not, inject it manually
   const script = document.createElement("script");
   script.src = "https://js.paystack.co/v1/inline.js";
   script.async = true;
-  script.onload = () => setPaystackReady(true);
-  script.onerror = () => console.error("Paystack script failed to load");
+  script.onload = () => setPaystackLoaded(true);
+  script.onerror = () => {
+    console.error("Failed to load Paystack script");
+    // Fallback: Enable button anyway so user isn't stuck
+    setPaystackLoaded(true); 
+  };
   document.body.appendChild(script);
 }, []);
-  
+
   // --- 2. LOGIC HANDLERS ---
   const addToCart = (product, qty = 1) => {
     setCart((prevCart) => {
