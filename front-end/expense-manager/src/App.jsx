@@ -71,7 +71,8 @@ function App() {
   // --- AUTH & USER STATES ---
   const [user, setUser] = useState(null);
   const [authMode, setAuthMode] = useState("login"); // 'login' or 'register'
- const [authData, setAuthData] = useState({ phone: "", password: "", first_name: "" });
+  const [authData, setAuthData] = useState({ phone: "", password: "", first_name: "" });
+  const [paystackLoaded, setPaystackLoaded] = useState(false);
 
   // --- TRACKING & HISTORY STATES ---
   const [trackInput, setTrackInput] = useState("");
@@ -105,38 +106,39 @@ function App() {
   };
 
   try {
-    const res = await fetch(`${BASE_URL}${endpoint}`, {
-      method: "POST",
-      headers: { 
-        "Content-Type": "application/json",
-        "X-CSRFToken": getCookie("csrftoken") 
-      },
-      body: JSON.stringify(payload),
-      credentials: "include",
-    });
-    
-    const data = await res.json();
-    
-    if (res.ok) {
-      setUser(data.user || data);
-      
-      // --- WELCOME MESSAGE LOGIC MOVED HERE ---
-      const name = data.user?.first_name || "there";
-      setWelcomeMessage(`Hi, ${name}! Welcome back.`);
-      setTimeout(() => setWelcomeMessage(""), 5000);
-      // ----------------------------------------
-      
-      setView("grid");
-    } else {
-      console.error("Backend Error:", data);
-      alert(data.error || "Authentication failed");
-    }
-  } catch (err) {
-    console.error("Fetch Error:", err);
-    alert("Connection error. Check your network or server status.");
-  } finally {
-    setIsSubmitting(false);
+  const res = await fetch(`${BASE_URL}${endpoint}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "X-CSRFToken": getCookie("csrftoken") },
+    body: JSON.stringify(payload),
+    credentials: "include",
+  });
+
+  // Check if response is JSON before parsing
+  const contentType = res.headers.get("content-type");
+  if (!contentType || !contentType.includes("application/json")) {
+    throw new Error("Server returned non-JSON response");
   }
+
+  const data = await res.json();
+
+  if (res.ok) {
+    setUser(data.user || data);
+    setWelcomeMessage(`Hi, ${data.user?.first_name || "there"}! Welcome back.`);
+    setTimeout(() => setWelcomeMessage(""), 5000);
+    setView("grid");
+  } else {
+    // Only alert if it's a real logic error (like invalid password)
+    alert(data.error || "Authentication failed");
+  }
+} catch (err) {
+  console.error("Fetch Error:", err);
+  // ONLY show this if it was a true network failure
+  if (err.message !== "Server returned non-JSON response") {
+    alert("Connection error. Check your network.");
+  }
+} finally {
+  setIsSubmitting(false);
+}
 };
   // --- 1. PERSISTENCE & DATA FETCHING ---
   // Add this to your main App component or a global auth provider
@@ -191,6 +193,16 @@ useEffect(() => {
         .catch((err) => console.error("Order fetch error:", err));
     }
   }, [view, user]);
+
+  useEffect(() => {
+  const checkPaystack = setInterval(() => {
+    if (window.PaystackPop) {
+      setPaystackLoaded(true);
+      clearInterval(checkPaystack);
+    }
+  }, 500); // Checks every 0.5 seconds
+  return () => clearInterval(checkPaystack);
+}, []);
 
   // --- 2. LOGIC HANDLERS ---
   const addToCart = (product, qty = 1) => {
@@ -421,12 +433,15 @@ useEffect(() => {
           
           <div className="total-section" style={{ borderTop: '1px solid #eee', paddingTop: '15px' }}>
             <p>Subtotal: ₦{cart.reduce((s, i) => s + (i.price * i.quantity), 0).toLocaleString()}</p>
-            <p><strong>Total: ₦{(cart.reduce((s, i) => s + (i.price * i.quantity), 0) + (cart.length > 0 ? 1500 : 0)).toLocaleString()}</strong></p>
-            
+            <p><strong>Total: ₦{cart.reduce((s, i) => s + (i.price * i.quantity), 0).toLocaleString()}</strong></p>
             {/* The Buttons requested */}
             <div className="cart-action-stack" style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '20px' }}>
-              <button className="checkout-btn-curved" disabled={isProcessing} onClick={checkoutWithPaystack}>
-                {isProcessing ? "Processing..." : "Checkout Now"}
+              <button 
+                    className="checkout-btn-curved" 
+                    disabled={isProcessing || !paystackLoaded} 
+                    onClick={checkoutWithPaystack}
+                  >
+                    {paystackLoaded ? (isProcessing ? "Processing..." : "Checkout Now") : "Loading Payment..."}
               </button>
               <button className="clear-cart-btn-curved" onClick={() => setCart([])}>
                 Clear Cart
