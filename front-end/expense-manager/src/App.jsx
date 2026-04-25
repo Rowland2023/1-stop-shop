@@ -67,7 +67,6 @@ function App() {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [activeMainImage, setActiveMainImage] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [paystackPop, setPaystackPop] = useState(null);
   
   // --- AUTH & USER STATES ---
   const [user, setUser] = useState(null);
@@ -155,7 +154,8 @@ useEffect(() => {
   };
   seedCSRF();
 }, []);
-  // Update activeMainImage whenever selectedProduct changes
+
+// Update activeMainImage whenever selectedProduct changes
   useEffect(() => {
     if (selectedProduct) {
       setActiveMainImage(selectedProduct.main_image_url || selectedProduct.additional_images?.[0]?.image);
@@ -199,46 +199,32 @@ useEffect(() => {
     }
   }, [view, user]);
 
-  // 2. Add this dedicated effect to load it properly
+  // --- In your App Component ---
+const [paystackPop, setPaystackPop] = useState(null);
+
 useEffect(() => {
-  const script = document.createElement("script");
-  script.src = "https://js.paystack.co/v1/inline.js";
-  script.async = true;
-  script.onload = () => {
-    if (window.PaystackPop) {
-      setPaystackPop(window.PaystackPop);
-    }
-  };
-  document.body.appendChild(script);
-}, []);
-// 3. Update your checkout function to use the state
-const checkoutWithPaystack = async () => {
-  if (cart.length === 0) return alert("Cart is empty!");
-  
-  if (!paystackPop) {
-    alert("Payment gateway is still initializing. Please wait a moment.");
+  // Check if it already exists before doing anything
+  if (window.PaystackPop) {
+    setPaystackPop(window.PaystackPop);
     return;
   }
 
-  setIsProcessing(true);
+  const script = document.createElement("script");
+  script.src = "https://js.paystack.co/v1/inline.js";
+  script.async = true;
   
-  const totalAmount = cart.reduce((sum, item) => sum + (parseFloat(item.price) * item.quantity), 0);
+  script.onload = () => {
+    if (window.PaystackPop) setPaystackPop(window.PaystackPop);
+  };
+  
+  script.onerror = () => {
+    console.error("Paystack script failed to load. Payment will be unavailable.");
+    // We DON'T crash here, we just leave paystackPop as null
+  };
+  
+  document.body.appendChild(script);
+}, []);
 
-  const handler = paystackPop.setup({
-    key: "pk_live_21207f639d252b46e35e171dca6b075f79cba433",
-    email: user ? `${user.phone}@mebuy.com` : 'guest@mebuy.com',
-    amount: Math.round(totalAmount * 100),
-    currency: 'NGN',
-    callback: (response) => {
-      setIsProcessing(false);
-      setCart([]);
-      alert("Payment Successful! Reference: " + response.reference);
-    },
-    onClose: () => setIsProcessing(false)
-  });
-
-  handler.openIframe();
-};
   // --- 2. LOGIC HANDLERS ---
   const addToCart = (product, qty = 1) => {
     setCart((prevCart) => {
