@@ -198,30 +198,23 @@ useEffect(() => {
   }, [view, user]);
 
   useEffect(() => {
-  let attempts = 0;
-  
-  const checkPaystack = () => {
-    if (window.PaystackPop) {
-      setPaystackLoaded(true);
-      return true;
-    }
-    return false;
-  };
-
-  // 1. Try immediately
-  if (!checkPaystack()) {
-    // 2. Poll every 500ms for up to 10 seconds (20 attempts)
-    const interval = setInterval(() => {
-      attempts++;
-      if (checkPaystack() || attempts > 20) {
-        clearInterval(interval);
-        if (attempts > 20 && !window.PaystackPop) {
-          console.error("Paystack failed to load after 10 seconds.");
-        }
-      }
-    }, 500);
-    return () => clearInterval(interval);
+  // Check if it's already there
+  if (window.PaystackPop) {
+    setPaystackLoaded(true);
+    return;
   }
+
+  // If not, inject it manually
+  const script = document.createElement("script");
+  script.src = "https://js.paystack.co/v1/inline.js";
+  script.async = true;
+  script.onload = () => setPaystackLoaded(true);
+  script.onerror = () => {
+    console.error("Failed to load Paystack script");
+    // Fallback: Enable button anyway so user isn't stuck
+    setPaystackLoaded(true); 
+  };
+  document.body.appendChild(script);
 }, []);
 
   // --- 2. LOGIC HANDLERS ---
