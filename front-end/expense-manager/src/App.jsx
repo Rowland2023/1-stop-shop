@@ -97,27 +97,12 @@ function App() {
   e.preventDefault();
   setIsSubmitting(true);
   const endpoint = authMode === "login" ? "/api/login/" : "/api/register/";
-
-  // welcome message logic moved inside the successful response block
-  if (res.ok) {
-    setUser(data.user || data);
-    // Add this greeting
-    const name = data.user?.first_name || "there";
-    setWelcomeMessage(`Hi, ${name}! Welcome back.`);
-    
-    // Clear the message after 5 seconds
-    setTimeout(() => setWelcomeMessage(""), 5000);
-    
-    setView("grid");
-  }
-  // Construct payload explicitly
+  
   const payload = {
     first_name: authData.first_name,
     phone: authData.phone,
     password: authData.password
   };
-
-  console.log("Sending Payload:", JSON.stringify(payload)); // Check browser console
 
   try {
     const res = await fetch(`${BASE_URL}${endpoint}`, {
@@ -131,8 +116,16 @@ function App() {
     });
     
     const data = await res.json();
+    
     if (res.ok) {
       setUser(data.user || data);
+      
+      // --- WELCOME MESSAGE LOGIC MOVED HERE ---
+      const name = data.user?.first_name || "there";
+      setWelcomeMessage(`Hi, ${name}! Welcome back.`);
+      setTimeout(() => setWelcomeMessage(""), 5000);
+      // ----------------------------------------
+      
       setView("grid");
     } else {
       console.error("Backend Error:", data);
@@ -141,8 +134,8 @@ function App() {
   } catch (err) {
     console.error("Fetch Error:", err);
     alert("Connection error. Check your network or server status.");
-  }finally {
-    setIsSubmitting(false); // <--- Add this
+  } finally {
+    setIsSubmitting(false);
   }
 };
   // --- 1. PERSISTENCE & DATA FETCHING ---
