@@ -127,8 +127,8 @@ function App() {
     // Use the first_name from the root of 'data'
     const name = data.first_name || "there";
     
-    setWelcomeMessage(`Hi, ${name}! Welcome back.`);
-    setTimeout(() => setWelcomeMessage(""), 5000);
+    //setWelcomeMessage(`Hi, ${name}! Welcome back.`);
+    //setTimeout(() => setWelcomeMessage(""), 5000);
     
     setView("grid");
     } else {
@@ -220,25 +220,39 @@ useEffect(() => {
   };
 
   const checkoutWithPaystack = async () => {
-    if (cart.length === 0) return alert("Cart is empty!");
-    setIsProcessing(true);
-    const totalAmount = cart.reduce((sum, item) => sum + (parseFloat(item.price) * item.quantity), 0) + 1500;
+  if (cart.length === 0) return alert("Cart is empty!");
 
+  // 1. Safety check: Ensure the Paystack script is loaded
+  if (typeof window.PaystackPop === 'undefined') {
+    alert("Payment gateway is still loading. Please wait a moment.");
+    return;
+  }
+
+  setIsProcessing(true); // Start the spinner
+  const totalAmount = cart.reduce((sum, item) => sum + (parseFloat(item.price) * item.quantity), 0);
+
+  try {
     const handler = window.PaystackPop.setup({
       key: 'pk_live_21207f639d252b46e35e171dca6b075f79cba433',
       email: user ? `${user.phone}@mebuy.com` : 'guest@mebuy.com',
       amount: Math.round(totalAmount * 100),
       currency: 'NGN',
       callback: (response) => {
-        setIsProcessing(false);
+        setIsProcessing(false); // Reset on success
         setCart([]);
         alert("Payment Successful! Reference: " + response.reference);
       },
-      onClose: () => setIsProcessing(false)
+      onClose: () => {
+        setIsProcessing(false); // Reset when user closes the modal
+      }
     });
     handler.openIframe();
-  };
-
+  } catch (error) {
+    console.error("Paystack Error:", error);
+    setIsProcessing(false); // Reset if the setup itself crashes
+    alert("An error occurred. Please try again.");
+  }
+};
   const filteredProducts = products.filter((p) => 
     p.category.toLowerCase() === category.toLowerCase() && 
     p.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -281,14 +295,24 @@ useEffect(() => {
 
   {/* Welcome Message Toast (Fixed position is fine here) */}
   {welcomeMessage && (
-    <div className="welcome-toast" style={{
-      position: 'fixed', top: '80px', right: '20px', 
-      background: '#2e7d32', color: 'white', padding: '15px', 
-      borderRadius: '8px', zIndex: 1000, boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
-    }}>
-      {welcomeMessage}
-    </div>
-  )}
+  <div className="welcome-toast" style={{
+    position: 'fixed', 
+    top: '80px', 
+    right: '20px', 
+    background: '#d84315', // High-contrast Deep Orange
+    color: '#ffffff',      // White text for maximum readability
+    padding: '16px 24px', 
+    borderRadius: '10px', 
+    zIndex: 9999,          // Increased to ensure it stays on top of header
+    boxShadow: '0 10px 20px rgba(0,0,0,0.2)', // Stronger shadow for "depth"
+    fontWeight: 'bold',
+    fontSize: '16px',
+    border: '1px solid #bf360c', // Subtle border to make it pop more
+    animation: 'fadeIn 0.5s' // Smooth appearance
+  }}>
+    {welcomeMessage}
+  </div>
+)}
 </header>
       {/* NAVIGATION */}
       <nav className="main-nav">
@@ -329,7 +353,6 @@ useEffect(() => {
       </aside>
 
       <main>
-  {/* AUTH VIEW */}
   {/* AUTH VIEW */}
 {view === "auth" && (
   <div className="view-container auth-screen" style={{ padding: '20px' }}>
