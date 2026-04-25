@@ -1,6 +1,6 @@
 import json
 from .models import Product           # ADD THIS to define 'Product'
-from .serializers import ProductSerializer # You likely need this too
+from .serializers import OrderSerializer, ProductSerializer# You likely need this too
 from django.db import transaction
 from rest_framework.response import Response
 from rest_framework import status
@@ -13,8 +13,10 @@ from super_mart.models import Profile
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.http import JsonResponse
 from django.shortcuts import render, get_object_or_404
-from .models import Order, Payroll  # Ensure Payroll is added here
+from .models import Order, OrderItem, Product, Payroll, Employee  # Ensure Payroll is added here
 # in views.py
+import requests
+import logging
 
 
 @api_view(['GET'])
@@ -180,20 +182,108 @@ def get_order_detail(request, order_id):
         return Response({"id": order.id, "total": str(order.total_price), "user_id": order.user_id, "items": items_list, "status": getattr(order, 'status', 'Processing')})
     except Order.DoesNotExist:
         return Response({"error": "Order not found"}, status=404)
+
+
+logger = logging.getLogger(__name__)
+
+# --- Infrastructure: Payment Logic ---
+def verify_paystack_transaction(reference):
+    """External service communication with robust error handling."""
+    url = f"https://api.paystack.co/transaction/verify/{reference}"
+    headers = {"Authorization": f"Bearer {settings.PAYSTACK_SECRET_KEY}"}
+    try:
+        response = requests.get(url, headers=headers, timeout=10)
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Paystack verification failed: {e}")
+        return None
+
+# --- Unified Order API ---
+class OrderViewSet(viewsets.ModelViewSet):
+    queryset = Order.objects.all().order_by('-id')
+    serializer_class = OrderSerializer
+    permission_classes = [AllowAny]
+
+    @transaction.atomic
+    def create(self, request, *args, **kwargs):
+        data = request.data
+        items_data = data.get('items', [])
     
+        if not items_data:
+            return Response({"error": "No items provided"}, status=400)
 
-from django.shortcuts import render, get_object_or_404
-from .models import Order, Invoice
+        try:
+            order = Order.objects.create(
+                user_id=data.get('userId', 'guest_001'),
+                total_price=data.get('total'),
+                status='Pending'
+            )
+        
+            # Bulk create is faster and more efficient for high-concurrency
+            order_items = [
+                OrderItem(
+                    order=order,
+                    product_id=item['id'],
+                    quantity=item.get('quantity', 1),
+                    price_at_purchase=Product.objects.get(id=item['id']).price
+                )   for item in items_data
+            ]
+            OrderItem.objects.bulk_create(order_items)
+        
+            return Response({"id": order.id, "status": "Created"}, status=status.HTTP_201_CREATED)
+        except Product.DoesNotExist:
+            return Response({"error": "One or more products not found"}, status=404)
+        except Exception as e:
+           logger.error(f"Order creation failed: {e}")
+           return Response({"error": "Internal server error"}, status=500)
 
-def print_receipt(request, order_id):
+# --- The "Rock-Solid" Verification Endpoint ---
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def verify_payment(request):
+    reference = request.data.get('reference')
+    order_id = request.data.get('order_id')
+
+    if not reference or not order_id:
+        return Response({"error": "Missing params"}, status=400)
+
+    payment_data = verify_paystack_transaction(reference)
+    
+    if payment_data and payment_data.get('status') and payment_data['data']['status'] == 'success':
+        with transaction.atomic():
+            order = Order.objects.select_for_update().get(id=order_id)
+            
+            # Idempotency check: Don't process twice
+            if order.status == 'Paid':
+                return Response({"message": "Already processed"}, status=200)
+
+            # Security check: Amount verification
+            amount_paid = payment_data['data']['amount'] / 100
+            if float(order.total_price) != float(amount_paid):
+                logger.warning(f"Payment mismatch for Order {order_id}")
+                return Response({"error": "Invalid amount"}, status=400)
+
+            order.status = 'Paid'
+            order.save()
+            
+            # Here: Integrate Ledger Entry (e.g., Ledger.objects.create(...))
+            return Response({"message": "Payment verified and recorded."}, status=200)
+    
+    return Response({"error": "Verification failed"}, status=400)
+
+from django.template.loader import render_to_string
+from django.http import HttpResponse
+
+def render_receipt_pdf(request, order_id):
     order = get_object_or_404(Order, id=order_id)
-    # Assuming you want to show the order items and details
-    context = {
-        'order': order,
-        'items': order.items.all(), # 'items' is the related_name from OrderItem
-    }
+    # Professional touch: Block unauthorized receipt access
+    if order.status != 'Paid':
+        return HttpResponse("Receipt not available: Payment pending.", status=403)
+        
+    context = {'order': order, 'items': order.items.all()}
     return render(request, 'super_mart/receipt.html', context)
 
+# --- 6. HRM: PAYROLL PRINTING ---
 def print_payroll(request, payroll_id):
     payroll = get_object_or_404(Payroll, id=payroll_id)
     return render(request, 'super_mart/payslip.html', {'payroll': payroll})

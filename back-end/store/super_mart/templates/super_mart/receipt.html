@@ -1,63 +1,14 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <style>
-        body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #333; line-height: 1.5; }
-        .invoice-box { max-width: 600px; margin: auto; padding: 30px; border: 1px solid #eee; box-shadow: 0 0 10px rgba(0, 0, 0, 0.15); }
-        .header { display: flex; justify-content: space-between; border-bottom: 2px solid #2e7d32; padding-bottom: 20px; margin-bottom: 20px; }
-        .header h1 { color: #2e7d32; margin: 0; }
-        table { width: 100%; border-collapse: collapse; }
-        .item-table th { border-bottom: 1px solid #ddd; text-align: left; padding: 10px; }
-        .item-table td { padding: 10px; border-bottom: 1px solid #eee; }
-        .total-row { font-weight: bold; font-size: 1.1em; }
-        .footer { margin-top: 30px; text-align: center; font-size: 0.9em; color: #777; }
-        .btn-print { background: #2e7d32; color: white; padding: 10px 20px; border: none; cursor: pointer; border-radius: 4px; margin-top: 20px; }
-        @media print { .no-print { display: none; } }
-    </style>
-</head>
-<body>
-    <div class="invoice-box">
-        <div class="header">
-            <div>
-                <h1>RECEIPT</h1>
-                <p>Lagos Tech Hub</p>
-            </div>
-            <div style="text-align: right;">
-                <strong>Order #:</strong> {{ order.id }}<br>
-                <strong>Date:</strong> {{ order.created_at|date:"Y-m-d" }}
-            </div>
-        </div>
-
-        <table class="item-table">
-            <thead>
-                <tr>
-                    <th>Item</th>
-                    <th style="text-align: center;">Qty</th>
-                    <th style="text-align: right;">Price</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for item in items %}
-                <tr>
-                    <td>{{ item.product.name }}</td>
-                    <td style="text-align: center;">{{ item.quantity }}</td>
-                    <td style="text-align: right;">${{ item.price_at_purchase }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-            <tfoot>
-                <tr class="total-row">
-                    <td colspan="2" style="text-align: right;">Total:</td>
-                    <td style="text-align: right;">${{ order.total_price }}</td>
-                </tr>
-            </tfoot>
-        </table>
-
-        <div class="footer">
-            <p>Thank you for shopping at Lagos Tech Hub!</p>
-        </div>
-
-        <button class="no-print btn-print" onclick="window.print()">Print Receipt</button>
-    </div>
-</body>
-</html>
+<style>
+    :root { --brand-color: #2e7d32; }
+    
+    body { font-family: 'Segoe UI', Tahoma, sans-serif; }
+    .invoice-box { 
+        max-width: 800px; margin: 40px auto; padding: 40px; 
+        border: 1px solid #eee; box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        border-top: 5px solid var(--brand-color);
+    }
+    /* Improve table readability */
+    .item-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    .item-table th { background: #f8f8f8; padding: 12px; border-bottom: 2px solid var(--brand-color); }
+    .item-table td { padding: 12px; border-bottom: 1px solid #eee; }
+</style>

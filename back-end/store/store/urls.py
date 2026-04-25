@@ -22,6 +22,7 @@ urlpatterns = [
     path('api/login/', views.login_user, name='login'),
     path('receipt/<int:order_id>/', views.print_receipt, name='print_receipt'),
     path('payroll/print/<int:payroll_id>/', views.print_payroll, name='print_payroll'),
+    path('api/verify-payment/', views.verify_payment, name='verify_payment'),
     # ADDED THIS LINE BELOW:
     path('api/get-csrf-token/', views.get_csrf_token, name='get-csrf-token'),
     path('api/employees/<str:employee_id>/', views.employee_detail_api, name='employee-detail'),
