@@ -97,27 +97,12 @@ function App() {
   e.preventDefault();
   setIsSubmitting(true);
   const endpoint = authMode === "login" ? "/api/login/" : "/api/register/";
-
-  // welcome message logic moved inside the successful response block
-  if (res.ok) {
-    setUser(data.user || data);
-    // Add this greeting
-    const name = data.user?.first_name || "there";
-    setWelcomeMessage(`Hi, ${name}! Welcome back.`);
-    
-    // Clear the message after 5 seconds
-    setTimeout(() => setWelcomeMessage(""), 5000);
-    
-    setView("grid");
-  }
-  // Construct payload explicitly
+  
   const payload = {
     first_name: authData.first_name,
     phone: authData.phone,
     password: authData.password
   };
-
-  console.log("Sending Payload:", JSON.stringify(payload)); // Check browser console
 
   try {
     const res = await fetch(`${BASE_URL}${endpoint}`, {
@@ -131,8 +116,16 @@ function App() {
     });
     
     const data = await res.json();
+    
     if (res.ok) {
       setUser(data.user || data);
+      
+      // --- WELCOME MESSAGE LOGIC MOVED HERE ---
+      const name = data.user?.first_name || "there";
+      setWelcomeMessage(`Hi, ${name}! Welcome back.`);
+      setTimeout(() => setWelcomeMessage(""), 5000);
+      // ----------------------------------------
+      
       setView("grid");
     } else {
       console.error("Backend Error:", data);
@@ -141,8 +134,8 @@ function App() {
   } catch (err) {
     console.error("Fetch Error:", err);
     alert("Connection error. Check your network or server status.");
-  }finally {
-    setIsSubmitting(false); // <--- Add this
+  } finally {
+    setIsSubmitting(false);
   }
 };
   // --- 1. PERSISTENCE & DATA FETCHING ---
@@ -223,24 +216,43 @@ useEffect(() => {
   };
 
   const checkoutWithPaystack = async () => {
-    if (cart.length === 0) return alert("Cart is empty!");
-    setIsProcessing(true);
-    const totalAmount = cart.reduce((sum, item) => sum + (parseFloat(item.price) * item.quantity), 0) + 1500;
+  if (cart.length === 0) return alert("Cart is empty!");
 
+  // 1. Safety Check: Verify Paystack library is loaded in the browser
+  if (typeof window.PaystackPop === 'undefined') {
+    alert("Payment gateway is still initializing. Please wait a moment and try again.");
+    return;
+  }
+
+  setIsProcessing(true);
+  const totalAmount = cart.reduce((sum, item) => sum + (parseFloat(item.price) * item.quantity), 0) + 1500;
+
+  try {
     const handler = window.PaystackPop.setup({
       key: 'pk_live_21207f639d252b46e35e171dca6b075f79cba433',
       email: user ? `${user.phone}@mebuy.com` : 'guest@mebuy.com',
       amount: Math.round(totalAmount * 100),
       currency: 'NGN',
       callback: (response) => {
+        // Success: Reset state and clear cart
         setIsProcessing(false);
         setCart([]);
         alert("Payment Successful! Reference: " + response.reference);
+        // TODO: Send response.reference to your Django backend to verify the transaction
       },
-      onClose: () => setIsProcessing(false)
+      onClose: () => {
+        // User closed the window: Reset processing state
+        setIsProcessing(false);
+      }
     });
+
     handler.openIframe();
-  };
+  } catch (error) {
+    console.error("Paystack Setup Error:", error);
+    setIsProcessing(false); // Reset state if setup fails
+    alert("An error occurred initializing payment. Please try again.");
+  }
+};
 
   const filteredProducts = products.filter((p) => 
     p.category.toLowerCase() === category.toLowerCase() && 
