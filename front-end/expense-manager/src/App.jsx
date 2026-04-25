@@ -222,35 +222,31 @@ useEffect(() => {
   const checkoutWithPaystack = async () => {
   if (cart.length === 0) return alert("Cart is empty!");
 
-  // 1. Safety check: Ensure the Paystack script is loaded
-  if (typeof window.PaystackPop === 'undefined') {
-    alert("Payment gateway is still loading. Please wait a moment.");
-    return;
-  }
-
-  setIsProcessing(true); // Start the spinner
+  setIsProcessing(true); // Start the loading state
   const totalAmount = cart.reduce((sum, item) => sum + (parseFloat(item.price) * item.quantity), 0);
 
+  // Use a promise-based approach to ensure we catch errors
   try {
     const handler = window.PaystackPop.setup({
-      key: 'pk_live_21207f639d252b46e35e171dca6b075f79cba433',
+      key: PAYSTACK_PUBLIC_KEY,
       email: user ? `${user.phone}@mebuy.com` : 'guest@mebuy.com',
       amount: Math.round(totalAmount * 100),
       currency: 'NGN',
       callback: (response) => {
-        setIsProcessing(false); // Reset on success
+        setIsProcessing(false);
         setCart([]);
         alert("Payment Successful! Reference: " + response.reference);
       },
       onClose: () => {
-        setIsProcessing(false); // Reset when user closes the modal
+        setIsProcessing(false); // Reset when user closes modal
       }
     });
+    
     handler.openIframe();
   } catch (error) {
     console.error("Paystack Error:", error);
-    setIsProcessing(false); // Reset if the setup itself crashes
-    alert("An error occurred. Please try again.");
+    setIsProcessing(false); // Ensure we stop processing on error
+    alert("Payment gateway failed to initialize. Please try again.");
   }
 };
   const filteredProducts = products.filter((p) => 
@@ -280,9 +276,16 @@ useEffect(() => {
       
       {/* Dynamic User Greeting */}
       {user && (
-        <span className="user-tag" style={{ fontWeight: 'bold' }}>
-          Hi, {user.first_name}! 👤
-        </span>
+        <span className="user-tag" style={{ 
+    fontWeight: 'bold', 
+    backgroundColor: 'rgba(255, 255, 255, 0.2)', // Light semi-transparent bubble
+    padding: '5px 12px',
+    borderRadius: '20px',
+    color: '#ffffff', // White text
+    textShadow: '0px 1px 3px rgba(0,0,0,0.5)' // Subtle shadow for readability
+  }}>
+    Hi, {user.first_name}! 👤
+  </span>
       )}
 
       {/* Cart Button */}
@@ -293,26 +296,6 @@ useEffect(() => {
     </div>
   </div>
 
-  {/* Welcome Message Toast (Fixed position is fine here) */}
-  {welcomeMessage && (
-  <div className="welcome-toast" style={{
-    position: 'fixed', 
-    top: '80px', 
-    right: '20px', 
-    background: '#d84315', // High-contrast Deep Orange
-    color: '#ffffff',      // White text for maximum readability
-    padding: '16px 24px', 
-    borderRadius: '10px', 
-    zIndex: 9999,          // Increased to ensure it stays on top of header
-    boxShadow: '0 10px 20px rgba(0,0,0,0.2)', // Stronger shadow for "depth"
-    fontWeight: 'bold',
-    fontSize: '16px',
-    border: '1px solid #bf360c', // Subtle border to make it pop more
-    animation: 'fadeIn 0.5s' // Smooth appearance
-  }}>
-    {welcomeMessage}
-  </div>
-)}
 </header>
       {/* NAVIGATION */}
       <nav className="main-nav">
