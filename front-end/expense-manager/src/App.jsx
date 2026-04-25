@@ -71,7 +71,8 @@ function App() {
   // --- AUTH & USER STATES ---
   const [user, setUser] = useState(null);
   const [authMode, setAuthMode] = useState("login"); // 'login' or 'register'
- const [authData, setAuthData] = useState({ phone: "", password: "", first_name: "" });
+  const [authData, setAuthData] = useState({ phone: "", password: "", first_name: "" });
+  const [welcomeMessage, setWelcomeMessage] = useState("");
 
   // --- TRACKING & HISTORY STATES ---
   const [trackInput, setTrackInput] = useState("");
@@ -120,8 +121,16 @@ function App() {
     
     const data = await res.json();
     if (res.ok) {
-      setUser(data.user || data);
-      setView("grid");
+    // Since the API returns the user fields directly, we use 'data'
+    setUser(data); 
+    
+    // Use the first_name from the root of 'data'
+    const name = data.first_name || "there";
+    
+    setWelcomeMessage(`Hi, ${name}! Welcome back.`);
+    setTimeout(() => setWelcomeMessage(""), 5000);
+    
+    setView("grid");
     } else {
       console.error("Backend Error:", data);
       alert(data.error || "Authentication failed");
@@ -239,16 +248,48 @@ useEffect(() => {
     <div className="app-grid-wrapper">
       {/* HEADER */}
       <header className="brand-header">
-        <div className="header-inner" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
-          <h1 onClick={() => setView("grid")} className="logo-text" style={{ cursor: 'pointer' }}>MeBuy</h1>
-          
-          <button className="cart-toggle-btn" onClick={() => setCartOpen(!cartOpen)}>
-           🛒 {cart.reduce((acc, item) => acc + item.quantity, 0)}
-            <span> ₦{cart.reduce((sum, item) => sum + (item.price * item.quantity), 0).toLocaleString()}</span>
-          </button>
-        </div>
-      </header>
+  <div className="header-inner" style={{ 
+    display: 'flex', 
+    justifyContent: 'space-between', 
+    alignItems: 'center', 
+    width: '100%',
+    padding: '10px 20px' 
+  }}>
+    
+    {/* 1. Logo */}
+    <h1 onClick={() => setView("grid")} className="logo-text" style={{ cursor: 'pointer', margin: 0 }}>
+      MeBuy
+    </h1>
 
+    {/* 2. User Greeting + Cart */}
+    <div className="header-actions" style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+      
+      {/* Dynamic User Greeting */}
+      {user && (
+        <span className="user-tag" style={{ fontWeight: 'bold' }}>
+          Hi, {user.first_name}! 👤
+        </span>
+      )}
+
+      {/* Cart Button */}
+      <button className="cart-toggle-btn" onClick={() => setCartOpen(!cartOpen)}>
+        🛒 {cart.reduce((acc, item) => acc + item.quantity, 0)} | 
+        <span> ₦{cart.reduce((sum, item) => sum + (item.price * item.quantity), 0).toLocaleString()}</span>
+      </button>
+    </div>
+  </div>
+
+  {/* Welcome Message Toast (Fixed position is fine here) */}
+  {welcomeMessage && (
+    <div className="welcome-toast" style={{
+      position: 'fixed', top: '80px', right: '20px', 
+      background: '#2e7d32', color: 'white', padding: '15px', 
+      borderRadius: '8px', zIndex: 1000, boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+    }}>
+      {welcomeMessage}
+    </div>
+  )}
+</header>
       {/* NAVIGATION */}
       <nav className="main-nav">
         <div className="nav-container">
