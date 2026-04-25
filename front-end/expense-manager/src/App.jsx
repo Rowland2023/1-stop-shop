@@ -244,34 +244,22 @@ useEffect(() => {
     } catch (err) { alert("Connection failed."); }
   };
 
-  const checkoutWithPaystack = async () => {
-  if (cart.length === 0) return alert("Cart is empty!");
+  // 1. Remove the global useEffect that injects the script into document.body.
+// Keep only the logic inside the checkout function or a dedicated loader.
 
+const checkoutWithPaystack = async () => {
+  if (cart.length === 0) return alert("Cart is empty!");
   setIsProcessing(true);
 
-  // Helper to load Paystack dynamically
-  const loadPaystack = () => {
-    return new Promise((resolve, reject) => {
-      // If already loaded, return the existing object
-      if (window.PaystackPop) return resolve(window.PaystackPop);
-
-      // Create and inject the script
-      const script = document.createElement("script");
-      script.src = "https://js.paystack.co/v1/inline.js";
-      script.async = true;
-      script.onload = () => resolve(window.PaystackPop);
-      script.onerror = () => reject(new Error("Paystack script failed to load"));
-      document.head.appendChild(script);
-    });
-  };
-
   try {
-    // Wait for the script to be ready
-    const PaystackPop = await loadPaystack();
+    // Check if Paystack is already loaded
+    if (!window.PaystackPop) {
+      throw new Error("Paystack script not loaded");
+    }
 
     const totalAmount = cart.reduce((sum, item) => sum + (parseFloat(item.price) * item.quantity), 0);
 
-    const handler = PaystackPop.setup({
+    const handler = window.PaystackPop.setup({
       key: "pk_live_21207f639d252b46e35e171dca6b075f79cba433",
       email: user ? `${user.phone}@mebuy.com` : 'guest@mebuy.com',
       amount: Math.round(totalAmount * 100),
@@ -281,16 +269,15 @@ useEffect(() => {
         setCart([]);
         alert("Payment Successful! Reference: " + response.reference);
       },
-      onClose: () => {
-        setIsProcessing(false);
-      }
+      onClose: () => setIsProcessing(false)
     });
 
     handler.openIframe();
   } catch (error) {
     console.error("Paystack Initialization Error:", error);
     setIsProcessing(false);
-    alert("Payment gateway failed to initialize. Please check your internet connection and try again.");
+    // Tell the user why it failed if it's a known issue
+    alert("Could not start payment. Please disable ad-blockers and try again.");
   }
 };
   const filteredProducts = products.filter((p) => 
