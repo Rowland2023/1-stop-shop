@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import "./App.css";
-import { PaystackButton } from '@paystack/inline-react';
+import { usePaystackPayment } from 'react-paystack';
 // --- CONFIG ---
 const BASE_URL = import.meta.env.VITE_API_URL || "";
 const CLOUDINARY_BASE = "https://res.cloudinary.com/dscxqsew5/";
@@ -200,27 +200,15 @@ useEffect(() => {
     }
   }, [view, user]);
 
-  // --- In your App Component ---
-// 1. Add this state at the top with your other states
-// Add a 'retry' counter to your state
-
-
-
-
-// Inside your App component, replace your checkout button with this:
-const totalAmount = cart.reduce((sum, item) => sum + (parseFloat(item.price) * item.quantity), 0);
-
-const componentProps = {
+// Inside your App component:
+const config = {
+    reference: (new Date()).getTime().toString(),
     email: user ? `${user.phone}@mebuy.com` : 'guest@mebuy.com',
     amount: Math.round(totalAmount * 100),
-    publicKey: "pk_live_21207f639d252b46e35e171dca6b075f79cba433",
-    text: "Checkout Now",
-    onSuccess: (response) => {
-        setCart([]);
-        alert("Payment Successful! Reference: " + response.reference);
-    },
-    onClose: () => alert("Transaction Cancelled"),
+    publicKey: 'pk_live_21207f639d252b46e35e171dca6b075f79cba433',
 };
+
+const initializePayment = usePaystackPayment(config);
 
   // --- 2. LOGIC HANDLERS ---
   const addToCart = (product, qty = 1) => {
@@ -448,7 +436,13 @@ const componentProps = {
 
             {/* The Buttons requested */}
             <div className="cart-action-stack" style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '20px' }}>
-              <PaystackButton className="orange-curved-btn" {...componentProps} />  
+              // Your button:
+              <button className="checkout-btn-curved" onClick={() => initializePayment({ 
+                    onSuccess: (res) => alert("Success! " + res.reference), 
+                    onClose: () => alert("Closed") 
+                  })}>
+                      Checkout Now
+              </button>
               <button className="clear-cart-btn-curved" onClick={() => setCart([])}>
                 Clear Cart
               </button>
