@@ -185,36 +185,30 @@ useEffect(() => {
     .catch((err) => console.error("Fetch error:", err));
 }, []);
 
-  useEffect(() => {
-    if (view === "account" && user) {
-      fetch(`${BASE_URL}/api/orders/`)
-        .then((res) => res.json())
-        .then((data) => {
-          const ordersArray = Array.isArray(data) ? data : (data.results || []);
-          setUserOrders(ordersArray);
-        })
-        .catch((err) => console.error("Order fetch error:", err));
+// --- REPLACE YOUR EXISTING PAYSTACK useEffect ---
+useEffect(() => {
+  const checkPaystack = () => {
+    if (window.PaystackPop) {
+      setPaystackLoaded(true);
+      return true;
     }
-  }, [view, user]);
-
-  useEffect(() => {
-  // Check if it's already there
-  if (window.PaystackPop) {
-    setPaystackLoaded(true);
-    return;
-  }
-
-  // If not, inject it manually
-  const script = document.createElement("script");
-  script.src = "https://js.paystack.co/v1/inline.js";
-  script.async = true;
-  script.onload = () => setPaystackLoaded(true);
-  script.onerror = () => {
-    console.error("Failed to load Paystack script");
-    // Fallback: Enable button anyway so user isn't stuck
-    setPaystackLoaded(true); 
+    return false;
   };
-  document.body.appendChild(script);
+
+  // Try immediately
+  if (!checkPaystack()) {
+    const script = document.createElement("script");
+    script.src = "https://js.paystack.co/v1/inline.js";
+    script.async = true;
+    script.onload = () => setPaystackLoaded(true);
+    document.body.appendChild(script);
+
+    // Fallback: Check every second for 10 seconds
+    const interval = setInterval(() => {
+      if (checkPaystack()) clearInterval(interval);
+    }, 1000);
+    return () => clearInterval(interval);
+  }
 }, []);
 
   // --- 2. LOGIC HANDLERS ---
