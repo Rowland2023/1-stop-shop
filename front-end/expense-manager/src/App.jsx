@@ -97,7 +97,19 @@ function App() {
   e.preventDefault();
   setIsSubmitting(true);
   const endpoint = authMode === "login" ? "/api/login/" : "/api/register/";
-  
+
+  // welcome message logic moved inside the successful response block
+  if (res.ok) {
+    setUser(data.user || data);
+    // Add this greeting
+    const name = data.user?.first_name || "there";
+    setWelcomeMessage(`Hi, ${name}! Welcome back.`);
+    
+    // Clear the message after 5 seconds
+    setTimeout(() => setWelcomeMessage(""), 5000);
+    
+    setView("grid");
+  }
   // Construct payload explicitly
   const payload = {
     first_name: authData.first_name,
