@@ -97,47 +97,41 @@ function App() {
   e.preventDefault();
   setIsSubmitting(true);
   const endpoint = authMode === "login" ? "/api/login/" : "/api/register/";
-  
+
+  // Construct payload explicitly
   const payload = {
     first_name: authData.first_name,
     phone: authData.phone,
     password: authData.password
   };
 
+  console.log("Sending Payload:", JSON.stringify(payload)); // Check browser console
+
   try {
-  const res = await fetch(`${BASE_URL}${endpoint}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "X-CSRFToken": getCookie("csrftoken") },
-    body: JSON.stringify(payload),
-    credentials: "include",
-  });
-
-  // Check if response is JSON before parsing
-  const contentType = res.headers.get("content-type");
-  if (!contentType || !contentType.includes("application/json")) {
-    throw new Error("Server returned non-JSON response");
+    const res = await fetch(`${BASE_URL}${endpoint}`, {
+      method: "POST",
+      headers: { 
+        "Content-Type": "application/json",
+        "X-CSRFToken": getCookie("csrftoken") 
+      },
+      body: JSON.stringify(payload),
+      credentials: "include",
+    });
+    
+    const data = await res.json();
+    if (res.ok) {
+      setUser(data.user || data);
+      setView("grid");
+    } else {
+      console.error("Backend Error:", data);
+      alert(data.error || "Authentication failed");
+    }
+  } catch (err) {
+    console.error("Fetch Error:", err);
+    alert("Connection error. Check your network or server status.");
+  }finally {
+    setIsSubmitting(false); // <--- Add this
   }
-
-  const data = await res.json();
-
-  if (res.ok) {
-    setUser(data.user || data);
-    setWelcomeMessage(`Hi, ${data.user?.first_name || "there"}! Welcome back.`);
-    setTimeout(() => setWelcomeMessage(""), 5000);
-    setView("grid");
-  } else {
-    // Only alert if it's a real logic error (like invalid password)
-    alert(data.error || "Authentication failed");
-  }
-} catch (err) {
-  console.error("Fetch Error:", err);
-  // ONLY show this if it was a true network failure
-  if (err.message !== "Server returned non-JSON response") {
-    alert("Connection error. Check your network.");
-  }
-} finally {
-  setIsSubmitting(false);
-}
 };
   // --- 1. PERSISTENCE & DATA FETCHING ---
   // Add this to your main App component or a global auth provider
@@ -404,6 +398,7 @@ useEffect(() => {
           <div className="total-section" style={{ borderTop: '1px solid #eee', paddingTop: '15px' }}>
             <p>Subtotal: ₦{cart.reduce((s, i) => s + (i.price * i.quantity), 0).toLocaleString()}</p>
             <p><strong>Total: ₦{cart.reduce((s, i) => s + (i.price * i.quantity), 0).toLocaleString()}</strong></p>
+
 
             {/* The Buttons requested */}
             <div className="cart-action-stack" style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '20px' }}>
