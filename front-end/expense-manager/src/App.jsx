@@ -66,6 +66,7 @@ function App() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [activeMainImage, setActiveMainImage] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   // --- AUTH & USER STATES ---
   const [user, setUser] = useState(null);
@@ -94,6 +95,7 @@ function App() {
 }
   const handleAuth = async (e) => {
   e.preventDefault();
+  setIsSubmitting(true);
   const endpoint = authMode === "login" ? "/api/login/" : "/api/register/";
   
   // Construct payload explicitly
@@ -126,6 +128,9 @@ function App() {
     }
   } catch (err) {
     console.error("Fetch Error:", err);
+    alert("Connection error. Check your network or server status.");
+  }finally {
+    setIsSubmitting(false); // <--- Add this
   }
 };
   // --- 1. PERSISTENCE & DATA FETCHING ---
