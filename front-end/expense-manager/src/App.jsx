@@ -19,9 +19,6 @@ const getImageUrl = (input) => {
   const cleanPath = path.startsWith("/") ? path.substring(1) : path;
   return `${CLOUDINARY_BASE}${cleanPath}`;
 };
-/* --- COMPONENTS & SUB-COMPONENTS --- */
-const ITEMS_PER_PAGE = 9;
-const [currentPage, setCurrentPage] = useState(1);
 
 function ProductCard({ product, onAddToCart, onSelect }) {
   const [tempQty, setTempQty] = useState(1);
@@ -54,6 +51,8 @@ function ProductCard({ product, onAddToCart, onSelect }) {
 /* ... rest of your App component remains the same */
 function App() {
   // --- CORE STATES ---
+  const ITEMS_PER_PAGE = 9;
+  const [currentPage, setCurrentPage] = useState(1);
   const [products, setProducts] = useState([]);
   const [category, setCategory] = useState("food");
   const [cart, setCart] = useState(() => {
@@ -71,6 +70,7 @@ function App() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [paystackReady, setPaystackReady] = useState(false);
   const [loadAttempt, setLoadAttempt] = useState(0);
+  
   
   /* --- AUTH & USER STATES ---*/
   const [user, setUser] = useState(null);
