@@ -272,7 +272,7 @@ useEffect(() => {
     style={{ 
       maxHeight: '100px', // Increase this to make it taller
       width: 'auto',     // Keeps aspect ratio
-      maxWidth: '400%',  // Prevents it from growing wider than the header
+      //maxWidth: '100%',  // Prevents it from growing wider than the header
       objectFit: 'contain' 
     }} 
   />
