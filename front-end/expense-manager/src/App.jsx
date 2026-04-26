@@ -246,21 +246,7 @@ useEffect(() => {
     <div className="app-grid-wrapper">
       {/* HEADER */}
       <header className="brand-header">
-  <div className="header-inner" style={{ 
-    display: 'flex', 
-    justifyContent: 'space-between', 
-    alignItems: 'center', 
-    width: '100%',
-    padding: '10px 20px' 
-  }}>
-    
-    {/* 1. Logo */}
-    <h1 onClick={() => setView("grid")} className="logo-text" style={{ cursor: 'pointer', margin: 0 }}>
-      MeBuy
-    </h1>
-    
-    {/* 2. Centered Container (Flex item 2 - Grows to fill space) */}
-    <div className="header-inner" style={{ 
+       <div className="header-inner" style={{ 
   display: 'flex', 
   justifyContent: 'space-between', 
   alignItems: 'center', 
@@ -291,15 +277,8 @@ useEffect(() => {
         height: '100%', 
         objectFit: 'cover' // This is the key: it stretches to cover the space
       }} 
-    />
-  </div>
-
-  {/* User Greeting + Cart */}
-  <div className="header-actions" style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-     {/* ... your existing buttons ... */}
-  </div>
-</div>
-
+     />
+    </div>
     {/* 2. User Greeting + Cart */}
     <div className="header-actions" style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
       
