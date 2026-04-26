@@ -19,6 +19,9 @@ const getImageUrl = (input) => {
   const cleanPath = path.startsWith("/") ? path.substring(1) : path;
   return `${CLOUDINARY_BASE}${cleanPath}`;
 };
+/* --- COMPONENTS & SUB-COMPONENTS --- */
+const ITEMS_PER_PAGE = 9;
+const [currentPage, setCurrentPage] = useState(1);
 
 function ProductCard({ product, onAddToCart, onSelect }) {
   const [tempQty, setTempQty] = useState(1);
@@ -241,6 +244,12 @@ useEffect(() => {
     p.category.toLowerCase() === category.toLowerCase() && 
     p.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
+  // 2. Calculate pagination
+  const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE);
+  const paginatedProducts = filteredProducts.slice(
+  (currentPage - 1) * ITEMS_PER_PAGE,
+  currentPage * ITEMS_PER_PAGE
+  );
 
   return (
     <div className="app-grid-wrapper">
@@ -401,41 +410,72 @@ useEffect(() => {
 
   {/* PRODUCT GRID & DETAIL VIEW (Only rendered when view is 'grid') */}
   {view === "grid" && (
-    <>
-      {selectedProduct ? (
-        <div className="detail-screen" style={{ padding: '20px' }}>
-          <button onClick={() => setSelectedProduct(null)}>← Back to Products</button>
-          <h1>{selectedProduct.name}</h1>
-          <div className="product-gallery">
-            <img 
-              src={getImageUrl(activeMainImage)} 
-              style={{ width: '100%', maxWidth: '400px', objectFit: 'contain' }} 
-            />
-            <div className="thumb-strip" style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
-              {selectedProduct.additional_images?.map((imgObj, idx) => (
-                <img 
-                  key={idx} 
-                  src={getImageUrl(imgObj.image)} 
-                  onClick={() => setActiveMainImage(imgObj.image)}
-                  style={{ width: '80px', height: '80px', cursor: 'pointer', objectFit: 'cover', border: activeMainImage === imgObj.image ? '2px solid orange' : 'none' }}
-                />
-              ))}
-            </div>
-          </div>
-          <div className="product-description">
-            <h3>Product Details</h3>
-            <p>{selectedProduct.description || "No description provided by the merchant."}</p>
+  <>
+    {selectedProduct ? (
+      <div className="detail-screen" style={{ padding: '20px' }}>
+        <button onClick={() => setSelectedProduct(null)}>← Back to Products</button>
+        <h1>{selectedProduct.name}</h1>
+        <div className="product-gallery">
+          <img 
+            src={getImageUrl(activeMainImage)} 
+            style={{ width: '100%', maxWidth: '400px', objectFit: 'contain' }} 
+          />
+          <div className="thumb-strip" style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+            {selectedProduct.additional_images?.map((imgObj, idx) => (
+              <img 
+                key={idx} 
+                src={getImageUrl(imgObj.image)} 
+                onClick={() => setActiveMainImage(imgObj.image)}
+                style={{ width: '80px', height: '80px', cursor: 'pointer', objectFit: 'cover', border: activeMainImage === imgObj.image ? '2px solid orange' : 'none' }}
+              />
+            ))}
           </div>
         </div>
-      ) : (
+        <div className="product-description">
+          <h3>Product Details</h3>
+          <p>{selectedProduct.description || "No description provided by the merchant."}</p>
+        </div>
+      </div>
+    ) : (
+      <div className="product-grid-wrapper">
         <div className="product-grid">
-          {filteredProducts.map((p) => (
+          {/* Paginated slice of products */}
+          {paginatedProducts.map((p) => (
             <ProductCard key={p.id} product={p} onAddToCart={addToCart} onSelect={setSelectedProduct} />
           ))}
         </div>
-      )}
-    </>
-  )}
+
+        {/* Pagination Controls */}
+        {totalPages > 1 && (
+          <div className="pagination-controls" style={{ 
+            display: 'flex', 
+            justifyContent: 'center', 
+            alignItems: 'center',
+            gap: '15px', 
+            marginTop: '30px',
+            marginBottom: '20px'
+          }}>
+            <button 
+              disabled={currentPage === 1} 
+              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+            >
+              Previous
+            </button>
+            
+            <span>Page {currentPage} of {totalPages}</span>
+            
+            <button 
+              disabled={currentPage === totalPages} 
+              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+            >
+              Next
+            </button>
+          </div>
+        )}
+      </div>
+    )}
+  </>
+)}
 </main>
 
       {/* RIGHT SIDEBAR - Updated with Orange Curved Buttons */}
