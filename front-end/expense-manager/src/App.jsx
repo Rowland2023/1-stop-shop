@@ -266,7 +266,16 @@ useEffect(() => {
       flex: 1, 
       margin: '0 20px' 
     }}>
-      <img src="Shoping-ad.jpg" alt="Promo" style={{ height: '40px', objectFit: 'contain' }} />
+      <img 
+    src="/Shoping-ad.jpg" 
+    alt="Promo" 
+    style={{ 
+      maxHeight: '60px', // Increase this to make it taller
+      width: 'auto',     // Keeps aspect ratio
+      maxWidth: '100%',  // Prevents it from growing wider than the header
+      objectFit: 'contain' 
+    }} 
+  />
     </div>
 
     {/* 2. User Greeting + Cart */}
