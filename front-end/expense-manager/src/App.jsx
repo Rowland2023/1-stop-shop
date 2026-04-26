@@ -266,7 +266,7 @@ useEffect(() => {
       flex: 1, 
       margin: '0 20px' 
     }}>
-      <img src="/C:\Users\rowla\projects\1-stop-shop\Market-Place\front-end\expense-manager\public\Shoping-ad.jpg" alt="Promo" style={{ height: '40px', objectFit: 'contain' }} />
+      <img src="Shoping-ad.jpg" alt="Promo" style={{ height: '40px', objectFit: 'contain' }} />
     </div>
 
     {/* 2. User Greeting + Cart */}
