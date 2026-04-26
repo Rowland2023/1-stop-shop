@@ -270,9 +270,9 @@ useEffect(() => {
     src="/Shoping-ad.jpg" 
     alt="Promo" 
     style={{ 
-      maxHeight: '60px', // Increase this to make it taller
+      maxHeight: '100px', // Increase this to make it taller
       width: 'auto',     // Keeps aspect ratio
-      maxWidth: '100%',  // Prevents it from growing wider than the header
+      maxWidth: '400%',  // Prevents it from growing wider than the header
       objectFit: 'contain' 
     }} 
   />
