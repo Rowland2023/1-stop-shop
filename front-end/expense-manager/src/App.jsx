@@ -255,11 +255,6 @@ useEffect(() => {
   gap: '10px' // Add a small gap between elements
 }}>
   
-  {/* Logo */}
-  <h1 onClick={() => setView("grid")} className="logo-text" style={{ cursor: 'pointer', margin: 0 }}>
-    MeBuy
-  </h1>
-
   {/* Stretched Advert Container */}
   <div className="header-ad" style={{ 
     flex: 1, 
