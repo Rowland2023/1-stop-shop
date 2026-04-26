@@ -246,30 +246,30 @@ useEffect(() => {
     <div className="app-grid-wrapper">
       {/* HEADER */}
       <header className="brand-header">
-       <div className="header-inner" style={{ 
-  display: 'flex', 
-  justifyContent: 'space-between', 
-  alignItems: 'center', 
-  width: '100%',
-  padding: '10px 20px',
-  gap: '10px' // Add a small gap between elements
-}}>
-  
-  {/* Logo */}
-  <h1 onClick={() => setView("grid")} className="logo-text" style={{ cursor: 'pointer', margin: 0 }}>
-    MeBuy
-  </h1>
-
-  {/* Stretched Advert Container */}
-  <div className="header-ad" style={{ 
-    flex: 1, 
-    height: '50px',
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    overflow: 'hidden'
-  }}>
-    <img 
+      <div className="header-inner" style={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center', 
+        width: '100%',
+        padding: '10px 20px',
+        gap: '10px' // Add a small gap between elements
+      }}>
+    
+      {/* 1. Logo */}
+      <h1 onClick={() => setView("grid")} className="logo-text" style={{ cursor: 'pointer', margin: 0 }}>
+        MeBuy
+      </h1>
+    
+      {/* 2. Centered Container (Flex item 2 - Grows to fill space) */}
+      <div className="header-ad" style={{ 
+        flex: 1, 
+        height: '50px',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        overflow: 'hidden'
+      }}>
+      <img 
       src="/Shoping-ad.jpg" 
       alt="Promo" 
       style={{ 
@@ -277,8 +277,9 @@ useEffect(() => {
         height: '100%', 
         objectFit: 'cover' // This is the key: it stretches to cover the space
       }} 
-     />
+    />
     </div>
+
     {/* 2. User Greeting + Cart */}
     <div className="header-actions" style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
       
