@@ -93,3 +93,9 @@ footer { grid-area: footer; }
   .app-grid-wrapper { grid-template-columns: 1fr; grid-template-areas: "header" "nav-row" "main" "footer"; }
   .left-sidebar, .right-sidebar { display: none; }
 }
+/* Hide the central search on smaller screens to save space */
+@media (max-width: 768px) {
+  .header-center {
+    display: none !important;
+  }
+}

@@ -258,6 +258,16 @@ useEffect(() => {
     <h1 onClick={() => setView("grid")} className="logo-text" style={{ cursor: 'pointer', margin: 0 }}>
       MeBuy
     </h1>
+    
+    {/* 2. Centered Container (Flex item 2 - Grows to fill space) */}
+    <div className="header-center" style={{ 
+      display: 'flex', 
+      justifyContent: 'center', 
+      flex: 1, 
+      margin: '0 20px' 
+    }}>
+      <img src="/C:\Users\rowla\projects\1-stop-shop\Market-Place\front-end\expense-manager\public\Shoping-ad.jpg" alt="Promo" style={{ height: '40px', objectFit: 'contain' }} />
+    </div>
 
     {/* 2. User Greeting + Cart */}
     <div className="header-actions" style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
@@ -276,7 +286,6 @@ useEffect(() => {
     Hi, {user.first_name}! 👤
   </span>
 )}
-
       {/* Cart Button */}
       <button className="cart-toggle-btn" onClick={() => setCartOpen(!cartOpen)}>
         🛒 {cart.reduce((acc, item) => acc + item.quantity, 0)} | 
