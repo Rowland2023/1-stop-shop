@@ -118,19 +118,3 @@ footer { grid-area: footer; }
   .central-search-wrapper { flex: 1; padding: 0 10px; }
 }
 
-/* --- DESKTOP DEFAULT (Hidden) --- */
-.mobile-only-toggle { 
-    display: none !important; 
-}
-
-/* --- MOBILE ONLY (Visible) --- */
-@media (max-width: 768px) {
-    .mobile-only-toggle { 
-        display: block !important; 
-    }
-    
-    /* Hide desktop elements */
-    .hide-on-mobile { 
-        display: none !important; 
-    }
-}
