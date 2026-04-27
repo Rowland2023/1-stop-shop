@@ -83,10 +83,6 @@ footer { grid-area: footer; }
 /* =========================================
    5. RESPONSIVE
    ========================================= */
-/* Default: Desktop visibility */
-.mobile-only-toggle { display: none !important; }
-.hide-on-mobile { display: flex !important; }
-
 @media (max-width: 900px) {
   .nav-container { flex-direction: column; gap: 15px; }
   .nav-group { order: 2; width: 100%; justify-content: center; }
@@ -94,29 +90,67 @@ footer { grid-area: footer; }
 }
 
 @media (max-width: 768px) {
-  /* Hide desktop items, show mobile toggles */
-  .hide-on-mobile { display: none !important; }
-  .mobile-only-toggle { display: block !important; }
-  
+  /* Fix for image display: Ensure main doesn't have overflow issues */
+  main { overflow-x: hidden; padding: 10px; }
+
   .app-grid-wrapper {
     grid-template-columns: 1fr;
     grid-template-areas: "header" "nav-row" "main";
   }
 
+  /* Sidebars as absolute/fixed overlays */
   .left-sidebar, .right-sidebar {
-    position: fixed; top: 0; height: 100vh; width: 280px;
-    background: white; z-index: 3000; box-shadow: 0 0 15px rgba(0,0,0,0.3);
-    transition: transform 0.3s ease-in-out; padding: 20px; overflow-y: auto;
+    position: fixed;
+    top: 0;
+    height: 100vh;
+    width: 280px; /* Slightly wider for mobile thumb usage */
+    background: white;
+    z-index: 3000;
+    box-shadow: 0 0 15px rgba(0,0,0,0.3);
+    transition: transform 0.3s ease-in-out;
+    padding: 20px;
+    overflow-y: auto;
   }
 
+  /* Positioning */
   .right-sidebar { right: 0; transform: translateX(100%); }
   .right-sidebar.open { transform: translateX(0); }
   .left-sidebar { left: 0; transform: translateX(-100%); }
   .left-sidebar.show { transform: translateX(0); }
+
+  /* Navigation adjustments */
   
-  .nav-container { flex-direction: row !important; justify-content: space-between; }
-  .central-search-wrapper { flex: 1; padding: 0 10px; }
+  .nav-container { 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    padding: 5px 10px;
+  }
+  
+  /* The "Mobile Menu" that holds the missing links */
+  .mobile-menu-content { display: flex; flex-direction: column; gap: 15px; margin-top: 20px; }
+}
+/* Hide the central search on smaller screens to save space */
+@media (max-width: 768px) {
+  .header-center {
+    display: none !important;
+  }
 }
 
-/* --- DESKTOP DEFAULT (Hidden) --- */
+/* Show toggles only on mobile */
+.mobile-only-toggle { display: none; }
+
+@media (max-width: 768px) {
+  .mobile-only-toggle { display: block; }
+  .hide-on-mobile { display: none; }
+  
+  /* Ensure nav container stays balanced */
+  .nav-container { 
+    display: flex; 
+    flex-direction: row !important; 
+    justify-content: space-between; 
+    align-items: center; 
+  }
+  .central-search-wrapper { flex: 1; padding: 0 10px; }
+}
 
