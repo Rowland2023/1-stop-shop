@@ -83,19 +83,23 @@ footer { grid-area: footer; }
 /* =========================================
    5. RESPONSIVE
    ========================================= */
-/* Update your responsive section */
 @media (max-width: 768px) {
+  /* Redefine the grid to only have one column and one area */
   .app-grid-wrapper { 
     grid-template-columns: 1fr; 
-    grid-template-areas: "header" "nav-row" "main" "footer"; 
+    grid-template-areas: 
+      "header" 
+      "nav-row" 
+      "main" 
+      "footer"; 
   }
-  
-  /* Make the sidebar a slide-out overlay instead of hidden */
-  .left-sidebar {
+
+  /* Force the sidebars to ignore the grid entirely */
+  .left-sidebar, .right-sidebar {
+    grid-area: unset; /* Remove from grid placement */
     display: block;
     position: fixed;
     top: 0;
-    left: -250px; /* Hidden off-screen */
     width: 250px;
     height: 100vh;
     background: white;
@@ -103,8 +107,21 @@ footer { grid-area: footer; }
     transition: left 0.3s ease;
     box-shadow: 2px 0 10px rgba(0,0,0,0.2);
   }
-  
+
+  /* Specifically position the left sidebar */
+  .left-sidebar {
+    left: -250px;
+  }
   .left-sidebar.open {
-    left: 0; /* Slide in */
+    left: 0;
+  }
+
+  /* If you have a right sidebar, handle it similarly */
+  .right-sidebar {
+    right: -250px;
+    left: auto;
+  }
+  .right-sidebar.open {
+    right: 0;
   }
 }
