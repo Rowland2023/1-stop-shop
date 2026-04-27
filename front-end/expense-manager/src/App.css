@@ -15,7 +15,6 @@ body, #root {
   color: var(--text-dark);
   margin: 0;
   font-family: sans-serif;
-  overflow-x: hidden; /* Prevents sidebar slide causing horizontal scroll */
 }
 
 /* =========================================
@@ -34,7 +33,7 @@ body, #root {
 
 header { grid-area: header; }
 nav { grid-area: nav-row; }
-.left-sidebar { grid-area: left-sb; display: block; }
+.left-sidebar { grid-area: left-sb; }
 main { grid-area: main; background: var(--bg-white); padding: 30px; }
 .right-sidebar { grid-area: right-sb; }
 footer { grid-area: footer; }
@@ -73,7 +72,7 @@ footer { grid-area: footer; }
 .img-frame:hover .zoom-effect { transform: scale(1.15); }
 
 /* =========================================
-   4. CART & SIDEBAR COMPONENTS
+   4. CART, AUTH & MISC
    ========================================= */
 .checkout-btn-curved { background: var(--brand-orange); color: white; border: none; padding: 12px 25px; border-radius: var(--radius-curved); font-weight: bold; cursor: pointer; width: 100%; }
 .clear-cart-btn-curved { background: var(--bg-white); color: var(--brand-orange); border: 2px solid var(--brand-orange); padding: 10px 20px; border-radius: var(--radius-curved); font-weight: bold; cursor: pointer; width: 100%; }
@@ -81,15 +80,14 @@ footer { grid-area: footer; }
 .side-nav button { width: 100%; text-align: left; padding: 12px 15px; border: 1px solid #dfe6e9; background: var(--bg-white); color: #2c3e50; cursor: pointer; border-radius: 6px; font-weight: 600; }
 .active { background: #3498db !important; color: white !important; transform: translateX(5px); }
 
-/* Sidebar Backdrop (for mobile) */
-.sidebar-backdrop {
-  position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-  background: rgba(0,0,0,0.5); z-index: 1999;
-}
-
 /* =========================================
-   5. RESPONSIVE
+   5. RESPONSIVE & VISIBILITY
    ========================================= */
+
+/* Desktop Defaults: Hide mobile toggles, Show desktop links */
+.mobile-only-toggle { display: none !important; }
+.hide-on-mobile { display: flex !important; }
+
 @media (max-width: 900px) {
   .nav-container { flex-direction: column; gap: 15px; }
   .nav-group { order: 2; width: 100%; justify-content: center; }
@@ -97,40 +95,34 @@ footer { grid-area: footer; }
 }
 
 @media (max-width: 768px) {
-  .app-grid-wrapper { grid-template-columns: 1fr; grid-template-areas: "header" "nav-row" "main" "footer"; }
+  /* Show mobile toggles, Hide desktop links */
   .hide-on-mobile { display: none !important; }
   .mobile-only-toggle { display: block !important; }
-
-  /* --- 1. DEFAULT DESKTOP BEHAVIOR --- */
-.left-sidebar {
-  grid-area: left-sb;
-  display: block;      /* Ensures it stays in the grid */
-  position: static;    /* CRITICAL: Resets fixed positioning from mobile */
-  transform: none;     /* Resets any mobile transformations */
-  box-shadow: none;    /* Removes the mobile overlay shadow */
-  padding: 0;          /* Reset padding if necessary */
-}
-
-/* --- 2. MOBILE OVERRIDE --- */
-@media (max-width: 768px) {
-  .left-sidebar {
-    position: fixed;   /* Only use fixed on mobile */
-    top: 0;
-    left: -250px;      /* Hidden off-screen */
-    width: 250px;
-    height: 100vh;
-    background: white;
-    z-index: 2000;
-    transition: left 0.3s ease;
-    box-shadow: 2px 0 10px rgba(0,0,0,0.2);
-    padding: 20px;     /* Mobile-specific padding */
-  }
   
-  .left-sidebar.show { 
-    left: 0;           /* Slide in */
+  .app-grid-wrapper {
+    grid-template-columns: 1fr;
+    grid-template-areas: "header" "nav-row" "main";
   }
+
+  /* Sidebar styling (hidden by default off-screen) */
+  .left-sidebar, .right-sidebar {
+    position: fixed;
+    top: 0;
+    height: 100vh;
+    width: 280px;
+    background: white;
+    z-index: 3000;
+    box-shadow: 0 0 15px rgba(0,0,0,0.3);
+    transition: transform 0.3s ease-in-out;
+    padding: 20px;
+    overflow-y: auto;
+  }
+
+  .right-sidebar { right: 0; transform: translateX(100%); }
+  .right-sidebar.open { transform: translateX(0); }
+  .left-sidebar { left: 0; transform: translateX(-100%); }
+  .left-sidebar.show { transform: translateX(0); }
+  
+  .nav-container { flex-direction: row !important; justify-content: space-between; }
+  .central-search-wrapper { flex: 1; padding: 0 10px; }
 }
-}
-/* Desktop Visibility Defaults */
-.mobile-only-toggle { display: none; }
-.hide-on-mobile { display: flex; }
