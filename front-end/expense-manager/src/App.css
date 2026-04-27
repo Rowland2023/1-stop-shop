@@ -84,20 +84,29 @@ footer { grid-area: footer; }
    5. RESPONSIVE
    ========================================= */
 /* Default: Desktop visibility */
-.mobile-only-toggle { display: none !important; }
-.hide-on-mobile { display: flex !important; }
+/* Default state: Hide mobile-only items, show desktop items */
+.mobile-only-toggle {
+    display: none !important;
+}
 
+.hide-on-mobile {
+    display: flex !important; /* or 'block' depending on your layout */
+}
 @media (max-width: 900px) {
   .nav-container { flex-direction: column; gap: 15px; }
   .nav-group { order: 2; width: 100%; justify-content: center; }
   .central-search-wrapper { order: 1; width: 100%; }
 }
 
+/* Mobile-only overrides */
 @media (max-width: 768px) {
-  /* Hide desktop items, show mobile toggles */
-  .hide-on-mobile { display: none !important; }
-  .mobile-only-toggle { display: block !important; }
-  
+    .mobile-only-toggle {
+        display: block !important;
+    }
+    .hide-on-mobile {
+        display: none !important;
+    }
+
   .app-grid-wrapper {
     grid-template-columns: 1fr;
     grid-template-areas: "header" "nav-row" "main";
