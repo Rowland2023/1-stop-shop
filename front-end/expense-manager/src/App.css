@@ -99,3 +99,24 @@ footer { grid-area: footer; }
     display: none !important;
   }
 }
+
+/* --- RESPONSIVE VISIBILITY OVERRIDES --- */
+
+/* Default state: Hide mobile-only items, show desktop items */
+.mobile-only-toggle {
+    display: none !important;
+}
+
+.hide-on-mobile {
+    display: flex !important; /* or 'block' depending on your layout */
+}
+
+/* Mobile-only overrides */
+@media (max-width: 768px) {
+    .mobile-only-toggle {
+        display: block !important;
+    }
+    .hide-on-mobile {
+        display: none !important;
+    }
+}
