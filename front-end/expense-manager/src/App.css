@@ -100,41 +100,41 @@ footer { grid-area: footer; }
   }
 }
 
-/* --- RESPONSIVE SIDEBAR OVERLAY --- */
+
+/* --- MOBILE SIDEBAR OVERLAY FIX --- */
 @media (max-width: 768px) {
   .right-sidebar {
     position: fixed;
     top: 0;
-    right: -100%;
-    width: 100%;
+    right: -100%; /* Hidden off-screen by default */
+    width: 80%;   /* Occupies 80% of the screen width */
     height: 100%;
     background: white;
-    z-index: 2000;
+    z-index: 9999; /* Higher than other elements */
     transition: right 0.3s ease;
     overflow-y: auto;
-    box-shadow: none;
+    box-shadow: -2px 0 10px rgba(0,0,0,0.2);
   }
+
   .right-sidebar.open {
-    right: 0;
+    right: 0; /* Slides into view when cartOpen is true */
   }
 }
 
-/* --- PRODUCT IMAGE FIXES --- */
+/* --- IMAGE CONSISTENCY FIX --- */
 .img-frame {
   width: 100%;
-  height: 180px; 
-  overflow: hidden;
-  border-radius: 5px;
-  position: relative;
-  background: #f9f9f9;
+  height: 200px; /* Fixed height for consistency */
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
+  background: #f4f4f4;
+  border-radius: 8px;
 }
 
 .zoom-effect {
   width: 100%;
   height: 100%;
-  object-fit: cover; /* Ensures image fills the frame */
-  transition: transform 0.4s ease;
+  object-fit: cover; /* Ensures image fills the frame without distortion */
 }

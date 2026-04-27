@@ -243,6 +243,8 @@ function App() {
       {/* RIGHT SIDEBAR - Now handles Mobile Overlay */}
       <aside className={`right-sidebar ${cartOpen ? "open" : ""}`}>
         <div className="cart-container" style={{ padding: '20px' }}>
+          {/* Added Close button for better UX */}
+          <button onClick={() => setCartOpen(false)} style={{ marginBottom: '15px' }}>✕ Close</button>
           <h3>Your Cart</h3>
           <div className="cart-action-stack" style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '20px' }}>
             <button className="checkout-btn-curved" onClick={() => initializePayment({ onSuccess: (res) => alert("Success! " + res.reference), onClose: () => {} })}>Checkout Now</button>
