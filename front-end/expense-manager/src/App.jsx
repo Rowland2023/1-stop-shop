@@ -253,6 +253,7 @@ useEffect(() => {
   );
 
   return (
+    
     <div className="app-grid-wrapper">
       {/* HEADER */}
       <header className="brand-header">
@@ -291,7 +292,33 @@ useEffect(() => {
       }} 
     />
     </div>
+    // Inside your App component
+const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+// Add this to your header JSX (the logo side)
+<button className="mobile-menu-toggle" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+  ☰ Menu
+</button>
+
+// And create the Mobile Menu overlay inside the App return
+{mobileMenuOpen && (
+  <div className="mobile-menu-overlay">
+    <button className="close-btn" onClick={() => setMobileMenuOpen(false)}>✕</button>
+    
+    {/* Move your Categories here */}
+    <div className="mobile-menu-section">
+      <h3>Categories</h3>
+      {["food", "electronics", "office", "style&fashion", "sex-toys", "rent-house", "car-sales", "kitchen-items"].map((catId) => (
+        <button key={catId} onClick={() => { setCategory(catId); setView("grid"); setMobileMenuOpen(false); }}>
+          {catId.toUpperCase()}
+        </button>
+      ))}
+    </div>
+    
+    
+     </div>
+    )}
+    
     {/* 2. User Greeting + Cart */}
     <div className="header-actions" style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
       
@@ -342,7 +369,7 @@ useEffect(() => {
           </div>
         </div>
       </nav>
-
+      
       {/* SIDEBARS & MAIN - Ensure these are direct children of app-grid-wrapper */}
       <aside className="left-sidebar">
         <h3>Categories</h3>
