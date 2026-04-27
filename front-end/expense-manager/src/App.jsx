@@ -289,6 +289,9 @@ useEffect(() => {
         objectFit: 'cover' // This is the key: it stretches to cover the space
       }} 
     />
+    <button className="mobile-menu-toggle" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+        ☰ Menu
+    </button>
     </div>
 
     {/* 2. User Greeting + Cart */}
@@ -323,9 +326,6 @@ useEffect(() => {
           <div className="nav-group left">
             <button className="nav-link-item" onClick={() => {setView("grid"); setSelectedProduct(null)}}>Home</button>
             <button className="nav-link-item" onClick={() => setView("tracking")}>Tracking</button>
-            <button className="mobile-menu-toggle" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
-                    ☰ Menu
-            </button>
           </div>
           <div className="central-search-wrapper">
             <div className="search-pill">
