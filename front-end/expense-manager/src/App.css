@@ -1,5 +1,5 @@
 /* =========================================
-   0. ROOT VARIABLES (Global Branding)
+   0. ROOT VARIABLES
    ========================================= */
 :root {
   --brand-orange: #ff8c00;
@@ -15,6 +15,7 @@ body, #root {
   color: var(--text-dark);
   margin: 0;
   font-family: sans-serif;
+  overflow-x: hidden; /* Prevents sidebar slide causing horizontal scroll */
 }
 
 /* =========================================
@@ -33,7 +34,7 @@ body, #root {
 
 header { grid-area: header; }
 nav { grid-area: nav-row; }
-.left-sidebar { grid-area: left-sb; }
+.left-sidebar { grid-area: left-sb; display: block; }
 main { grid-area: main; background: var(--bg-white); padding: 30px; }
 .right-sidebar { grid-area: right-sb; }
 footer { grid-area: footer; }
@@ -72,13 +73,19 @@ footer { grid-area: footer; }
 .img-frame:hover .zoom-effect { transform: scale(1.15); }
 
 /* =========================================
-   4. CART, AUTH & MISC
+   4. CART & SIDEBAR COMPONENTS
    ========================================= */
 .checkout-btn-curved { background: var(--brand-orange); color: white; border: none; padding: 12px 25px; border-radius: var(--radius-curved); font-weight: bold; cursor: pointer; width: 100%; }
 .clear-cart-btn-curved { background: var(--bg-white); color: var(--brand-orange); border: 2px solid var(--brand-orange); padding: 10px 20px; border-radius: var(--radius-curved); font-weight: bold; cursor: pointer; width: 100%; }
 
 .side-nav button { width: 100%; text-align: left; padding: 12px 15px; border: 1px solid #dfe6e9; background: var(--bg-white); color: #2c3e50; cursor: pointer; border-radius: 6px; font-weight: 600; }
 .active { background: #3498db !important; color: white !important; transform: translateX(5px); }
+
+/* Sidebar Backdrop (for mobile) */
+.sidebar-backdrop {
+  position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+  background: rgba(0,0,0,0.5); z-index: 1999;
+}
 
 /* =========================================
    5. RESPONSIVE
@@ -91,32 +98,25 @@ footer { grid-area: footer; }
 
 @media (max-width: 768px) {
   .app-grid-wrapper { grid-template-columns: 1fr; grid-template-areas: "header" "nav-row" "main" "footer"; }
-  .left-sidebar, .right-sidebar { display: none; }
-}
-/* Hide the central search on smaller screens to save space */
-@media (max-width: 768px) {
-  .header-center {
-    display: none !important;
+  .hide-on-mobile { display: none !important; }
+  .mobile-only-toggle { display: block !important; }
+
+  /* Transform Left Sidebar into mobile drawer */
+  .left-sidebar {
+    position: fixed;
+    top: 0;
+    left: -250px;
+    width: 250px;
+    height: 100vh;
+    background: white;
+    z-index: 2000;
+    transition: left 0.3s ease;
+    box-shadow: 2px 0 10px rgba(0,0,0,0.2);
+    padding: 20px;
   }
+  .left-sidebar.show { left: 0; }
 }
 
-/* --- RESPONSIVE VISIBILITY OVERRIDES --- */
-
-/* Default state: Hide mobile-only items, show desktop items */
-.mobile-only-toggle {
-    display: none !important;
-}
-
-.hide-on-mobile {
-    display: flex !important; /* or 'block' depending on your layout */
-}
-
-/* Mobile-only overrides */
-@media (max-width: 768px) {
-    .mobile-only-toggle {
-        display: block !important;
-    }
-    .hide-on-mobile {
-        display: none !important;
-    }
-}
+/* Desktop Visibility Defaults */
+.mobile-only-toggle { display: none; }
+.hide-on-mobile { display: flex; }
