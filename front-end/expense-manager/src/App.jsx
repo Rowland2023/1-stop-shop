@@ -315,8 +315,10 @@ const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
       ))}
     </div>
     
-    
-     </div>
+    {/* Add Account/Tracking links here too */}
+    <button onClick={() => {setView("tracking"); setMobileMenuOpen(false)}}>Tracking</button>
+    <button onClick={() => {setView("account"); setMobileMenuOpen(false)}}>Account</button>
+    </div>
     )}
     
     {/* 2. User Greeting + Cart */}
@@ -542,7 +544,39 @@ const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
           </div>
         </div>
       </aside>
+      {mobileMenuOpen && (
+  <div className="mobile-menu-overlay">
+    <button className="close-btn" onClick={() => setMobileMenuOpen(false)}>✕ Close</button>
+    
+    {/* Navigation Links */}
+    <div className="mobile-nav-links">
+      <button onClick={() => {setView("grid"); setMobileMenuOpen(false)}}>Home</button>
+      <button onClick={() => {setView("tracking"); setMobileMenuOpen(false)}}>Tracking</button>
+      <button onClick={() => {setView("account"); setMobileMenuOpen(false)}}>Account</button>
+      
+      {!user ? (
+        <>
+          <button onClick={() => {setView("auth"); setAuthMode("register"); setMobileMenuOpen(false)}}>Join</button>
+          <button onClick={() => {setView("auth"); setAuthMode("login"); setMobileMenuOpen(false)}}>Login</button>
+        </>
+      ) : (
+        <button disabled>👤 {user.phone}</button>
+      )}
+    </div>
+
+    {/* Categories */}
+    <div className="mobile-menu-section">
+      <h3>Categories</h3>
+      {["food", "electronics", "office", "style&fashion", "sex-toys", "rent-house", "car-sales", "kitchen-items"].map((catId) => (
+        <button key={catId} onClick={() => { setCategory(catId); setView("grid"); setMobileMenuOpen(false); }}>
+          {catId.toUpperCase()}
+        </button>
+      ))}
+    </div>
+  </div>
+)}
     </div>
   );
+  
 }
 export default App;
