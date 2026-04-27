@@ -271,9 +271,6 @@ useEffect(() => {
       <h1 onClick={() => setView("grid")} className="logo-text" style={{ cursor: 'pointer', margin: 0 }}>
         MeBuy
       </h1>
-      <button className="mobile-menu-toggle" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
-          ☰ Menu
-      </button>
       {/* 2. Centered Container (Flex item 2 - Grows to fill space) */}
       <div className="header-ad" style={{ 
         flex: 1, 
@@ -326,6 +323,9 @@ useEffect(() => {
           <div className="nav-group left">
             <button className="nav-link-item" onClick={() => {setView("grid"); setSelectedProduct(null)}}>Home</button>
             <button className="nav-link-item" onClick={() => setView("tracking")}>Tracking</button>
+            <button className="mobile-menu-toggle" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+                    ☰ Menu
+            </button>
           </div>
           <div className="central-search-wrapper">
             <div className="search-pill">
