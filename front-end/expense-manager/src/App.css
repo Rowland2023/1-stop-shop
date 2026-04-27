@@ -1,5 +1,5 @@
 /* =========================================
-   0. ROOT VARIABLES
+   0. ROOT VARIABLES (Global Branding)
    ========================================= */
 :root {
   --brand-orange: #ff8c00;
@@ -10,14 +10,18 @@
   --radius-curved: 25px;
 }
 
-body, #root { background-color: var(--bg-white); color: var(--text-dark); margin: 0; font-family: sans-serif; }
+body, #root {
+  background-color: var(--bg-white);
+  color: var(--text-dark);
+  margin: 0;
+  font-family: sans-serif;
+}
 
 /* =========================================
    1. MASTER GRID & LAYOUT
    ========================================= */
 .app-grid-wrapper {
   display: grid;
-  /* Default Desktop Layout: Sidebar-Main-Sidebar */
   grid-template-columns: 250px 1fr 200px;
   grid-template-areas: 
     "header header header"
@@ -29,9 +33,9 @@ body, #root { background-color: var(--bg-white); color: var(--text-dark); margin
 
 header { grid-area: header; }
 nav { grid-area: nav-row; }
-.left-sidebar { grid-area: left-sb; display: block; }
+.left-sidebar { grid-area: left-sb; }
 main { grid-area: main; background: var(--bg-white); padding: 30px; }
-.right-sidebar { grid-area: right-sb; display: block; }
+.right-sidebar { grid-area: right-sb; }
 footer { grid-area: footer; }
 
 /* =========================================
@@ -77,77 +81,21 @@ footer { grid-area: footer; }
 .active { background: #3498db !important; color: white !important; transform: translateX(5px); }
 
 /* =========================================
-   5. RESPONSIVE & VISIBILITY
+   5. RESPONSIVE
    ========================================= */
-
-/* A. Desktop Defaults */
-.mobile-only-toggle { display: none !important; }
-.hide-on-mobile { display: flex !important; }
-
-/* B. Intermediate Screen (900px) */
 @media (max-width: 900px) {
   .nav-container { flex-direction: column; gap: 15px; }
   .nav-group { order: 2; width: 100%; justify-content: center; }
   .central-search-wrapper { order: 1; width: 100%; }
 }
 
-/* C. Mobile Screen (768px) */
 @media (max-width: 768px) {
-  .hide-on-mobile { display: none !important; }
-  .mobile-only-toggle { display: block !important; }
-  
-  .app-grid-wrapper {
-    grid-template-columns: 1fr;
-    grid-template-areas: "header" "nav-row" "main";
-  }
-
-  /* Force sidebars to be fixed/hidden off-screen on mobile */
-  .left-sidebar, .right-sidebar {
-    position: fixed;
-    top: 0;
-    height: 100vh;
-    width: 280px;
-    background: white;
-    z-index: 3000;
-    box-shadow: 0 0 15px rgba(0,0,0,0.3);
-    transition: transform 0.3s ease-in-out;
-    padding: 20px;
-    overflow-y: auto;
-  }
-
-  .right-sidebar { right: 0; transform: translateX(100%); }
-  .right-sidebar.open { transform: translateX(0); }
-  .left-sidebar { left: 0; transform: translateX(-100%); }
-  .left-sidebar.show { transform: translateX(0); }
-  
-  .nav-container { flex-direction: row !important; justify-content: space-between; }
-  .central-search-wrapper { flex: 1; padding: 0 10px; }
+  .app-grid-wrapper { grid-template-columns: 1fr; grid-template-areas: "header" "nav-row" "main" "footer"; }
+  .left-sidebar, .right-sidebar { display: none; }
 }
-
-
-
-/* Add this to the very bottom of your App.css */
-
-@media (min-width: 769px) {
-  /* Force the App Wrapper to behave as a 3-column grid */
-  .app-grid-wrapper {
-    display: grid !important;
-    grid-template-columns: 250px 1fr 200px;
-    grid-template-areas: 
-      "header header header"
-      "nav-row nav-row nav-row"
-      "left-sb main right-sb"
-      "footer footer footer";
-  }
-
-  /* Ensure the sidebar stays in its column and doesn't push down content */
-  .left-sidebar {
-    display: block !important;
-    grid-area: left-sb;
-    position: static !important; /* Removes fixed position */
-    transform: none !important;
-    height: auto !important;
-    box-shadow: none !important;
-    width: 250px !important;
+/* Hide the central search on smaller screens to save space */
+@media (max-width: 768px) {
+  .header-center {
+    display: none !important;
   }
 }
