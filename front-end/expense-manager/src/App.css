@@ -126,18 +126,28 @@ footer { grid-area: footer; }
 
 
 
-/* --- DESKTOP OVERRIDE: FORCE GRID BEHAVIOR --- */
+/* Add this to the very bottom of your App.css */
+
 @media (min-width: 769px) {
-  .left-sidebar {
-    position: static !important; /* Forces it out of fixed/absolute positioning */
-    left: auto !important;       /* Resets the slide animation values */
-    box-shadow: none !important; /* Removes mobile overlay shadow */
-    display: block !important;   /* Ensures it stays in the grid */
-    transform: none !important;
+  /* Force the App Wrapper to behave as a 3-column grid */
+  .app-grid-wrapper {
+    display: grid !important;
+    grid-template-columns: 250px 1fr 200px;
+    grid-template-areas: 
+      "header header header"
+      "nav-row nav-row nav-row"
+      "left-sb main right-sb"
+      "footer footer footer";
   }
-  
-  /* Hide mobile-specific close buttons or toggles */
-  .left-sidebar button:first-child { 
-    display: none !important; 
+
+  /* Ensure the sidebar stays in its column and doesn't push down content */
+  .left-sidebar {
+    display: block !important;
+    grid-area: left-sb;
+    position: static !important; /* Removes fixed position */
+    transform: none !important;
+    height: auto !important;
+    box-shadow: none !important;
+    width: 250px !important;
   }
 }
