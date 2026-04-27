@@ -240,7 +240,7 @@ function App() {
           </>
         )}
       </main>
-
+      {/* RIGHT SIDEBAR - Now handles Mobile Overlay */}
       <aside className={`right-sidebar ${cartOpen ? "open" : ""}`}>
         <div className="cart-container" style={{ padding: '20px' }}>
           <h3>Your Cart</h3>
@@ -255,7 +255,6 @@ function App() {
       {mobileMenuOpen && (
         <div className="mobile-menu-overlay">
           <button className="close-btn" onClick={() => setMobileMenuOpen(false)}>✕ Close</button>
-          
           <div className="mobile-menu-section">
             <h3>Categories</h3>
             {["food", "electronics", "office", "style&fashion", "sex-toys", "rent-house", "car-sales", "kitchen-items"].map((catId) => (
