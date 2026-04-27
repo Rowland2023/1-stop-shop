@@ -83,45 +83,19 @@ footer { grid-area: footer; }
 /* =========================================
    5. RESPONSIVE
    ========================================= */
+@media (max-width: 900px) {
+  .nav-container { flex-direction: column; gap: 15px; }
+  .nav-group { order: 2; width: 100%; justify-content: center; }
+  .central-search-wrapper { order: 1; width: 100%; }
+}
+
 @media (max-width: 768px) {
-  /* Redefine the grid to only have one column and one area */
-  .app-grid-wrapper { 
-    grid-template-columns: 1fr; 
-    grid-template-areas: 
-      "header" 
-      "nav-row" 
-      "main" 
-      "footer"; 
-  }
-
-  /* Force the sidebars to ignore the grid entirely */
-  .left-sidebar, .right-sidebar {
-    grid-area: unset; /* Remove from grid placement */
-    display: block;
-    position: fixed;
-    top: 0;
-    width: 250px;
-    height: 100vh;
-    background: white;
-    z-index: 2000;
-    transition: left 0.3s ease;
-    box-shadow: 2px 0 10px rgba(0,0,0,0.2);
-  }
-
-  /* Specifically position the left sidebar */
-  .left-sidebar {
-    left: -250px;
-  }
-  .left-sidebar.open {
-    left: 0;
-  }
-
-  /* If you have a right sidebar, handle it similarly */
-  .right-sidebar {
-    right: -250px;
-    left: auto;
-  }
-  .right-sidebar.open {
-    right: 0;
+  .app-grid-wrapper { grid-template-columns: 1fr; grid-template-areas: "header" "nav-row" "main" "footer"; }
+  .left-sidebar, .right-sidebar { display: none; }
+}
+/* Hide the central search on smaller screens to save space */
+@media (max-width: 768px) {
+  .header-center {
+    display: none !important;
   }
 }
