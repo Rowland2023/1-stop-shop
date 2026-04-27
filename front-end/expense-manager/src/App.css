@@ -83,19 +83,28 @@ footer { grid-area: footer; }
 /* =========================================
    5. RESPONSIVE
    ========================================= */
-@media (max-width: 900px) {
-  .nav-container { flex-direction: column; gap: 15px; }
-  .nav-group { order: 2; width: 100%; justify-content: center; }
-  .central-search-wrapper { order: 1; width: 100%; }
-}
-
+/* Update your responsive section */
 @media (max-width: 768px) {
-  .app-grid-wrapper { grid-template-columns: 1fr; grid-template-areas: "header" "nav-row" "main" "footer"; }
-  .left-sidebar, .right-sidebar { display: none; }
-}
-/* Hide the central search on smaller screens to save space */
-@media (max-width: 768px) {
-  .header-center {
-    display: none !important;
+  .app-grid-wrapper { 
+    grid-template-columns: 1fr; 
+    grid-template-areas: "header" "nav-row" "main" "footer"; 
+  }
+  
+  /* Make the sidebar a slide-out overlay instead of hidden */
+  .left-sidebar {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: -250px; /* Hidden off-screen */
+    width: 250px;
+    height: 100vh;
+    background: white;
+    z-index: 2000;
+    transition: left 0.3s ease;
+    box-shadow: 2px 0 10px rgba(0,0,0,0.2);
+  }
+  
+  .left-sidebar.open {
+    left: 0; /* Slide in */
   }
 }

@@ -61,6 +61,7 @@ function App() {
   });
   const [cartOpen, setCartOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   /* --- VIEW & UI STATES --- */
   const [view, setView] = useState("grid"); // 'grid', 'tracking', 'account', 'auth'
@@ -334,6 +335,9 @@ useEffect(() => {
               <>
                 <button className="nav-link-item auth-highlight" onClick={() => {setView("auth"); setAuthMode("register")}}>Join</button>
                 <button className="nav-link-item" onClick={() => {setView("auth"); setAuthMode("login")}}>Login</button>
+                <button onClick={() => setSidebarOpen(!sidebarOpen)}>
+                      ☰ Categories
+                </button>
               </>
             ) : <span className="user-tag">👤 {user.phone}</span>}
           </div>
@@ -341,17 +345,23 @@ useEffect(() => {
       </nav>
 
       {/* SIDEBARS & MAIN - Ensure these are direct children of app-grid-wrapper */}
-      <aside className="left-sidebar">
+      <aside className={`left-sidebar ${sidebarOpen ? "open" : ""}`}>
+        <button onClick={() => setSidebarOpen(false)}>Close</button>
         <h3>Categories</h3>
         <nav className="side-nav">
-          {["food", "electronics", "office", "style&fashion", "sex-toys", "rent-house", "car-sales", "kitchen-items"].map((catId) => (
-            <button key={catId} className={category === catId ? "active" : ""} 
-              onClick={() => { setCategory(catId); setView("grid"); setSelectedProduct(null); }}>
-              {catId.toUpperCase()}
-            </button>
-          ))}
-        </nav>
-      </aside>
+        {["food", "electronics", "office", "style&fashion", "sex-toys", "rent-house", "car-sales", "kitchen-items"].map((catId) => (
+        <button 
+        key={catId} 
+        onClick={() => { 
+          setCategory(catId); 
+          setSidebarOpen(false); // Close after selecting
+        }}
+      >
+        {catId.toUpperCase()}
+      </button>
+      ))}
+      </nav>
+  </aside>
 
       <main>
   {/* AUTH VIEW */}
