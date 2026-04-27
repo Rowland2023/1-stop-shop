@@ -61,7 +61,7 @@ function App() {
   });
   const [cartOpen, setCartOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-  
+  const [leftSidebarOpen, setLeftSidebarOpen] = useState(false);
 
   /* --- VIEW & UI STATES --- */
   const [view, setView] = useState("grid"); // 'grid', 'tracking', 'account', 'auth'
@@ -317,42 +317,71 @@ useEffect(() => {
 
 </header>
       {/* NAVIGATION */}
-      <nav className="main-nav">
-        <div className="nav-container">
-          <div className="nav-group left">
-            <button className="nav-link-item" onClick={() => {setView("grid"); setSelectedProduct(null)}}>Home</button>
-            <button className="nav-link-item" onClick={() => setView("tracking")}>Tracking</button>
-          </div>
-          <div className="central-search-wrapper">
-            <div className="search-pill">
-              <input type="text" placeholder="Search..." value={searchTerm} onChange={(e) => {setSearchTerm(e.target.value); setView("grid");}} />
-              <button className="orange-go-btn" onClick={() => setView("grid")}>GO</button>
-            </div>
-          </div>
-          <div className="nav-group right">
-            <button className="nav-link-item" onClick={() => setView("account")}>Account</button>
-            {!user ? (
-              <>
-                <button className="nav-link-item auth-highlight" onClick={() => {setView("auth"); setAuthMode("register")}}>Join</button>
-                <button className="nav-link-item" onClick={() => {setView("auth"); setAuthMode("login")}}>Login</button>
-              </>
-            ) : <span className="user-tag">👤 {user.phone}</span>}
-          </div>
-        </div>
-      </nav>
+<nav className="main-nav">
+  <div className="nav-container">
+    {/* NEW: Left Toggle Button (Only visible on mobile) */}
+    <div className="mobile-only-toggle">
+      <button className="nav-link-item" onClick={() => setLeftSidebarOpen(!leftSidebarOpen)}>☰ Menu</button>
+    </div>
 
-      {/* SIDEBARS & MAIN - Ensure these are direct children of app-grid-wrapper */}
-      <aside className="left-sidebar">
-        <h3>Categories</h3>
-        <nav className="side-nav">
-          {["food", "electronics", "office", "style&fashion", "sex-toys", "rent-house", "car-sales", "kitchen-items"].map((catId) => (
-            <button key={catId} className={category === catId ? "active" : ""} 
-              onClick={() => { setCategory(catId); setView("grid"); setSelectedProduct(null); }}>
-              {catId.toUpperCase()}
-            </button>
-          ))}
-        </nav>
-      </aside>
+    <div className="nav-group left hide-on-mobile">
+      <button className="nav-link-item" onClick={() => {setView("grid"); setSelectedProduct(null)}}>Home</button>
+      <button className="nav-link-item" onClick={() => setView("tracking")}>Tracking</button>
+    </div>
+
+    <div className="central-search-wrapper">
+      <div className="search-pill">
+        <input type="text" placeholder="Search..." value={searchTerm} onChange={(e) => {setSearchTerm(e.target.value); setView("grid");}} />
+        <button className="orange-go-btn" onClick={() => setView("grid")}>GO</button>
+      </div>
+    </div>
+
+    <div className="nav-group right hide-on-mobile">
+      <button className="nav-link-item" onClick={() => setView("account")}>Account</button>
+      {!user ? (
+        <>
+          <button className="nav-link-item auth-highlight" onClick={() => {setView("auth"); setAuthMode("register")}}>Join</button>
+          <button className="nav-link-item" onClick={() => {setView("auth"); setAuthMode("login")}}>Login</button>
+        </>
+      ) : <span className="user-tag">👤 {user.phone}</span>}
+    </div>
+    
+    {/* NEW: Right Toggle Button (Only visible on mobile) */}
+    <div className="mobile-only-toggle">
+      <button className="nav-link-item" onClick={() => setCartOpen(!cartOpen)}>🛒 Cart</button>
+    </div>
+  </div>
+</nav>
+      <aside className={`left-sidebar ${leftSidebarOpen ? "show" : ""}`}>
+  {/* Header with Close Button for Mobile */}
+  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+    <h3>Categories</h3>
+    <button 
+      className="close-sb-btn" 
+      onClick={() => setLeftSidebarOpen(false)}
+      style={{ background: 'none', border: '1px solid #ccc', padding: '5px 10px', cursor: 'pointer' }}
+    >
+      ✕
+    </button>
+  </div>
+
+  <nav className="side-nav">
+    {["food", "electronics", "office", "style&fashion", "sex-toys", "rent-house", "car-sales", "kitchen-items"].map((catId) => (
+      <button 
+        key={catId} 
+        className={category === catId ? "active" : ""} 
+        onClick={() => { 
+          setCategory(catId); 
+          setView("grid"); 
+          setSelectedProduct(null); 
+          setLeftSidebarOpen(false); // Close sidebar on selection for mobile UX
+        }}
+      >
+        {catId.toUpperCase()}
+      </button>
+    ))}
+  </nav>
+</aside>
 
       <main>
   {/* AUTH VIEW */}
