@@ -62,6 +62,7 @@ function App() {
   const [cartOpen, setCartOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [leftSidebarOpen, setLeftSidebarOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   /* --- VIEW & UI STATES --- */
   const [view, setView] = useState("grid"); // 'grid', 'tracking', 'account', 'auth'
@@ -264,12 +265,15 @@ useEffect(() => {
         padding: '10px 20px',
         gap: '10px' // Add a small gap between elements
       }}>
+        
     
       {/* 1. Logo */}
       <h1 onClick={() => setView("grid")} className="logo-text" style={{ cursor: 'pointer', margin: 0 }}>
         MeBuy
       </h1>
-    
+      <button className="mobile-menu-toggle" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+          ☰ Menu
+      </button>
       {/* 2. Centered Container (Flex item 2 - Grows to fill space) */}
       <div className="header-ad" style={{ 
         flex: 1, 
@@ -340,6 +344,27 @@ useEffect(() => {
           </div>
         </div>
       </nav>
+
+      // And create the Mobile Menu overlay inside the App return
+{mobileMenuOpen && (
+  <div className="mobile-menu-overlay">
+    <button className="close-btn" onClick={() => setMobileMenuOpen(false)}>✕</button>
+    
+    {/* Move your Categories here */}
+    <div className="mobile-menu-section">
+      <h3>Categories</h3>
+      {["food", "electronics", "office", "style&fashion", "sex-toys", "rent-house", "car-sales", "kitchen-items"].map((catId) => (
+        <button key={catId} onClick={() => { setCategory(catId); setView("grid"); setMobileMenuOpen(false); }}>
+          {catId.toUpperCase()}
+        </button>
+      ))}
+    </div>
+    
+    {/* Add Account/Tracking links here too */}
+    <button onClick={() => {setView("tracking"); setMobileMenuOpen(false)}}>Tracking</button>
+    <button onClick={() => {setView("account"); setMobileMenuOpen(false)}}>Account</button>
+  </div>
+)}
 
       {/* SIDEBARS & MAIN - Ensure these are direct children of app-grid-wrapper */}
       <aside className="left-sidebar">
