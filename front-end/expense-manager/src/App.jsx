@@ -255,17 +255,7 @@ function App() {
       {mobileMenuOpen && (
         <div className="mobile-menu-overlay">
           <button className="close-btn" onClick={() => setMobileMenuOpen(false)}>✕ Close</button>
-          <div className="mobile-nav-links">
-            <button onClick={() => {setView("grid"); setMobileMenuOpen(false)}}>Home</button>
-            <button onClick={() => {setView("tracking"); setMobileMenuOpen(false)}}>Tracking</button>
-            <button onClick={() => {setView("account"); setMobileMenuOpen(false)}}>Account</button>
-            {!user ? (
-              <>
-                <button onClick={() => {setView("auth"); setAuthMode("register"); setMobileMenuOpen(false)}}>Join</button>
-                <button onClick={() => {setView("auth"); setAuthMode("login"); setMobileMenuOpen(false)}}>Login</button>
-              </>
-            ) : <button disabled>👤 {user.phone}</button>}
-          </div>
+          
           <div className="mobile-menu-section">
             <h3>Categories</h3>
             {["food", "electronics", "office", "style&fashion", "sex-toys", "rent-house", "car-sales", "kitchen-items"].map((catId) => (
