@@ -1,5 +1,5 @@
 /* =========================================
-   0. ROOT VARIABLES
+   0. ROOT VARIABLES (Global Branding)
    ========================================= */
 :root {
   --brand-orange: #ff8c00;
@@ -10,10 +10,15 @@
   --radius-curved: 25px;
 }
 
-body, #root { background-color: var(--bg-white); color: var(--text-dark); margin: 0; font-family: sans-serif; }
+body, #root {
+  background-color: var(--bg-white);
+  color: var(--text-dark);
+  margin: 0;
+  font-family: sans-serif;
+}
 
 /* =========================================
-   1. MASTER GRID (Desktop)
+   1. MASTER GRID & LAYOUT
    ========================================= */
 .app-grid-wrapper {
   display: grid;
@@ -21,7 +26,8 @@ body, #root { background-color: var(--bg-white); color: var(--text-dark); margin
   grid-template-areas: 
     "header header header"
     "nav-row nav-row nav-row"
-    "left-sb main right-sb";
+    "left-sb main right-sb"
+    "footer footer footer";
   min-height: 100vh;
 }
 
@@ -30,46 +36,8 @@ nav { grid-area: nav-row; }
 .left-sidebar { grid-area: left-sb; }
 main { grid-area: main; background: var(--bg-white); padding: 30px; }
 .right-sidebar { grid-area: right-sb; }
+footer { grid-area: footer; }
 
-/* =========================================
-   2. DESKTOP & MOBILE RESPONSIVE LOGIC
-   ========================================= */
-
-/* Desktop Specific: Reset sidebar to standard flow */
-@media (min-width: 769px) {
-  .left-sidebar, .right-sidebar {
-    display: block !important;
-    position: static;
-    transform: none !important;
-    height: auto;
-    box-shadow: none;
-  }
-}
-
-/* Mobile Specific: Fixed Overlays */
-@media (max-width: 768px) {
-  .app-grid-wrapper { display: block; } /* Break grid */
-
-  .left-sidebar, .right-sidebar {
-    position: fixed;
-    top: 0;
-    width: 280px;
-    height: 100%;
-    z-index: 9999;
-    background: white;
-    transition: transform 0.3s ease;
-    overflow-y: auto;
-    box-shadow: 2px 0 10px rgba(0,0,0,0.2);
-  }
-
-  .left-sidebar { left: 0; transform: translateX(-100%); }
-  .left-sidebar.open { transform: translateX(0); }
-
-  .right-sidebar { right: 0; transform: translateX(100%); }
-  .right-sidebar.open { transform: translateX(0); }
-}
-
-/* ... Keep your existing Sections 2, 3, and 4 here ... */
 /* =========================================
    2. HEADER & NAVIGATION
    ========================================= */
@@ -115,37 +83,19 @@ main { grid-area: main; background: var(--bg-white); padding: 30px; }
 /* =========================================
    5. RESPONSIVE
    ========================================= */
-/* A. Intermediate Screen (900px) */
 @media (max-width: 900px) {
   .nav-container { flex-direction: column; gap: 15px; }
   .nav-group { order: 2; width: 100%; justify-content: center; }
   .central-search-wrapper { order: 1; width: 100%; }
 }
 
-/* B. Mobile Screen (768px) */
 @media (max-width: 768px) {
-  /* Break the Desktop Grid */
-  .app-grid-wrapper { display: block; } 
-
-  /* Force sidebars to be fixed overlays */
-  .left-sidebar, .right-sidebar {
-    position: fixed;
-    top: 0;
-    width: 280px;
-    height: 100%;
-    z-index: 9999;
-    background: white;
-    transition: transform 0.3s ease;
-    overflow-y: auto;
-    box-shadow: 2px 0 10px rgba(0,0,0,0.2);
+  .app-grid-wrapper { grid-template-columns: 1fr; grid-template-areas: "header" "nav-row" "main" "footer"; }
+  .left-sidebar, .right-sidebar { display: none; }
+}
+/* Hide the central search on smaller screens to save space */
+@media (max-width: 768px) {
+  .header-center {
+    display: none !important;
   }
-
-  .left-sidebar { left: 0; transform: translateX(-100%); }
-  .left-sidebar.open { transform: translateX(0); }
-
-  .right-sidebar { right: 0; transform: translateX(100%); }
-  .right-sidebar.open { transform: translateX(0); }
-  
-  /* Hide search to save space */
-  .central-search-wrapper { display: none !important; }
 }
