@@ -353,30 +353,30 @@ useEffect(() => {
   </div>
 </nav>
       <aside className={`left-sidebar ${leftSidebarOpen ? "show" : ""}`}>
-  {/* Header with Close Button for Mobile */}
   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-    <h3>Categories</h3>
-    <button 
-      className="close-sb-btn" 
-      onClick={() => setLeftSidebarOpen(false)}
-      style={{ background: 'none', border: '1px solid #ccc', padding: '5px 10px', cursor: 'pointer' }}
-    >
-      ✕
-    </button>
+    <h3>Menu</h3>
+    <button onClick={() => setLeftSidebarOpen(false)}>✕</button>
   </div>
 
+  {/* NEW: Mobile-only links */}
+  <div className="mobile-menu-content">
+    <button className="nav-link-item" onClick={() => {setView("grid"); setLeftSidebarOpen(false)}}>Home</button>
+    <button className="nav-link-item" onClick={() => {setView("tracking"); setLeftSidebarOpen(false)}}>Tracking</button>
+    <button className="nav-link-item" onClick={() => {setView("account"); setLeftSidebarOpen(false)}}>Account</button>
+    {!user && (
+      <>
+        <button className="nav-link-item" onClick={() => {setView("auth"); setAuthMode("register"); setLeftSidebarOpen(false)}}>Join</button>
+        <button className="nav-link-item" onClick={() => {setView("auth"); setAuthMode("login"); setLeftSidebarOpen(false)}}>Login</button>
+      </>
+    )}
+    <hr style={{ width: '100%' }} />
+    <h4>Categories</h4>
+  </div>
+
+  {/* Existing Categories */}
   <nav className="side-nav">
     {["food", "electronics", "office", "style&fashion", "sex-toys", "rent-house", "car-sales", "kitchen-items"].map((catId) => (
-      <button 
-        key={catId} 
-        className={category === catId ? "active" : ""} 
-        onClick={() => { 
-          setCategory(catId); 
-          setView("grid"); 
-          setSelectedProduct(null); 
-          setLeftSidebarOpen(false); // Close sidebar on selection for mobile UX
-        }}
-      >
+      <button key={catId} onClick={() => { setCategory(catId); setView("grid"); setLeftSidebarOpen(false); }}>
         {catId.toUpperCase()}
       </button>
     ))}

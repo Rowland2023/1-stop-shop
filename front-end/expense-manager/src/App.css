@@ -90,37 +90,47 @@ footer { grid-area: footer; }
 }
 
 @media (max-width: 768px) {
-  /* 1. Change to single column grid */
+  /* Fix for image display: Ensure main doesn't have overflow issues */
+  main { overflow-x: hidden; padding: 10px; }
+
   .app-grid-wrapper {
     grid-template-columns: 1fr;
-    grid-template-areas: 
-      "header"
-      "nav-row"
-      "main";
+    grid-template-areas: "header" "nav-row" "main";
   }
 
-  /* 2. Style Sidebars as Overlays instead of hiding them */
+  /* Sidebars as absolute/fixed overlays */
   .left-sidebar, .right-sidebar {
-    display: block; /* Show them */
     position: fixed;
     top: 0;
     height: 100vh;
-    width: 250px;
+    width: 280px; /* Slightly wider for mobile thumb usage */
     background: white;
-    z-index: 2000;
-    box-shadow: 2px 0 10px rgba(0,0,0,0.2);
+    z-index: 3000;
+    box-shadow: 0 0 15px rgba(0,0,0,0.3);
     transition: transform 0.3s ease-in-out;
     padding: 20px;
     overflow-y: auto;
   }
 
-  /* Right sidebar positions on the right */
+  /* Positioning */
   .right-sidebar { right: 0; transform: translateX(100%); }
   .right-sidebar.open { transform: translateX(0); }
-
-  /* Left sidebar positions on the left */
   .left-sidebar { left: 0; transform: translateX(-100%); }
   .left-sidebar.show { transform: translateX(0); }
+
+  /* Navigation adjustments */
+  .mobile-only-toggle { display: block; }
+  .hide-on-mobile { display: none; }
+  
+  .nav-container { 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    padding: 5px 10px;
+  }
+  
+  /* The "Mobile Menu" that holds the missing links */
+  .mobile-menu-content { display: flex; flex-direction: column; gap: 15px; margin-top: 20px; }
 }
 /* Hide the central search on smaller screens to save space */
 @media (max-width: 768px) {
