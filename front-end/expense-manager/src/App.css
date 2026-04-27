@@ -123,3 +123,21 @@ footer { grid-area: footer; }
   .nav-container { flex-direction: row !important; justify-content: space-between; }
   .central-search-wrapper { flex: 1; padding: 0 10px; }
 }
+
+
+
+/* --- DESKTOP OVERRIDE: FORCE GRID BEHAVIOR --- */
+@media (min-width: 769px) {
+  .left-sidebar {
+    position: static !important; /* Forces it out of fixed/absolute positioning */
+    left: auto !important;       /* Resets the slide animation values */
+    box-shadow: none !important; /* Removes mobile overlay shadow */
+    display: block !important;   /* Ensures it stays in the grid */
+    transform: none !important;
+  }
+  
+  /* Hide mobile-specific close buttons or toggles */
+  .left-sidebar button:first-child { 
+    display: none !important; 
+  }
+}
