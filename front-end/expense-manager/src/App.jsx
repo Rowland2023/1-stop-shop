@@ -61,6 +61,7 @@ function App() {
   });
   const [cartOpen, setCartOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [leftSidebarOpen, setLeftSidebarOpen] = useState(false);
 
   /* --- VIEW & UI STATES --- */
   const [view, setView] = useState("grid"); // 'grid', 'tracking', 'account', 'auth'
@@ -337,11 +338,15 @@ useEffect(() => {
               </>
             ) : <span className="user-tag">👤 {user.phone}</span>}
           </div>
+          <div className="mobile-menu-toggle">
+              <button onClick={() => setLeftSidebarOpen(true)}>☰ Menu</button>
+          </div>
         </div>
       </nav>
 
       {/* SIDEBARS & MAIN - Ensure these are direct children of app-grid-wrapper */}
-      <aside className="left-sidebar">
+      <aside className={`left-sidebar ${leftSidebarOpen ? "open" : ""}`}>
+        <button className="close-btn" onClick={() => setLeftSidebarOpen(false)}>✕</button>
         <h3>Categories</h3>
         <nav className="side-nav">
           {["food", "electronics", "office", "style&fashion", "sex-toys", "rent-house", "car-sales", "kitchen-items"].map((catId) => (
