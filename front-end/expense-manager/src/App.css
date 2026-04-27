@@ -1,5 +1,5 @@
 /* =========================================
-   0. ROOT VARIABLES
+   0. ROOT VARIABLES (Global Branding)
    ========================================= */
 :root {
   --brand-orange: #ff8c00;
@@ -34,7 +34,7 @@ body, #root {
 header { grid-area: header; }
 nav { grid-area: nav-row; }
 .left-sidebar { grid-area: left-sb; }
-main { grid-area: main; background: var(--bg-white); padding: 30px; min-width: 0; }
+main { grid-area: main; background: var(--bg-white); padding: 30px; }
 .right-sidebar { grid-area: right-sb; }
 footer { grid-area: footer; }
 
@@ -42,7 +42,7 @@ footer { grid-area: footer; }
    2. HEADER & NAVIGATION
    ========================================= */
 .brand-header { background: var(--brand-dark); padding: 15px 5%; }
-.header-inner { display: flex; justify-content: space-between; align-items: center; width: 100%; padding: 10px 20px; gap: 10px; }
+.header-inner { display: flex; justify-content: space-between; align-items: center; }
 .logo-text { color: var(--brand-orange); font-size: 2rem; margin: 0; cursor: pointer; }
 
 .main-nav { background: var(--bg-white); border-bottom: 1px solid #e0e0e0; position: sticky; top: 0; z-index: 1000; padding: 10px 0; }
@@ -50,7 +50,7 @@ footer { grid-area: footer; }
 .nav-group { display: flex; gap: 20px; flex: 1; }
 .nav-group.right { justify-content: flex-end; }
 
-.nav-link-item { background: none; border: none; font-weight: 600; color: var(--text-dark); cursor: pointer; font-size: 0.95rem; }
+.nav-link-item { background: none; border: none; font-weight: 600; color: var(--text-dark); cursor: pointer; font-size: 0.95rem; transition: color 0.2s; }
 .nav-link-item:hover { color: var(--brand-orange); }
 .auth-highlight { color: var(--brand-orange); border: 1px solid var(--brand-orange); padding: 5px 15px; border-radius: 15px; }
 
@@ -64,15 +64,25 @@ footer { grid-area: footer; }
    3. PRODUCT GRID & CARDS
    ========================================= */
 .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 25px; }
-.product-card { border: 1px solid var(--border-color); padding: 15px; text-align: center; border-radius: 8px; }
+.product-card { border: 1px solid var(--border-color); padding: 15px; text-align: center; border-radius: 8px; transition: box-shadow 0.3s; }
+.product-card:hover { box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
 
-.img-frame { width: 100%; height: 180px; overflow: hidden; border-radius: 5px; position: relative; background: #f9f9f9; }
-.zoom-effect { width: 100%; height: 100%; object-fit: contain; }
+.img-frame { width: 100%; height: 180px; overflow: hidden; border-radius: 5px; position: relative; cursor: pointer; background: #f9f9f9; }
+.zoom-effect { width: 100%; height: 100%; object-fit: contain; transition: transform 0.4s ease; }
+.img-frame:hover .zoom-effect { transform: scale(1.15); }
 
 /* =========================================
-   4. RESPONSIVE & VISIBILITY
+   4. CART, AUTH & MISC
    ========================================= */
+.checkout-btn-curved { background: var(--brand-orange); color: white; border: none; padding: 12px 25px; border-radius: var(--radius-curved); font-weight: bold; cursor: pointer; width: 100%; }
+.clear-cart-btn-curved { background: var(--bg-white); color: var(--brand-orange); border: 2px solid var(--brand-orange); padding: 10px 20px; border-radius: var(--radius-curved); font-weight: bold; cursor: pointer; width: 100%; }
 
+.side-nav button { width: 100%; text-align: left; padding: 12px 15px; border: 1px solid #dfe6e9; background: var(--bg-white); color: #2c3e50; cursor: pointer; border-radius: 6px; font-weight: 600; }
+.active { background: #3498db !important; color: white !important; transform: translateX(5px); }
+
+/* =========================================
+   5. RESPONSIVE
+   ========================================= */
 /* Default: Desktop visibility */
 .mobile-only-toggle { display: none !important; }
 .hide-on-mobile { display: flex !important; }
@@ -106,4 +116,21 @@ footer { grid-area: footer; }
   
   .nav-container { flex-direction: row !important; justify-content: space-between; }
   .central-search-wrapper { flex: 1; padding: 0 10px; }
+}
+
+/* --- DESKTOP DEFAULT (Hidden) --- */
+.mobile-only-toggle { 
+    display: none !important; 
+}
+
+/* --- MOBILE ONLY (Visible) --- */
+@media (max-width: 768px) {
+    .mobile-only-toggle { 
+        display: block !important; 
+    }
+    
+    /* Hide desktop elements */
+    .hide-on-mobile { 
+        display: none !important; 
+    }
 }
