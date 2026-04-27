@@ -101,22 +101,36 @@ footer { grid-area: footer; }
   .hide-on-mobile { display: none !important; }
   .mobile-only-toggle { display: block !important; }
 
-  /* Transform Left Sidebar into mobile drawer */
+  /* --- 1. DEFAULT DESKTOP BEHAVIOR --- */
+.left-sidebar {
+  grid-area: left-sb;
+  display: block;      /* Ensures it stays in the grid */
+  position: static;    /* CRITICAL: Resets fixed positioning from mobile */
+  transform: none;     /* Resets any mobile transformations */
+  box-shadow: none;    /* Removes the mobile overlay shadow */
+  padding: 0;          /* Reset padding if necessary */
+}
+
+/* --- 2. MOBILE OVERRIDE --- */
+@media (max-width: 768px) {
   .left-sidebar {
-    position: fixed;
+    position: fixed;   /* Only use fixed on mobile */
     top: 0;
-    left: -250px;
+    left: -250px;      /* Hidden off-screen */
     width: 250px;
     height: 100vh;
     background: white;
     z-index: 2000;
     transition: left 0.3s ease;
     box-shadow: 2px 0 10px rgba(0,0,0,0.2);
-    padding: 20px;
+    padding: 20px;     /* Mobile-specific padding */
   }
-  .left-sidebar.show { left: 0; }
+  
+  .left-sidebar.show { 
+    left: 0;           /* Slide in */
+  }
 }
-
+}
 /* Desktop Visibility Defaults */
 .mobile-only-toggle { display: none; }
 .hide-on-mobile { display: flex; }
