@@ -253,12 +253,15 @@ function App() {
         )}
       </main>
       {/* RIGHT SIDEBAR */}
-<aside className={`right-sidebar ${cartOpen ? "open" : ""}`}>
+      <aside className={`right-sidebar ${cartOpen ? "open" : ""}`}>
   <div className="cart-container" style={{ padding: '20px' }}>
-    <button onClick={() => setCartOpen(false)} style={{ marginBottom: '15px' }}>✕ Close</button>
+    {/* This button is only visible on mobile via CSS */}
+    <button className="close-cart-btn" onClick={() => setCartOpen(false)} style={{ marginBottom: '15px' }}>
+      ✕ Close
+    </button>
+    
     <h3>Your Cart</h3>
     
-    {/* THIS WAS MISSING: The loop to show cart items */}
     <div className="cart-items-list" style={{ marginBottom: '20px' }}>
       {cart.length === 0 ? <p>Your cart is empty.</p> : 
         cart.map((item, index) => (

@@ -185,3 +185,17 @@ footer { grid-area: footer; }
     right: 0; /* Slide in */
   }
 }
+
+/* 1. Hide the close button on desktop screens */
+@media (min-width: 769px) {
+  .close-cart-btn { 
+    display: none !important; 
+  }
+}
+
+/* 2. Ensure it shows on mobile */
+@media (max-width: 768px) {
+  .close-cart-btn { 
+    display: block; 
+  }
+}
