@@ -152,3 +152,35 @@ footer { grid-area: footer; }
   height: 100%;
   object-fit: cover; /* Ensures image fills the frame without distortion */
 }
+
+/* =========================================
+   RIGHT SIDEBAR (CART)
+   ========================================= */
+.right-sidebar {
+  grid-area: right-sb;
+  background: #f9f9f9;
+  border-left: 1px solid var(--border-color);
+  min-height: 100vh;
+  /* On desktop, it's always visible */
+  display: block; 
+}
+
+/* --- MOBILE OVERLAY FOR CART --- */
+@media (max-width: 768px) {
+  .right-sidebar {
+    position: fixed;
+    top: 0;
+    right: -100%; /* Hidden by default */
+    width: 85%;
+    height: 100vh;
+    background: white;
+    z-index: 3000;
+    transition: right 0.3s ease;
+    overflow-y: auto;
+    box-shadow: -5px 0 15px rgba(0,0,0,0.2);
+  }
+
+  .right-sidebar.open {
+    right: 0; /* Slide in */
+  }
+}

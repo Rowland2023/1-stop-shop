@@ -252,31 +252,37 @@ function App() {
           </>
         )}
       </main>
-      {/* RIGHT SIDEBAR - Now handles Mobile Overlay */}
-      <aside className={`right-sidebar ${cartOpen ? "open" : ""}`}>
-        <div className="cart-container" style={{ padding: '20px' }}>
-          {/* Added Close button for better UX */}
-          <button onClick={() => setCartOpen(false)} style={{ marginBottom: '15px' }}>✕ Close</button>
-          <h3>Your Cart</h3>
-          <div className="cart-action-stack" style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '20px' }}>
-            <button className="checkout-btn-curved" onClick={() => initializePayment({ onSuccess: (res) => alert("Success! " + res.reference), onClose: () => {} })}>Checkout Now</button>
-            <button className="clear-cart-btn-curved" onClick={() => setCart([])}>Clear Cart</button>
+      {/* RIGHT SIDEBAR */}
+<aside className={`right-sidebar ${cartOpen ? "open" : ""}`}>
+  <div className="cart-container" style={{ padding: '20px' }}>
+    <button onClick={() => setCartOpen(false)} style={{ marginBottom: '15px' }}>✕ Close</button>
+    <h3>Your Cart</h3>
+    
+    {/* THIS WAS MISSING: The loop to show cart items */}
+    <div className="cart-items-list" style={{ marginBottom: '20px' }}>
+      {cart.length === 0 ? <p>Your cart is empty.</p> : 
+        cart.map((item, index) => (
+          <div key={index} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
+            <span>{item.name} (x{item.quantity})</span>
+            <span>₦{(item.price * item.quantity).toLocaleString()}</span>
           </div>
-        </div>
-      </aside>
+        ))
+      }
+    </div>
 
-      {/* MOBILE MENU OVERLAY */}
-      {mobileMenuOpen && (
-        <div className="mobile-menu-overlay">
-          <button className="close-btn" onClick={() => setMobileMenuOpen(false)}>✕ Close</button>
-          <div className="mobile-menu-section">
-            <h3>Categories</h3>
-            {["food", "electronics", "office", "style&fashion", "sex-toys", "rent-house", "car-sales", "kitchen-items"].map((catId) => (
-              <button key={catId} onClick={() => { setCategory(catId); setView("grid"); setMobileMenuOpen(false); }}>{catId.toUpperCase()}</button>
-            ))}
-          </div>
+    {cart.length > 0 && (
+      <div className="total-section" style={{ borderTop: '2px solid #ccc', paddingTop: '10px' }}>
+        <p><strong>Total: ₦{totalAmount.toLocaleString()}</strong></p>
+        <div className="cart-action-stack" style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '20px' }}>
+          <button className="checkout-btn-curved" onClick={() => initializePayment({ onSuccess: (res) => alert("Success! " + res.reference), onClose: () => {} })}>
+            Checkout Now
+          </button>
+          <button className="clear-cart-btn-curved" onClick={() => setCart([])}>Clear Cart</button>
         </div>
-      )}
+      </div>
+    )}
+  </div>
+</aside>
     </div>
   );
 }
