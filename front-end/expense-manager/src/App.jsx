@@ -124,6 +124,13 @@ function App() {
     }
   }, [view, user]);
 
+useEffect(() => {
+  if (selectedProduct) {
+    setActiveMainImage(selectedProduct.main_image_url || selectedProduct.additional_images?.[0]?.image);
+    setGalleryPage(1); // This is key to preventing the gallery from staying on page 2, 3, etc.
+  }
+}, [selectedProduct]);
+
   function getCookie(name) {
     let cookieValue = null;
     if (document.cookie && document.cookie !== '') {
@@ -259,45 +266,45 @@ function App() {
         <div className="gallery-section" style={{ marginTop: '20px' }}>
           <div className="gallery-thumbnails" style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
             
-            {/* We create a flat array of all image URLs to handle pagination uniformly */}
+            {/* 1. Flatten all images into one array */}
             {(() => {
               const allImages = [
                 selectedProduct.main_image_url, 
                 ...(selectedProduct.additional_images?.map(i => i.image) || [])
-              ].filter(Boolean); // Remove null/undefined
+              ].filter(Boolean);
 
-              return (
-                <>
-                  {allImages
-                    .slice(0, galleryPage * IMAGES_PER_PAGE)
-                    .map((imageUrl, index) => (
-                      <img 
-                        key={index}
-                        src={getImageUrl(imageUrl)} 
-                        alt={`View ${index}`}
-                        onClick={() => setActiveMainImage(imageUrl)}
-                        style={{ 
-                          width: '80px', 
-                          height: '80px', 
-                          objectFit: 'cover', 
-                          cursor: 'pointer', 
-                          border: activeMainImage === imageUrl ? '2px solid #ff8c00' : '1px solid #ddd' 
-                        }}
-                      />
-                  ))}
-                </>
-              );
+              return allImages
+                .slice(0, galleryPage * ITEMS_PER_PAGE)
+                .map((imageUrl, index) => (
+                  <img 
+                    key={`${selectedProduct.id}-${index}`}
+                    src={getImageUrl(imageUrl)} 
+                    alt={`View ${index}`}
+                    onClick={() => setActiveMainImage(imageUrl)}
+                    style={{ 
+                      width: '80px', 
+                      height: '80px', 
+                      objectFit: 'cover', 
+                      cursor: 'pointer', 
+                      border: activeMainImage === imageUrl ? '2px solid #ff8c00' : '1px solid #ddd' 
+                    }}
+                  />
+                ));
             })()}
           </div>
 
-          {/* "Show More" Button */}
+          {/* 2. "Show More" Button */}
           {(() => {
-            const totalImages = 1 + (selectedProduct.additional_images?.length || 0);
-            return galleryPage * IMAGES_PER_PAGE < totalImages && (
+            const allImages = [
+                selectedProduct.main_image_url, 
+                ...(selectedProduct.additional_images?.map(i => i.image) || [])
+            ].filter(Boolean);
+            
+            return galleryPage * ITEMS_PER_PAGE < allImages.length && (
               <button 
                 className="orange-curved-btn"
                 onClick={() => setGalleryPage(prev => prev + 1)}
-                style={{ marginTop: '15px', padding: '10px 20px', cursor: 'pointer' }}
+                style={{ marginTop: '15px', padding: '10px 20px', cursor: 'pointer', display: 'block' }}
               >
                 Load More Images
               </button>
