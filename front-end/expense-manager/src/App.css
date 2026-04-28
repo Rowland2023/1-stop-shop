@@ -128,25 +128,20 @@ footer { grid-area: footer; }
   }
 }
 
-/* Update your img-frame to ensure it ALWAYS has space */
+/* Add/Replace these styles in your App.css */
 .img-frame {
   width: 100%;
-  height: 180px; 
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  height: 150px;
+  display: block;      /* 🔥 REMOVE flex */
   overflow: hidden;
   background: #f4f4f4;
-  border-radius: 8px;
-  position: relative;
-  flex-shrink: 0; /* ADD THIS: Prevents the container from shrinking */
 }
 
 .zoom-effect {
   width: 100%;
-  height: 100%;
-  /* Change 'contain' to 'cover' to ensure it fills the frame */
-  object-fit: cover; 
+  height: auto;        /* 🔥 CHANGE THIS */
+  max-height: 100%;
+  object-fit: contain;
   display: block;
 }
 

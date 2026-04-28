@@ -26,11 +26,14 @@ function ProductCard({ product, onAddToCart, onSelect }) {
     <div className="product-card">
       <div className="img-frame" onClick={() => onSelect(product)} style={{ cursor: 'pointer' }}>
         <img 
-          src={displayImage} 
-          alt={product.name} 
-          className="zoom-effect" 
-          onError={(e) => { e.target.src = "/static/placeholder.png"; }} 
-        />
+  src={displayImage}
+  alt={product.name}
+  style={{ width: "100%", height: "auto", border: "2px solid red" }}
+  onError={(e) => { 
+    console.log("FAILED:", displayImage);
+    e.target.src = "/static/placeholder.png"; 
+  }}
+/>
       </div>
 
       <h3 onClick={() => onSelect(product)} style={{ cursor: 'pointer', marginBottom: '5px' }}>{product.name}</h3>
