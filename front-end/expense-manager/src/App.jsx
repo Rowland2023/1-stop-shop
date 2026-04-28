@@ -23,15 +23,21 @@ function ProductCard({ product, onAddToCart, onSelect }) {
   const displayImage = getImageUrl(primaryImg);
 
   return (
-    <div className="product-card">
+      <div className="product-card">
       <div className="img-frame" onClick={() => onSelect(product)} style={{ cursor: 'pointer' }}>
-        <img 
-          src={displayImage} 
-          alt={product.name} 
-          className="zoom-effect" 
-          onError={(e) => { e.target.src = "/static/placeholder.png"; }} 
-        />
+        <img src={displayImage} alt={product.name} className="zoom-effect" />
       </div>
+
+      <h3 onClick={() => onSelect(product)} style={{ cursor: 'pointer', marginBottom: '5px' }}>{product.name}</h3>
+      
+      {/* REMOVED DESCRIPTION HERE */}
+
+      <p className="price-text" style={{ fontWeight: 'bold', margin: '10px 0' }}>₦{parseFloat(product.price || 0).toLocaleString()}</p>
+      
+      {/* ... (keep the quantity and add button code) */}
+    </div>
+  );
+}
 
       <h3 onClick={() => onSelect(product)} style={{ cursor: 'pointer', marginBottom: '5px' }}>{product.name}</h3>
       
@@ -231,64 +237,37 @@ function App() {
             <button className="orange-curved-btn" disabled={!csrfReady} onClick={handleAuth}>{csrfReady ? (authMode === "login" ? "Login" : "Submit") : "Connecting..."}</button>
           </div>
         )}
-        {view === "tracking" && (
-          <div className="view-container tracking-screen">
-            <h1>📦 Track Your Shipment</h1>
-            <input type="text" placeholder="Order ID" value={trackInput} onChange={(e) => setTrackInput(e.target.value)} />
-            <button className="track-btn-action" onClick={handleTrackOrder}>Check Status</button>
-            {trackingData && <div className="tracking-timeline">Status: {trackingData.status}</div>}
-          </div>
-        )}
-        {view === "account" && (
-          <div className="view-container account-screen">
-            <h1>Order History</h1>
-            {userOrders.map(o => <div key={o.id}>{o.id} - ₦{o.total_price}</div>)}
-          </div>
-        )}
         {view === "grid" && (
-          <>
-            {selectedProduct ? (
-  <div className="detail-screen" style={{ padding: '20px' }}>
-    <button onClick={() => setSelectedProduct(null)} style={{ marginBottom: '10px' }}>← Back</button>
-    
-    <h1>{selectedProduct.name}</h1>
-    
-    {/* Main Active Image */}
-    <img 
-      src={getImageUrl(activeMainImage)} 
-      alt={selectedProduct.name} 
-      style={{ width: '100%', maxWidth: '500px', borderRadius: '8px', display: 'block', margin: '0 auto' }} 
-    />
-    
-    {/* Additional Images Gallery */}
-    {selectedProduct.additional_images && selectedProduct.additional_images.length > 0 && (
-      <div className="gallery-thumbnails" style={{ display: 'flex', gap: '10px', marginTop: '20px', flexWrap: 'wrap' }}>
-        {/* Render primary image as a thumbnail too */}
+  <>
+    {selectedProduct ? (
+      <div className="detail-screen" style={{ padding: '20px' }}>
+        <button onClick={() => setSelectedProduct(null)} style={{ marginBottom: '10px' }}>← Back</button>
+        
+        <h1>{selectedProduct.name}</h1>
+        
+        {/* ADDED DESCRIPTION HERE */}
+        <p style={{ fontSize: '1rem', color: '#333', margin: '15px 0', lineHeight: '1.5' }}>
+          {selectedProduct.description || "No description available for this product."}
+        </p>
+
+        {/* Main Active Image */}
         <img 
-            src={getImageUrl(selectedProduct.main_image_url)} 
-            onClick={() => setActiveMainImage(selectedProduct.main_image_url)}
-            style={{ width: '80px', height: '80px', objectFit: 'cover', cursor: 'pointer', border: activeMainImage === selectedProduct.main_image_url ? '2px solid #ff8c00' : 'none' }}
+          src={getImageUrl(activeMainImage)} 
+          alt={selectedProduct.name} 
+          style={{ width: '100%', maxWidth: '500px', borderRadius: '8px', display: 'block', margin: '0 auto' }} 
         />
-        {/* Render extra images */}
-        {selectedProduct.additional_images.map((imgObj, idx) => (
-          <img 
-            key={idx}
-            src={getImageUrl(imgObj.image)} 
-            alt={`View ${idx}`}
-            onClick={() => setActiveMainImage(imgObj.image)}
-            style={{ width: '80px', height: '80px', objectFit: 'cover', cursor: 'pointer', border: activeMainImage === imgObj.image ? '2px solid #ff8c00' : 'none' }}
-          />
+        
+        {/* ... (rest of your gallery code) */}
+      </div>
+    ) : (
+      <div className="product-grid">
+        {paginatedProducts.map((p) => (
+            <ProductCard key={p.id} product={p} onAddToCart={addToCart} onSelect={setSelectedProduct} />
         ))}
       </div>
     )}
-  </div>
-) : (
-  <div className="product-grid">
-    {paginatedProducts.map((p) => <ProductCard key={p.id} product={p} onAddToCart={addToCart} onSelect={setSelectedProduct} />)}
-  </div>
+  </>
 )}
-          </>
-        )}
       </main>
       {/* RIGHT SIDEBAR */}
       <aside className={`right-sidebar ${cartOpen ? "open" : ""}`}>
