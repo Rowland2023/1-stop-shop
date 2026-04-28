@@ -84,37 +84,30 @@ footer { grid-area: footer; }
    5. RESPONSIVE
    ========================================= */
 
-@media (max-width: 900px) {
-  .nav-container { flex-direction: column; gap: 15px; }
-  .nav-group { order: 2; width: 100%; justify-content: center; }
-  .central-search-wrapper { order: 1; width: 100%; }
+/* --- 5. RESPONSIVE --- */
+
+/* Hide mobile-only elements on Desktop */
+@media (min-width: 769px) {
+  .mobile-menu-toggle { display: none !important; }
+  .mobile-menu-dropdown { display: none !important; }
 }
 
+/* Ensure mobile-only elements show on Mobile */
 @media (max-width: 768px) {
-  /* Simplified Mobile Grid */
+  .mobile-menu-toggle { display: block; }
+  
+  /* Your existing mobile grid and sidebar overrides */
   .app-grid-wrapper { 
     grid-template-columns: 1fr; 
     grid-template-areas: "header" "nav-row" "main" "footer"; 
   }
-  
-  /* Hide the desktop sidebar on mobile */
   .left-sidebar { display: none; }
-
-  /* Dropdown Menu Styling */
-  .mobile-menu-dropdown {
-    background: #f9f9f9;
-    padding: 15px;
-    border-bottom: 1px solid #ddd;
-    display: block; /* Ensures it pushes content down */
-  }
+  .mobile-menu-dropdown { display: block; }
 }
 
-/* Ensure Desktop Sidebar stays in Grid */
-@media (min-width: 769px) {
-  .mobile-menu-dropdown { display: none; } /* Hide dropdown on desktop */
-  .left-sidebar { display: block; }      /* Force sidebar in grid */
-}
-
+/*===========================================
+   6. BUG FIXES & POLISH
+========================================= */ 
 /* --- MOBILE SIDEBAR OVERLAY FIX --- */
 @media (max-width: 768px) {
   .right-sidebar {
@@ -138,7 +131,7 @@ footer { grid-area: footer; }
 /* --- IMAGE CONSISTENCY FIX --- */
 .img-frame {
   width: 100%;
-  height: 200px; /* Fixed height for consistency */
+  height: 200px; /* Standard height */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -150,7 +143,15 @@ footer { grid-area: footer; }
 .zoom-effect {
   width: 100%;
   height: 100%;
-  object-fit: cover; /* Ensures image fills the frame without distortion */
+  object-fit: contain; /* Changed from cover to contain to prevent cropping */
+  transition: transform 0.4s ease;
+}
+
+/* Responsive adjustment for Mobile */
+@media (max-width: 480px) {
+  .img-frame {
+    height: 150px; /* Slightly shorter frame for mobile screens */
+  }
 }
 
 /* =========================================
