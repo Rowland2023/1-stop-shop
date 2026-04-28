@@ -234,19 +234,15 @@ function App() {
             <button className="orange-curved-btn" disabled={!csrfReady} onClick={handleAuth}>{csrfReady ? (authMode === "login" ? "Login" : "Submit") : "Connecting..."}</button>
           </div>
         )}
-        {/* This section concerns Product review*/}
       {view === "grid" && (
   <>
     {selectedProduct ? (
       <div className="detail-screen" style={{ padding: '20px' }}>
-        {/* Debugging: Check the console to see the real product data */}
-        {console.log("Selected Product Data:", selectedProduct)}
-        
         <button onClick={() => setSelectedProduct(null)} style={{ marginBottom: '10px' }}>← Back</button>
         
         <h1>{selectedProduct.name}</h1>
-      
-        {/* Main Active Image */}
+        
+        {/* Main Active Image Display */}
         <img 
           src={getImageUrl(activeMainImage)} 
           alt={selectedProduct.name} 
@@ -259,48 +255,62 @@ function App() {
             <p>{selectedProduct.description || "No description available for this product."}</p>
         </div>
         
-        {/* Additional Images Gallery */}
-        {selectedProduct.additional_images && selectedProduct.additional_images.length > 0 && (
+        {/* Gallery Section */}
         <div className="gallery-section" style={{ marginTop: '20px' }}>
-          <div className="gallery-thumbnails" style={{ display: 'flex', gap: '10px', marginTop: '20px', flexWrap: 'wrap' }}>
-            {/* Thumbnail for main image */}
-            <img 
-                src={getImageUrl(selectedProduct.main_image_url || selectedProduct.additional_images?.[0]?.image)} 
-                onClick={() => setActiveMainImage(selectedProduct.main_image_url || selectedProduct.additional_images?.[0]?.image)}
-                style={{ width: '80px', height: '80px', objectFit: 'cover', cursor: 'pointer', border: activeMainImage === (selectedProduct.main_image_url || selectedProduct.additional_images?.[0]?.image) ? '2px solid #ff8c00' : 'none' }}
-                alt="Main view"
-            />
-            {/* 1. Logic to slice only 9 images */}
-      {selectedProduct.additional_images
-        .slice(0, galleryPage * IMAGES_PER_PAGE)
-        .map((imgObj, idx) => (
-          <img 
-            key={idx}
-            src={getImageUrl(imgObj.image)} 
-            alt={`View ${idx}`}
-            onClick={() => setActiveMainImage(imgObj.image)}
-            style={{ 
-              width: '80px', 
-              height: '80px', 
-              objectFit: 'cover', 
-              cursor: 'pointer', 
-              border: activeMainImage === imgObj.image ? '2px solid #ff8c00' : '1px solid #ddd' 
-            }}
-          />
-        ))}
+          <div className="gallery-thumbnails" style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+            
+            {/* We create a flat array of all image URLs to handle pagination uniformly */}
+            {(() => {
+              const allImages = [
+                selectedProduct.main_image_url, 
+                ...(selectedProduct.additional_images?.map(i => i.image) || [])
+              ].filter(Boolean); // Remove null/undefined
+
+              return (
+                <>
+                  {allImages
+                    .slice(0, galleryPage * IMAGES_PER_PAGE)
+                    .map((imageUrl, index) => (
+                      <img 
+                        key={index}
+                        src={getImageUrl(imageUrl)} 
+                        alt={`View ${index}`}
+                        onClick={() => setActiveMainImage(imageUrl)}
+                        style={{ 
+                          width: '80px', 
+                          height: '80px', 
+                          objectFit: 'cover', 
+                          cursor: 'pointer', 
+                          border: activeMainImage === imageUrl ? '2px solid #ff8c00' : '1px solid #ddd' 
+                        }}
+                      />
+                  ))}
+                </>
+              );
+            })()}
           </div>
-        )}
+
+          {/* "Show More" Button */}
+          {(() => {
+            const totalImages = 1 + (selectedProduct.additional_images?.length || 0);
+            return galleryPage * IMAGES_PER_PAGE < totalImages && (
+              <button 
+                className="orange-curved-btn"
+                onClick={() => setGalleryPage(prev => prev + 1)}
+                style={{ marginTop: '15px', padding: '10px 20px', cursor: 'pointer' }}
+              >
+                Load More Images
+              </button>
+            );
+          })()}
+        </div>
       </div>
     ) : (
-      {/* 2. "Show More" Button */}
-    {galleryPage * IMAGES_PER_PAGE < selectedProduct.additional_images.length && (
-      <button 
-        onClick={() => setGalleryPage(prev => prev + 1)}
-        style={{ marginTop: '15px', padding: '10px 20px', cursor: 'pointer' }}
-      >
-        Load More Images
-      </button>
-    )}
+      <div className="product-grid">
+        {paginatedProducts.map((p) => (
+            <ProductCard key={p.id} product={p} onAddToCart={addToCart} onSelect={setSelectedProduct} />
+        ))}
+      </div>
     )}
   </>
 )}
