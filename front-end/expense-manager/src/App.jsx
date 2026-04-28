@@ -9,10 +9,28 @@ const PAYSTACK_PUBLIC_KEY = 'pk_live_21207f639d252b46e35e171dca6b075f79cba433';
 
 const getImageUrl = (input) => {
   if (!input) return "/static/placeholder.png";
-  const path = (typeof input === 'object' && input !== null) ? input.image : input;
-  if (typeof path !== 'string') return "/static/placeholder.png";
-  if (path.startsWith("http")) return path;
+
+  let path = (typeof input === "object" && input !== null)
+    ? input.image
+    : input;
+
+  if (typeof path !== "string") return "/static/placeholder.png";
+
+  // FIX 1: force https
+  if (path.startsWith("http://")) {
+    path = path.replace("http://", "https://");
+  }
+
+  // FIX 2: if already full URL → return
+  if (path.startsWith("https://")) return path;
+
+  // FIX 3: handle broken partial cloudinary paths
+  if (path.includes("res.cloudinary.com")) {
+    return `https://${path}`;
+  }
+
   const cleanPath = path.startsWith("/") ? path.substring(1) : path;
+
   return `${CLOUDINARY_BASE}${cleanPath}`;
 };
 
