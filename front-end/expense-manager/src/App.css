@@ -92,30 +92,17 @@ footer { grid-area: footer; }
   .mobile-menu-dropdown { display: none !important; }
 }
 
+/* Ensure mobile-only elements show on Mobile */
 @media (max-width: 768px) {
-  /* 1. Stop forcing the grid to hide elements */
-  .app-grid-wrapper { 
-    display: block; 
-  }
-
-  /* 2. Make the sidebar an overlay instead of hiding it */
-  .left-sidebar {
-    display: block; /* Important: Don't use display: none */
-    position: fixed;
-    left: -100%;
-    top: 0;
-    width: 250px;
-    height: 100vh;
-    background: white;
-    z-index: 9999;
-    transition: left 0.3s ease;
-  }
+  .mobile-menu-toggle { display: block; }
   
-  /* Use a class like .open to show it */
-  .left-sidebar.open { left: 0; }
-
-  /* 3. Ensure Main takes full width */
-  main { width: 100%; padding: 15px; }
+  /* Your existing mobile grid and sidebar overrides */
+  .app-grid-wrapper { 
+    grid-template-columns: 1fr; 
+    grid-template-areas: "header" "nav-row" "main" "footer"; 
+  }
+  .left-sidebar { display: none; }
+  .mobile-menu-dropdown { display: block; }
 }
 
 /*===========================================
