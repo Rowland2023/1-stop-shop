@@ -21,9 +21,7 @@ function ProductCard({ product, onAddToCart, onSelect }) {
   const gallery = product.additional_images || [];
   const primaryImg = product.main_image_url || (gallery.length > 0 ? gallery[0].image : null);
   const displayImage = getImageUrl(primaryImg);
-  // Add this near your other state declarations
-  const [galleryPage, setGalleryPage] = useState(1);
-  const IMAGES_PER_PAGE = 9;
+  
 
   return (
     <div className="product-card">
@@ -71,6 +69,9 @@ function App() {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [activeMainImage, setActiveMainImage] = useState(null);
   const [csrfReady, setCsrfReady] = useState(false);
+  // Add this near your other state declarations
+  const [galleryPage, setGalleryPage] = useState(1);
+  const IMAGES_PER_PAGE = 9;
   
   const [user, setUser] = useState(null);
   const [authMode, setAuthMode] = useState("login");
