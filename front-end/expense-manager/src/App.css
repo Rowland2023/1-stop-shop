@@ -83,6 +83,7 @@ footer { grid-area: footer; }
 /* =========================================
    5. RESPONSIVE
    ========================================= */
+
 @media (max-width: 900px) {
   .nav-container { flex-direction: column; gap: 15px; }
   .nav-group { order: 2; width: 100%; justify-content: center; }
@@ -90,16 +91,29 @@ footer { grid-area: footer; }
 }
 
 @media (max-width: 768px) {
-  .app-grid-wrapper { grid-template-columns: 1fr; grid-template-areas: "header" "nav-row" "main" "footer"; }
-  .left-sidebar, .right-sidebar { display: none; }
-}
-/* Hide the central search on smaller screens to save space */
-@media (max-width: 768px) {
-  .header-center {
-    display: none !important;
+  /* Simplified Mobile Grid */
+  .app-grid-wrapper { 
+    grid-template-columns: 1fr; 
+    grid-template-areas: "header" "nav-row" "main" "footer"; 
+  }
+  
+  /* Hide the desktop sidebar on mobile */
+  .left-sidebar { display: none; }
+
+  /* Dropdown Menu Styling */
+  .mobile-menu-dropdown {
+    background: #f9f9f9;
+    padding: 15px;
+    border-bottom: 1px solid #ddd;
+    display: block; /* Ensures it pushes content down */
   }
 }
 
+/* Ensure Desktop Sidebar stays in Grid */
+@media (min-width: 769px) {
+  .mobile-menu-dropdown { display: none; } /* Hide dropdown on desktop */
+  .left-sidebar { display: block; }      /* Force sidebar in grid */
+}
 
 /* --- MOBILE SIDEBAR OVERLAY FIX --- */
 @media (max-width: 768px) {
