@@ -131,18 +131,21 @@ footer { grid-area: footer; }
 /* Add/Replace these styles in your App.css */
 .img-frame {
   width: 100%;
-  height: 150px;
-  display: block;      /* 🔥 REMOVE flex */
+  height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   overflow: hidden;
   background: #f4f4f4;
+  border-radius: 8px;
+  position: relative;
 }
 
 .zoom-effect {
   width: 100%;
-  height: auto;        /* 🔥 CHANGE THIS */
-  max-height: 100%;
-  object-fit: contain;
-  display: block;
+  height: 100%;
+  object-fit: contain; /* Ensures the whole image is visible */
+  display: block;      /* Prevents bottom spacing artifacts */
 }
 
 @media (max-width: 480px) {
