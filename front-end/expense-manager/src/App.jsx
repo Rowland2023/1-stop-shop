@@ -23,30 +23,23 @@ function ProductCard({ product, onAddToCart, onSelect }) {
   const displayImage = getImageUrl(primaryImg);
 
   return (
-      <div className="product-card">
+    <div className="product-card">
       <div className="img-frame" onClick={() => onSelect(product)} style={{ cursor: 'pointer' }}>
-        <img src={displayImage} alt={product.name} className="zoom-effect" />
+        <img 
+          src={displayImage} 
+          alt={product.name} 
+          className="zoom-effect" 
+          onError={(e) => { e.target.src = "/static/placeholder.png"; }} 
+        />
       </div>
 
-      <h3 onClick={() => onSelect(product)} style={{ cursor: 'pointer', marginBottom: '5px' }}>{product.name}</h3>
+      <h3 onClick={() => onSelect(product)} style={{ cursor: 'pointer', marginBottom: '5px' }}>
+        {product.name}
+      </h3>
       
-      {/* REMOVED DESCRIPTION HERE */}
-
-      <p className="price-text" style={{ fontWeight: 'bold', margin: '10px 0' }}>₦{parseFloat(product.price || 0).toLocaleString()}</p>
-      
-      {/* ... (keep the quantity and add button code) */}
-    </div>
-  );
-}
-
-      <h3 onClick={() => onSelect(product)} style={{ cursor: 'pointer', marginBottom: '5px' }}>{product.name}</h3>
-      
-      {/* ADDED DESCRIPTION FIELD */}
-      <p style={{ fontSize: '0.85rem', color: '#666', height: '40px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-        {product.description || "No description available"}
+      <p className="price-text" style={{ fontWeight: 'bold', margin: '10px 0' }}>
+        ₦{parseFloat(product.price || 0).toLocaleString()}
       </p>
-
-      <p className="price-text" style={{ fontWeight: 'bold', margin: '10px 0' }}>₦{parseFloat(product.price || 0).toLocaleString()}</p>
       
       <div className="qty-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
         <button onClick={() => setTempQty(Math.max(1, tempQty - 1))}>-</button>
@@ -57,6 +50,7 @@ function ProductCard({ product, onAddToCart, onSelect }) {
     </div>
   );
 }
+
 function App() {
   const ITEMS_PER_PAGE = 9;
   const [currentPage, setCurrentPage] = useState(1);
