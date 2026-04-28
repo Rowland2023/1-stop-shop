@@ -21,6 +21,9 @@ function ProductCard({ product, onAddToCart, onSelect }) {
   const gallery = product.additional_images || [];
   const primaryImg = product.main_image_url || (gallery.length > 0 ? gallery[0].image : null);
   const displayImage = getImageUrl(primaryImg);
+  // Add this near your other state declarations
+  const [galleryPage, setGalleryPage] = useState(1);
+  const IMAGES_PER_PAGE = 9;
 
   return (
     <div className="product-card">
@@ -258,6 +261,7 @@ function App() {
         
         {/* Additional Images Gallery */}
         {selectedProduct.additional_images && selectedProduct.additional_images.length > 0 && (
+        <div className="gallery-section" style={{ marginTop: '20px' }}>
           <div className="gallery-thumbnails" style={{ display: 'flex', gap: '10px', marginTop: '20px', flexWrap: 'wrap' }}>
             {/* Thumbnail for main image */}
             <img 
@@ -266,25 +270,37 @@ function App() {
                 style={{ width: '80px', height: '80px', objectFit: 'cover', cursor: 'pointer', border: activeMainImage === (selectedProduct.main_image_url || selectedProduct.additional_images?.[0]?.image) ? '2px solid #ff8c00' : 'none' }}
                 alt="Main view"
             />
-            {/* Thumbnails for extra images */}
-            {selectedProduct.additional_images.map((imgObj, idx) => (
-              <img 
-                key={idx}
-                src={getImageUrl(imgObj.image)} 
-                alt={`View ${idx}`}
-                onClick={() => setActiveMainImage(imgObj.image)}
-                style={{ width: '80px', height: '80px', objectFit: 'cover', cursor: 'pointer', border: activeMainImage === imgObj.image ? '2px solid #ff8c00' : 'none' }}
-              />
-            ))}
+            {/* 1. Logic to slice only 9 images */}
+      {selectedProduct.additional_images
+        .slice(0, galleryPage * IMAGES_PER_PAGE)
+        .map((imgObj, idx) => (
+          <img 
+            key={idx}
+            src={getImageUrl(imgObj.image)} 
+            alt={`View ${idx}`}
+            onClick={() => setActiveMainImage(imgObj.image)}
+            style={{ 
+              width: '80px', 
+              height: '80px', 
+              objectFit: 'cover', 
+              cursor: 'pointer', 
+              border: activeMainImage === imgObj.image ? '2px solid #ff8c00' : '1px solid #ddd' 
+            }}
+          />
+        ))}
           </div>
         )}
       </div>
     ) : (
-      <div className="product-grid">
-        {paginatedProducts.map((p) => (
-            <ProductCard key={p.id} product={p} onAddToCart={addToCart} onSelect={setSelectedProduct} />
-        ))}
-      </div>
+      {/* 2. "Show More" Button */}
+    {galleryPage * IMAGES_PER_PAGE < selectedProduct.additional_images.length && (
+      <button 
+        onClick={() => setGalleryPage(prev => prev + 1)}
+        style={{ marginTop: '15px', padding: '10px 20px', cursor: 'pointer' }}
+      >
+        Load More Images
+      </button>
+    )}
     )}
   </>
 )}
