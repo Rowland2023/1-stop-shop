@@ -128,63 +128,63 @@ footer { grid-area: footer; }
   }
 }
 
-/* --- IMAGE CONSISTENCY FIX --- */
+/* Add/Replace these styles in your App.css */
 .img-frame {
   width: 100%;
-  height: 200px; /* Standard height */
+  height: 200px;
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
   background: #f4f4f4;
   border-radius: 8px;
+  position: relative;
 }
 
 .zoom-effect {
   width: 100%;
   height: 100%;
-  object-fit: contain; /* Changed from cover to contain to prevent cropping */
-  transition: transform 0.4s ease;
+  object-fit: contain; /* Ensures the whole image is visible */
+  display: block;      /* Prevents bottom spacing artifacts */
 }
 
-/* Responsive adjustment for Mobile */
 @media (max-width: 480px) {
   .img-frame {
-    height: 150px; /* Slightly shorter frame for mobile screens */
+    height: 150px; /* Adjust height for smaller mobile devices */
   }
 }
 
 /* =========================================
    RIGHT SIDEBAR (CART)
    ========================================= */
+/* Remove any previous standalone .right-sidebar { display: block; } blocks */
+
 .right-sidebar {
   grid-area: right-sb;
   background: #f9f9f9;
   border-left: 1px solid var(--border-color);
   min-height: 100vh;
-  /* On desktop, it's always visible */
-  display: block; 
 }
 
-/* --- MOBILE OVERLAY FOR CART --- */
 @media (max-width: 768px) {
   .right-sidebar {
     position: fixed;
     top: 0;
-    right: -100%; /* Hidden by default */
+    right: -100%;
     width: 85%;
     height: 100vh;
     background: white;
     z-index: 3000;
     transition: right 0.3s ease;
     overflow-y: auto;
-    box-shadow: -5px 0 15px rgba(0,0,0,0.2);
   }
-
   .right-sidebar.open {
-    right: 0; /* Slide in */
+    right: 0;
   }
 }
+/*========================================
+  CLOSE BUTTON VISIBILITY  
+========================================*/
 
 /* 1. Hide the close button on desktop screens */
 @media (min-width: 769px) {
