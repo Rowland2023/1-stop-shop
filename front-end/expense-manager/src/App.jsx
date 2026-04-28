@@ -26,9 +26,11 @@ function ProductCard({ product, onAddToCart, onSelect }) {
     <div className="product-card">
       <div className="img-frame" onClick={() => onSelect(product)} style={{ cursor: 'pointer' }}>
         <img 
-  src={displayImage}
-  style={{ width: "100%", height: "auto", border: "2px solid red" }}
-/>
+          src={displayImage} 
+          alt={product.name} 
+          className="zoom-effect" 
+          onError={(e) => { e.target.src = "/static/placeholder.png"; }} 
+        />
       </div>
 
       <h3 onClick={() => onSelect(product)} style={{ cursor: 'pointer', marginBottom: '5px' }}>{product.name}</h3>
