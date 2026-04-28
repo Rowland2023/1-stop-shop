@@ -67,6 +67,9 @@ footer { grid-area: footer; }
 .product-card { border: 1px solid var(--border-color); padding: 15px; text-align: center; border-radius: 8px; transition: box-shadow 0.3s; }
 .product-card:hover { box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
 
+.img-frame { width: 100%; height: 180px; overflow: hidden; border-radius: 5px; position: relative; cursor: pointer; background: #f9f9f9; }
+.zoom-effect { width: 100%; height: 100%; object-fit: contain; transition: transform 0.4s ease; }
+.img-frame:hover .zoom-effect { transform: scale(1.15); }
 
 /* =========================================
    4. CART, AUTH & MISC
@@ -94,7 +97,10 @@ footer { grid-area: footer; }
   .mobile-menu-toggle { display: block; }
   
   /* Your existing mobile grid and sidebar overrides */
-
+  .app-grid-wrapper { 
+    grid-template-columns: 1fr; 
+    grid-template-areas: "header" "nav-row" "main" "footer"; 
+  }
   .left-sidebar { display: none; }
   .mobile-menu-dropdown { display: block; }
 }
@@ -142,15 +148,43 @@ footer { grid-area: footer; }
   display: block;      /* Prevents bottom spacing artifacts */
 }
 
-/* Mobile specific overrides */
 @media (max-width: 480px) {
-  .img-frame { height: 140px; }
-  .product-grid { grid-template-columns: 1fr; } /* Force single column on mobile */
+  .img-frame {
+    height: 150px; /* Adjust height for smaller mobile devices */
+  }
+}
+
+/* =========================================
+   RIGHT SIDEBAR (CART)
+   ========================================= */
+/* Remove any previous standalone .right-sidebar { display: block; } blocks */
+
+.right-sidebar {
+  grid-area: right-sb;
+  background: #f9f9f9;
+  border-left: 1px solid var(--border-color);
+  min-height: 100vh;
+}
+
+@media (max-width: 768px) {
+  .right-sidebar {
+    position: fixed;
+    top: 0;
+    right: -100%;
+    width: 85%;
+    height: 100vh;
+    background: white;
+    z-index: 3000;
+    transition: right 0.3s ease;
+    overflow-y: auto;
+  }
+  .right-sidebar.open {
+    right: 0;
+  }
 }
 /*========================================
-  CLOSE BUTTON VISIBILITY  
-========================================*/
-
+  CLOSE BUTTON VISIBILITY  ========================================*/
+   
 /* 1. Hide the close button on desktop screens */
 @media (min-width: 769px) {
   .close-cart-btn { 
