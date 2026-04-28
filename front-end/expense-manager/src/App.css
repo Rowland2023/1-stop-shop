@@ -141,26 +141,19 @@ footer { grid-area: footer; }
   position: relative;
 }
 
-/* Update your zoom-effect class to be more robust */
 .zoom-effect {
   width: 100%;
   height: 100%;
-  object-fit: contain;
-  display: block;
-  /* Added to ensure it doesn't collapse */
-  min-height: 100px; 
+  object-fit: contain; /* Ensures the whole image is visible */
+  display: block;      /* Prevents bottom spacing artifacts */
 }
 
-/* Ensure mobile product cards don't constrain the height too much */
 @media (max-width: 480px) {
-  .product-grid {
-    grid-template-columns: 1fr; /* Stack cards in a single column on very small screens */
-    gap: 15px;
-  }
-  .product-card {
-    padding: 10px;
+  .img-frame {
+    height: 150px; /* Adjust height for smaller mobile devices */
   }
 }
+
 /* =========================================
    RIGHT SIDEBAR (CART)
    ========================================= */
