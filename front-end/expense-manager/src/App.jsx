@@ -231,6 +231,7 @@ function App() {
             <button className="orange-curved-btn" disabled={!csrfReady} onClick={handleAuth}>{csrfReady ? (authMode === "login" ? "Login" : "Submit") : "Connecting..."}</button>
           </div>
         )}
+        {/* This section concerns Product review*/}
         {view === "grid" && (
   <>
     {selectedProduct ? (
@@ -239,19 +240,41 @@ function App() {
         
         <h1>{selectedProduct.name}</h1>
         
-        {/* ADDED DESCRIPTION HERE */}
-        <p style={{ fontSize: '1rem', color: '#333', margin: '15px 0', lineHeight: '1.5' }}>
-          {selectedProduct.description || "No description available for this product."}
-        </p>
-
         {/* Main Active Image */}
         <img 
           src={getImageUrl(activeMainImage)} 
           alt={selectedProduct.name} 
           style={{ width: '100%', maxWidth: '500px', borderRadius: '8px', display: 'block', margin: '0 auto' }} 
         />
+
+        {/* Product Description */}
+        <div className="product-description" style={{ margin: '20px 0', color: '#333', lineHeight: '1.6' }}>
+            <h3>Description</h3>
+            <p>{selectedProduct.description || "No description available for this product."}</p>
+        </div>
         
-        {/* ... (rest of your gallery code) */}
+        {/* Additional Images Gallery */}
+        {selectedProduct.additional_images && selectedProduct.additional_images.length > 0 && (
+          <div className="gallery-thumbnails" style={{ display: 'flex', gap: '10px', marginTop: '20px', flexWrap: 'wrap' }}>
+            {/* Thumbnail for main image */}
+            <img 
+                src={getImageUrl(selectedProduct.main_image_url || selectedProduct.additional_images?.[0]?.image)} 
+                onClick={() => setActiveMainImage(selectedProduct.main_image_url || selectedProduct.additional_images?.[0]?.image)}
+                style={{ width: '80px', height: '80px', objectFit: 'cover', cursor: 'pointer', border: activeMainImage === (selectedProduct.main_image_url || selectedProduct.additional_images?.[0]?.image) ? '2px solid #ff8c00' : 'none' }}
+                alt="Main view"
+            />
+            {/* Thumbnails for extra images */}
+            {selectedProduct.additional_images.map((imgObj, idx) => (
+              <img 
+                key={idx}
+                src={getImageUrl(imgObj.image)} 
+                alt={`View ${idx}`}
+                onClick={() => setActiveMainImage(imgObj.image)}
+                style={{ width: '80px', height: '80px', objectFit: 'cover', cursor: 'pointer', border: activeMainImage === imgObj.image ? '2px solid #ff8c00' : 'none' }}
+              />
+            ))}
+          </div>
+        )}
       </div>
     ) : (
       <div className="product-grid">
