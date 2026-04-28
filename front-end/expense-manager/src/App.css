@@ -1,5 +1,5 @@
 /* =========================================
-   0. ROOT VARIABLES (Global Branding)
+   0. ROOT & BASE
    ========================================= */
 :root {
   --brand-orange: #ff8c00;
@@ -10,15 +10,10 @@
   --radius-curved: 25px;
 }
 
-body, #root {
-  background-color: var(--bg-white);
-  color: var(--text-dark);
-  margin: 0;
-  font-family: sans-serif;
-}
+body, #root { background-color: var(--bg-white); color: var(--text-dark); margin: 0; font-family: sans-serif; }
 
 /* =========================================
-   1. MASTER GRID & LAYOUT
+   1. LAYOUT (Desktop Default)
    ========================================= */
 .app-grid-wrapper {
   display: grid;
@@ -31,171 +26,46 @@ body, #root {
   min-height: 100vh;
 }
 
-header { grid-area: header; }
-nav { grid-area: nav-row; }
-.left-sidebar { grid-area: left-sb; }
 main { grid-area: main; background: var(--bg-white); padding: 30px; }
-.right-sidebar { grid-area: right-sb; }
-footer { grid-area: footer; }
+.left-sidebar { grid-area: left-sb; }
+.right-sidebar { grid-area: right-sb; background: #f9f9f9; border-left: 1px solid var(--border-color); }
 
 /* =========================================
-   2. HEADER & NAVIGATION
+   2. COMPONENTS (Images & Cards)
    ========================================= */
-.brand-header { background: var(--brand-dark); padding: 15px 5%; }
-.header-inner { display: flex; justify-content: space-between; align-items: center; }
-.logo-text { color: var(--brand-orange); font-size: 2rem; margin: 0; cursor: pointer; }
-
-.main-nav { background: var(--bg-white); border-bottom: 1px solid #e0e0e0; position: sticky; top: 0; z-index: 1000; padding: 10px 0; }
-.nav-container { display: flex; align-items: center; justify-content: space-between; max-width: 1400px; margin: 0 auto; padding: 0 20px; }
-.nav-group { display: flex; gap: 20px; flex: 1; }
-.nav-group.right { justify-content: flex-end; }
-
-.nav-link-item { background: none; border: none; font-weight: 600; color: var(--text-dark); cursor: pointer; font-size: 0.95rem; transition: color 0.2s; }
-.nav-link-item:hover { color: var(--brand-orange); }
-.auth-highlight { color: var(--brand-orange); border: 1px solid var(--brand-orange); padding: 5px 15px; border-radius: 15px; }
-
-/* Search Component */
-.central-search-wrapper { flex: 2; display: flex; justify-content: center; }
-.search-pill { display: flex; width: 100%; max-width: 500px; background: #000; border-radius: var(--radius-curved); border: 1px solid #333; overflow: hidden; }
-.search-pill input { flex: 1; background: transparent; border: none; padding: 12px 20px; color: white; outline: none; }
-.orange-go-btn { background: var(--brand-orange); color: white; border: none; padding: 0 25px; font-weight: bold; cursor: pointer; }
-
-/* =========================================
-   3. PRODUCT GRID & CARDS
-   ========================================= */
-.product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 25px; }
-.product-card { border: 1px solid var(--border-color); padding: 15px; text-align: center; border-radius: 8px; transition: box-shadow 0.3s; }
-.product-card:hover { box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
-
-.img-frame { width: 100%; height: 180px; overflow: hidden; border-radius: 5px; position: relative; cursor: pointer; background: #f9f9f9; }
-.zoom-effect { width: 100%; height: 100%; object-fit: contain; transition: transform 0.4s ease; }
+.img-frame {
+  width: 100%; height: 200px; display: flex; align-items: center; justify-content: center;
+  overflow: hidden; background: #f4f4f4; border-radius: 8px; position: relative;
+}
+.zoom-effect { width: 100%; height: 100%; object-fit: contain; display: block; transition: transform 0.4s ease; }
 .img-frame:hover .zoom-effect { transform: scale(1.15); }
 
 /* =========================================
-   4. CART, AUTH & MISC
+   3. RESPONSIVE & MOBILE OVERLAYS
    ========================================= */
-.checkout-btn-curved { background: var(--brand-orange); color: white; border: none; padding: 12px 25px; border-radius: var(--radius-curved); font-weight: bold; cursor: pointer; width: 100%; }
-.clear-cart-btn-curved { background: var(--bg-white); color: var(--brand-orange); border: 2px solid var(--brand-orange); padding: 10px 20px; border-radius: var(--radius-curved); font-weight: bold; cursor: pointer; width: 100%; }
-
-.side-nav button { width: 100%; text-align: left; padding: 12px 15px; border: 1px solid #dfe6e9; background: var(--bg-white); color: #2c3e50; cursor: pointer; border-radius: 6px; font-weight: 600; }
-.active { background: #3498db !important; color: white !important; transform: translateX(5px); }
-
-/* =========================================
-   5. RESPONSIVE
-   ========================================= */
-
-/* --- 5. RESPONSIVE --- */
-
-/* Hide mobile-only elements on Desktop */
+/* A. Desktop Only */
 @media (min-width: 769px) {
-  .mobile-menu-toggle { display: none !important; }
-  .mobile-menu-dropdown { display: none !important; }
+  .mobile-menu-toggle, .mobile-menu-dropdown, .close-cart-btn { display: none !important; }
 }
 
-/* Ensure mobile-only elements show on Mobile */
+/* B. Mobile Overrides */
 @media (max-width: 768px) {
-  .mobile-menu-toggle { display: block; }
+  .app-grid-wrapper { display: block; }
   
-  /* Your existing mobile grid and sidebar overrides */
-  .app-grid-wrapper { 
-    grid-template-columns: 1fr; 
-    grid-template-areas: "header" "nav-row" "main" "footer"; 
+  /* Left Sidebar Overlay */
+  .left-sidebar {
+    position: fixed; left: -100%; top: 0; width: 250px; height: 100vh;
+    background: white; z-index: 9999; transition: left 0.3s ease;
   }
-  .left-sidebar { display: none; }
-  .mobile-menu-dropdown { display: block; }
-}
+  .left-sidebar.open { left: 0; }
 
-/*===========================================
-   6. BUG FIXES & POLISH
-========================================= */ 
-/* --- MOBILE SIDEBAR OVERLAY FIX --- */
-@media (max-width: 768px) {
+  /* Right Sidebar Overlay */
   .right-sidebar {
-    position: fixed;
-    top: 0;
-    right: -100%; /* Hidden off-screen by default */
-    width: 80%;   /* Occupies 80% of the screen width */
-    height: 100%;
-    background: white;
-    z-index: 9999; /* Higher than other elements */
-    transition: right 0.3s ease;
-    overflow-y: auto;
-    box-shadow: -2px 0 10px rgba(0,0,0,0.2);
+    position: fixed; right: -100%; top: 0; width: 85%; height: 100vh;
+    background: white; z-index: 9999; transition: right 0.3s ease;
+    overflow-y: auto; box-shadow: -2px 0 10px rgba(0,0,0,0.2);
   }
-
-  .right-sidebar.open {
-    right: 0; /* Slides into view when cartOpen is true */
-  }
-}
-
-/* Add/Replace these styles in your App.css */
-.img-frame {
-  width: 100%;
-  height: 200px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  background: #f4f4f4;
-  border-radius: 8px;
-  position: relative;
-}
-
-.zoom-effect {
-  width: 100%;
-  height: 100%;
-  object-fit: contain; /* Ensures the whole image is visible */
-  display: block;      /* Prevents bottom spacing artifacts */
-}
-
-@media (max-width: 480px) {
-  .img-frame {
-    height: 150px; /* Adjust height for smaller mobile devices */
-  }
-}
-
-/* =========================================
-   RIGHT SIDEBAR (CART)
-   ========================================= */
-/* Remove any previous standalone .right-sidebar { display: block; } blocks */
-
-.right-sidebar {
-  grid-area: right-sb;
-  background: #f9f9f9;
-  border-left: 1px solid var(--border-color);
-  min-height: 100vh;
-}
-
-@media (max-width: 768px) {
-  .right-sidebar {
-    position: fixed;
-    top: 0;
-    right: -100%;
-    width: 85%;
-    height: 100vh;
-    background: white;
-    z-index: 3000;
-    transition: right 0.3s ease;
-    overflow-y: auto;
-  }
-  .right-sidebar.open {
-    right: 0;
-  }
-}
-/*========================================
-  CLOSE BUTTON VISIBILITY  
-========================================*/
-
-/* 1. Hide the close button on desktop screens */
-@media (min-width: 769px) {
-  .close-cart-btn { 
-    display: none !important; 
-  }
-}
-
-/* 2. Ensure it shows on mobile */
-@media (max-width: 768px) {
-  .close-cart-btn { 
-    display: block; 
-  }
+  .right-sidebar.open { right: 0; }
+  
+  .img-frame { height: 150px; } /* Smaller images for mobile */
 }
