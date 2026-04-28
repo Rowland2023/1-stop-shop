@@ -4,33 +4,15 @@ import { usePaystackPayment } from 'react-paystack';
 
 /* --- CONFIG --- */
 const BASE_URL = import.meta.env.VITE_API_URL || "";
-const CLOUDINARY_BASE = "https://res.cloudinary.com/dscxqsew5/image/upload/";
+const CLOUDINARY_BASE = "https://res.cloudinary.com/dscxqsew5/";
 const PAYSTACK_PUBLIC_KEY = 'pk_live_21207f639d252b46e35e171dca6b075f79cba433';
 
 const getImageUrl = (input) => {
   if (!input) return "/static/placeholder.png";
-
-  let path = (typeof input === "object" && input !== null)
-    ? input.image
-    : input;
-
-  if (typeof path !== "string") return "/static/placeholder.png";
-
-  // FIX 1: force https
-  if (path.startsWith("http://")) {
-    path = path.replace("http://", "https://");
-  }
-
-  // FIX 2: if already full URL → return
-  if (path.startsWith("https://")) return path;
-
-  // FIX 3: handle broken partial cloudinary paths
-  if (path.includes("res.cloudinary.com")) {
-    return `https://${path}`;
-  }
-
+  const path = (typeof input === 'object' && input !== null) ? input.image : input;
+  if (typeof path !== 'string') return "/static/placeholder.png";
+  if (path.startsWith("http")) return path;
   const cleanPath = path.startsWith("/") ? path.substring(1) : path;
-
   return `${CLOUDINARY_BASE}${cleanPath}`;
 };
 
