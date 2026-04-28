@@ -232,14 +232,17 @@ function App() {
           </div>
         )}
         {/* This section concerns Product review*/}
-        {view === "grid" && (
+      {view === "grid" && (
   <>
     {selectedProduct ? (
       <div className="detail-screen" style={{ padding: '20px' }}>
+        {/* Debugging: Check the console to see the real product data */}
+        {console.log("Selected Product Data:", selectedProduct)}
+        
         <button onClick={() => setSelectedProduct(null)} style={{ marginBottom: '10px' }}>← Back</button>
         
         <h1>{selectedProduct.name}</h1>
-        
+      
         {/* Main Active Image */}
         <img 
           src={getImageUrl(activeMainImage)} 
