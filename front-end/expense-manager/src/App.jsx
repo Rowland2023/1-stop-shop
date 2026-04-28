@@ -24,7 +24,6 @@ function ProductCard({ product, onAddToCart, onSelect }) {
 
   return (
     <div className="product-card">
-      {/* Image Block Restored */}
       <div className="img-frame" onClick={() => onSelect(product)} style={{ cursor: 'pointer' }}>
         <img 
           src={displayImage} 
@@ -34,13 +33,18 @@ function ProductCard({ product, onAddToCart, onSelect }) {
         />
       </div>
 
-      <h3 onClick={() => onSelect(product)} style={{ cursor: 'pointer' }}>{product.name}</h3>
-      <p className="price-text">₦{parseFloat(product.price || 0).toLocaleString()}</p>
+      <h3 onClick={() => onSelect(product)} style={{ cursor: 'pointer', marginBottom: '5px' }}>{product.name}</h3>
       
-      {/* Quantity Stepper */}
-      <div className="qty-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', marginTop: '10px' }}>
+      {/* ADDED DESCRIPTION FIELD */}
+      <p style={{ fontSize: '0.85rem', color: '#666', height: '40px', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+        {product.description || "No description available"}
+      </p>
+
+      <p className="price-text" style={{ fontWeight: 'bold', margin: '10px 0' }}>₦{parseFloat(product.price || 0).toLocaleString()}</p>
+      
+      <div className="qty-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
         <button onClick={() => setTempQty(Math.max(1, tempQty - 1))}>-</button>
-        <span style={{ fontWeight: 'bold' }}>{tempQty}</span>
+        <span style={{ width: '30px', textAlign: 'center' }}>{tempQty}</span>
         <button onClick={() => setTempQty(tempQty + 1)}>+</button>
         <button className="add-btn" onClick={() => onAddToCart(product, tempQty)}>Add</button>
       </div>
