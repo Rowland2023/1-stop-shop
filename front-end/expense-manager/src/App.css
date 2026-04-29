@@ -231,3 +231,37 @@ CLOSE BUTTON VISIBILITY
   max-height: 90vh; /* Prevents button from being pushed off-screen */
   padding-bottom: 50px;
 }
+
+/* Mobile Horizontal Category Bar */
+.mobile-category-scroll {
+  display: none; /* Hidden on desktop */
+  overflow-x: auto;
+  white-space: nowrap;
+  padding: 10px;
+  background: #f8f8f8;
+  border-bottom: 1px solid #ddd;
+  gap: 15px;
+  -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+}
+
+.mobile-category-scroll button {
+  background: none;
+  border: none;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #555;
+  padding: 5px 10px;
+  cursor: pointer;
+}
+
+.mobile-category-scroll button.active-cat {
+  color: var(--brand-orange);
+  border-bottom: 2px solid var(--brand-orange);
+}
+
+/* Show only on Mobile */
+@media (max-width: 768px) {
+  .mobile-category-scroll {
+    display: flex;
+  }
+}

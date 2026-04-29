@@ -207,19 +207,18 @@ function App() {
           <div className="nav-group right"><button className="nav-link-item" onClick={() => setView("account")}>Account</button>{!user ? <><button className="nav-link-item auth-highlight" onClick={() => {setView("auth"); setAuthMode("register")}}>Join</button><button className="nav-link-item" onClick={() => {setView("auth"); setAuthMode("login")}}>Login</button></> : <span className="user-tag">👤 {user.phone}</span>}</div>
         </div>
       </nav>
-      {/* MOBILE DROPDOWN (Pushes content down) */}
-{mobileMenuOpen && (
-  <div className="mobile-menu-dropdown">
-    <h3>Categories</h3>
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-      {["food", "electronics", "office", "style&fashion", "sex-toys", "rent-house", "car-sales", "kitchen-items"].map((catId) => (
-        <button key={catId} onClick={() => { setCategory(catId); setView("grid"); setMobileMenuOpen(false); }}>
-          {catId.toUpperCase()}
-        </button>
-      ))}
-    </div>
-  </div>
-)}
+       {/* Add this inside your return() after the <nav className="main-nav"> */}
+<div className="mobile-category-scroll">
+  {["food", "electronics", "office", "style&fashion", "sex-toys", "rent-house", "car-sales", "kitchen-items"].map((catId) => (
+    <button 
+      key={catId} 
+      className={category === catId ? "active-cat" : ""}
+      onClick={() => { setCategory(catId); setView("grid"); }}
+    >
+      {catId.toUpperCase()}
+    </button>
+  ))}
+</div>
       <aside className="left-sidebar">
         <h3>Categories</h3>
         <nav className="side-nav">
